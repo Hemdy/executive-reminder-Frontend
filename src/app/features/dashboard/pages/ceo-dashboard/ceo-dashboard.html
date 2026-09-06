@@ -1,0 +1,200 @@
+<div class="dashboard">
+
+  <div class="page-header">
+
+    <div>
+      <span class="eyebrow">Executive Overview</span>
+
+      <h1>
+        Good morning,
+        {{ authService.currentUser()?.firstName }}
+      </h1>
+
+      <p>
+        Here's what's happening across your organization.
+      </p>
+    </div>
+
+    <button class="primary-button" routerLink="/tasks/new">
+      + Create Task
+    </button>
+
+  </div>
+
+
+  <section class="summary-grid">
+
+    @for (item of summary; track item.label) {
+
+      <article class="summary-card">
+
+        <div class="summary-label">
+          {{ item.label }}
+        </div>
+
+        <div class="summary-value">
+          {{ item.value }}
+        </div>
+
+        <div class="summary-description">
+          {{ item.description }}
+        </div>
+
+      </article>
+
+    }
+
+  </section>
+
+
+  <section class="dashboard-grid">
+
+    <article class="dashboard-card">
+
+      <div class="card-header">
+
+        <div>
+          <h2>Today's Schedule</h2>
+          <span>September 6, 2026</span>
+        </div>
+
+        <a routerLink="/calendar">
+          View calendar
+        </a>
+
+      </div>
+
+      <div class="schedule-list">
+
+        @for (item of schedule; track item.time) {
+
+          <div class="schedule-item">
+
+            <time>
+              {{ item.time }}
+            </time>
+
+            <div class="schedule-marker"></div>
+
+            <div class="schedule-content">
+
+              <strong>
+                {{ item.title }}
+              </strong>
+
+              <span>
+                {{ item.type }}
+              </span>
+
+            </div>
+
+          </div>
+
+        }
+
+      </div>
+
+    </article>
+
+
+    <article class="dashboard-card">
+
+      <div class="card-header">
+
+        <div>
+          <h2>Needs Attention</h2>
+          <span>Items requiring your action</span>
+        </div>
+
+        <span class="attention-count">
+          {{ attentionItems.length }}
+        </span>
+
+      </div>
+
+      <div class="attention-list">
+
+        @for (item of attentionItems; track item.title) {
+
+          <div class="attention-item">
+
+            <div class="priority-indicator"></div>
+
+            <div>
+
+              <strong>
+                {{ item.title }}
+              </strong>
+
+              <span>
+                {{ item.type }}
+              </span>
+
+            </div>
+
+            <span class="priority">
+              {{ item.priority }}
+            </span>
+
+          </div>
+
+        }
+
+      </div>
+
+    </article>
+
+  </section>
+
+
+  <section class="dashboard-grid">
+
+    <article class="dashboard-card">
+
+      <div class="card-header">
+        <div>
+          <h2>Upcoming</h2>
+          <span>Next 7 days</span>
+        </div>
+      </div>
+
+      <div class="empty-placeholder">
+        Upcoming tasks, reminders and meetings will appear here.
+      </div>
+
+    </article>
+
+
+    <article class="dashboard-card">
+
+      <div class="card-header">
+        <div>
+          <h2>Recent Activity</h2>
+          <span>Latest organization activity</span>
+        </div>
+      </div>
+
+      <div class="activity-list">
+
+        <div>
+          <strong>John completed a task</strong>
+          <span>5 minutes ago</span>
+        </div>
+
+        <div>
+          <strong>Sarah submitted an approval request</strong>
+          <span>32 minutes ago</span>
+        </div>
+
+        <div>
+          <strong>CEO changed task priority</strong>
+          <span>1 hour ago</span>
+        </div>
+
+      </div>
+
+    </article>
+
+  </section>
+
+</div>
