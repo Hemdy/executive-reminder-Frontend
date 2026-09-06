@@ -1,0 +1,57 @@
+<header class="topbar">
+
+  <div class="mobile-brand">
+    <div class="brand-mark">E</div>
+    <strong>ExecTrack</strong>
+  </div>
+
+  <div class="topbar-actions">
+
+    <button
+      class="icon-button"
+      aria-label="Search"
+    >
+      ⌕
+    </button>
+
+    <button
+      class="icon-button notification-button"
+      aria-label="Notifications"
+      routerLink="/notifications"
+    >
+      ♢
+      <span class="notification-count">5</span>
+    </button>
+
+    @if (authService.currentUser(); as user) {
+
+      <div class="user-menu">
+
+        <div class="avatar">
+          {{ user.firstName.charAt(0) }}
+        </div>
+
+        <div class="user-info">
+          <strong>
+            {{ user.firstName }} {{ user.lastName }}
+          </strong>
+
+          <span>
+            {{ user.role }}
+          </span>
+        </div>
+
+        <button
+          class="logout-button"
+          (click)="logout()"
+        >
+          Logout
+        </button>
+
+      </div>
+
+    }
+
+  </div>
+
+</header>

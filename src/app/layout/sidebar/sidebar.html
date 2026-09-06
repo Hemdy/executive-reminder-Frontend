@@ -1,0 +1,86 @@
+<aside class="sidebar">
+
+  <div class="sidebar-brand">
+
+    <div class="brand-mark">
+      E
+    </div>
+
+    <div>
+      <strong>ExecTrack</strong>
+      <span>Executive Platform</span>
+    </div>
+
+  </div>
+
+  <nav>
+
+    <div class="nav-section">
+
+      <span class="nav-label">
+        Workspace
+      </span>
+
+      @for (item of navigation; track item.route) {
+
+        @if (isVisible(item)) {
+
+          <a
+            [routerLink]="item.route"
+            routerLinkActive="active"
+            [routerLinkActiveOptions]="{ exact: item.route === '/dashboard' }"
+            class="nav-item"
+          >
+            <span class="nav-icon">
+              {{ item.icon }}
+            </span>
+
+            <span>
+              {{ item.label }}
+            </span>
+          </a>
+
+        }
+
+      }
+
+    </div>
+
+    @if (authService.hasRole('ADMIN')) {
+
+      <div class="nav-section admin-section">
+
+        <span class="nav-label">
+          Administration
+        </span>
+
+        @for (item of adminNavigation; track item.route) {
+
+          <a
+            [routerLink]="item.route"
+            routerLinkActive="active"
+            class="nav-item"
+          >
+            <span class="nav-icon">
+              {{ item.icon }}
+            </span>
+
+            {{ item.label }}
+          </a>
+
+        }
+
+      </div>
+
+    }
+
+  </nav>
+
+  <div class="sidebar-footer">
+
+    <span>ExecTrack</span>
+    <small>Phase 1 MVP</small>
+
+  </div>
+
+</aside>

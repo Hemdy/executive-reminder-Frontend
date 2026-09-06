@@ -1,0 +1,76 @@
+<div class="login-page">
+
+  <div class="login-card">
+
+    <div class="brand">
+      <div class="brand-mark">E</div>
+
+      <div>
+        <h1>ExecTrack</h1>
+        <p>Executive Management Platform</p>
+      </div>
+    </div>
+
+    <div class="login-content">
+
+      <h2>Welcome back</h2>
+
+      <p class="description">
+        Sign in to access your executive workspace.
+      </p>
+
+      <div class="login-form">
+
+        <label>
+          Email address
+        </label>
+
+        <input
+          type="email"
+          placeholder="you@company.com"
+        />
+
+        <label>
+          Password
+        </label>
+
+        <input
+          type="password"
+          placeholder="Enter your password"
+        />
+
+        <button class="primary-button">
+          Sign in
+        </button>
+
+      </div>
+
+      <div class="divider">
+        <span>Development login</span>
+      </div>
+
+      <div class="development-logins">
+
+        <button (click)="login('CEO')">
+          Login as CEO
+        </button>
+
+        <button (click)="login('EMPLOYEE')">
+          Login as Employee
+        </button>
+
+        <button (click)="login('EXECUTIVE_ASSISTANT')">
+          Login as Executive Assistant
+        </button>
+
+        <button (click)="login('ADMIN')">
+          Login as Administrator
+        </button>
+
+      </div>
+
+    </div>
+
+  </div>
+
+</div>
