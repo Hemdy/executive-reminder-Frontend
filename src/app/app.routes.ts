@@ -16,10 +16,10 @@ export const routes: Routes = [
     children: [
       {
         path: 'dashboard',
-        loadComponent: () =>
-          import('./features/dashboard/pages/ceo-dashboard/ceo-dashboard').then(
-            (m) => m.CeoDashboard,
-          ),
+loadComponent: () =>
+  import('./features/dashboard/pages/ceo-dashboard/ceo-dashboard')
+    .then(m => m.CeoDashboard)
+
       },
 
       {
