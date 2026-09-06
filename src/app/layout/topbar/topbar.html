@@ -14,14 +14,22 @@
       ⌕
     </button>
 
-    <button
-      class="icon-button notification-button"
-      aria-label="Notifications"
-      routerLink="/notifications"
-    >
-      ♢
-      <span class="notification-count">5</span>
-    </button>
+<a
+  routerLink="/notifications"
+  class="notification-button"
+  aria-label="Notifications"
+>
+  ♢
+
+  @if (unreadNotificationCount() > 0) {
+    <span class="notification-badge">
+      {{ unreadNotificationCount() > 99
+        ? '99+'
+        : unreadNotificationCount()
+      }}
+    </span>
+  }
+</a>
 
     @if (authService.currentUser(); as user) {
 
