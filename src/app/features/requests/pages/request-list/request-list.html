@@ -1,0 +1,277 @@
+<section class="page">
+
+  <div class="page-header">
+    <div>
+      <div class="eyebrow">Workflow</div>
+      <h1>Requests</h1>
+      <p>Manage approvals, decisions, reviews and other executive requests.</p>
+    </div>
+
+    <button class="primary-button" type="button" (click)="createRequest()">
+      <span>+</span>
+      New Request
+    </button>
+  </div>
+
+  <div class="summary-grid">
+
+    <div class="summary-card">
+      <div class="summary-label">Total Requests</div>
+      <div class="summary-value">{{ totalCount() }}</div>
+      <div class="summary-description">All requests</div>
+    </div>
+
+    <div class="summary-card">
+      <div class="summary-label">Pending</div>
+      <div class="summary-value">{{ pendingCount() }}</div>
+      <div class="summary-description">Awaiting action</div>
+    </div>
+
+    <div class="summary-card">
+      <div class="summary-label">In Review</div>
+      <div class="summary-value">{{ inReviewCount() }}</div>
+      <div class="summary-description">Currently being reviewed</div>
+    </div>
+
+    <div class="summary-card">
+      <div class="summary-label">Attention</div>
+      <div class="summary-value">{{ attentionCount() }}</div>
+      <div class="summary-description">High priority or needs info</div>
+    </div>
+
+    <div class="summary-card">
+      <div class="summary-label">Approved</div>
+      <div class="summary-value">{{ approvedCount() }}</div>
+      <div class="summary-description">Approved requests</div>
+    </div>
+
+    <div class="summary-card">
+      <div class="summary-label">Completed</div>
+      <div class="summary-value">{{ completedCount() }}</div>
+      <div class="summary-description">Completed requests</div>
+    </div>
+
+  </div>
+
+  <div class="filters-card">
+
+    <div class="search-field">
+      <span class="search-icon">⌕</span>
+
+      <input
+        type="search"
+        placeholder="Search requests..."
+        [value]="searchTerm()"
+        (input)="searchTerm.set($any($event.target).value)"
+      />
+    </div>
+
+    <select
+      [value]="statusFilter()"
+      (change)="statusFilter.set($any($event.target).value)"
+    >
+      <option value="ALL">All Statuses</option>
+
+      @for (status of statuses; track status) {
+        <option [value]="status">
+          {{ statusLabel(status) }}
+        </option>
+      }
+    </select>
+
+    <select
+      [value]="typeFilter()"
+      (change)="typeFilter.set($any($event.target).value)"
+    >
+      <option value="ALL">All Types</option>
+
+      @for (type of types; track type) {
+        <option [value]="type">
+          {{ typeLabel(type) }}
+        </option>
+      }
+    </select>
+
+    <select
+      [value]="priorityFilter()"
+      (change)="priorityFilter.set($any($event.target).value)"
+    >
+      <option value="ALL">All Priorities</option>
+
+      @for (priority of priorities; track priority) {
+        <option [value]="priority">
+          {{ priorityLabel(priority) }}
+        </option>
+      }
+    </select>
+
+    @if (
+      searchTerm() ||
+      statusFilter() !== 'ALL' ||
+      typeFilter() !== 'ALL' ||
+      priorityFilter() !== 'ALL'
+    ) {
+      <button class="clear-button" type="button" (click)="clearFilters()">
+        Clear
+      </button>
+    }
+
+  </div>
+
+  <div class="table-card">
+
+    @if (requests().length > 0) {
+
+      <div class="table-wrapper">
+
+        <table>
+
+          <thead>
+            <tr>
+              <th>Request</th>
+              <th>Type</th>
+              <th>Requester</th>
+              <th>Assigned To</th>
+              <th>Priority</th>
+              <th>Due Date</th>
+              <th>Status</th>
+              <th>Activity</th>
+            </tr>
+          </thead>
+
+          <tbody>
+
+            @for (request of requests(); track request.id) {
+
+              <tr
+                class="request-row"
+                [class.overdue]="isOverdue(request)"
+                (click)="viewRequest(request.id)"
+              >
+
+                <td>
+                  <div class="request-cell">
+
+                    <div class="request-title">
+                      {{ request.title }}
+                    </div>
+
+                    @if (request.description) {
+                      <div class="request-description">
+                        {{ request.description }}
+                      </div>
+                    }
+
+                    @if (isOverdue(request)) {
+                      <span class="overdue-label">OVERDUE</span>
+                    }
+
+                  </div>
+                </td>
+
+                <td>
+                  <span class="type-badge">
+                    {{ typeLabel(request.type) }}
+                  </span>
+                </td>
+
+                <td>
+                  <div class="person">
+                    <div class="avatar">
+                      {{ request.requester.firstName.charAt(0) }}{{ request.requester.lastName.charAt(0) }}
+                    </div>
+
+                    <span>
+                      {{ request.requester.firstName }}
+                      {{ request.requester.lastName }}
+                    </span>
+                  </div>
+                </td>
+
+                <td>
+                  <div class="person">
+                    <div class="avatar">
+                      {{ request.assignedTo.firstName.charAt(0) }}{{ request.assignedTo.lastName.charAt(0) }}
+                    </div>
+
+                    <span>
+                      {{ request.assignedTo.firstName }}
+                      {{ request.assignedTo.lastName }}
+                    </span>
+                  </div>
+                </td>
+
+                <td>
+                  <span
+                    class="priority-badge"
+                    [class.low]="request.priority === 'LOW'"
+                    [class.medium]="request.priority === 'MEDIUM'"
+                    [class.high]="request.priority === 'HIGH'"
+                    [class.urgent]="request.priority === 'URGENT'"
+                  >
+                    {{ priorityLabel(request.priority) }}
+                  </span>
+                </td>
+
+                <td>
+                  <span
+                    class="due-date"
+                    [class.due-overdue]="isOverdue(request)"
+                  >
+                    {{ requestService.formatDate(request.dueDate) }}
+                  </span>
+                </td>
+
+                <td>
+                  <span
+                    class="status-badge"
+                    [class.pending]="request.status === 'PENDING'"
+                    [class.in-review]="request.status === 'IN_REVIEW'"
+                    [class.approved]="request.status === 'APPROVED'"
+                    [class.rejected]="request.status === 'REJECTED'"
+                    [class.needs-info]="request.status === 'NEEDS_INFORMATION'"
+                    [class.completed]="request.status === 'COMPLETED'"
+                    [class.cancelled]="request.status === 'CANCELLED'"
+                  >
+                    {{ statusLabel(request.status) }}
+                  </span>
+                </td>
+
+                <td>
+                  <div class="activity">
+                    <span>💬 {{ request.commentsCount }}</span>
+                    <span>📎 {{ request.attachmentsCount }}</span>
+                  </div>
+                </td>
+
+              </tr>
+
+            }
+
+          </tbody>
+
+        </table>
+
+      </div>
+
+    } @else {
+
+      <div class="empty-state">
+        <div class="empty-icon">▣</div>
+        <h3>No requests found</h3>
+        <p>Try changing your filters or create a new request.</p>
+
+        <button
+          class="primary-button"
+          type="button"
+          (click)="createRequest()"
+        >
+          New Request
+        </button>
+      </div>
+
+    }
+
+  </div>
+
+</section>

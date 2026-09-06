@@ -1,0 +1,474 @@
+<section class="details-page">
+
+  <div class="top-navigation">
+
+    <button
+      class="back-button"
+      type="button"
+      (click)="backToMeetings()"
+    >
+      ← Back to Meetings
+    </button>
+
+    <div class="top-actions">
+
+      <button
+        class="secondary-button"
+        type="button"
+        (click)="editMeeting()"
+      >
+        Edit Meeting
+      </button>
+
+      @if (
+        meeting()?.status === 'SCHEDULED' ||
+        meeting()?.status === 'RESCHEDULED'
+      ) {
+        <button
+          class="complete-button"
+          type="button"
+          (click)="markCompleted()"
+        >
+          ✓ Mark Completed
+        </button>
+      }
+
+    </div>
+
+  </div>
+
+  @if (meeting(); as meeting) {
+
+    <div class="meeting-header">
+
+      <div class="header-main">
+
+        <div class="header-meta">
+
+          <span class="type-badge">
+            {{ typeLabel(meeting.meetingType) }}
+          </span>
+
+          <span
+            class="status-badge"
+            [class.scheduled]="meeting.status === 'SCHEDULED'"
+            [class.rescheduled]="meeting.status === 'RESCHEDULED'"
+            [class.completed]="meeting.status === 'COMPLETED'"
+            [class.cancelled]="meeting.status === 'CANCELLED'"
+          >
+            {{ statusLabel(meeting.status) }}
+          </span>
+
+          @if (isPast()) {
+            <span class="past-badge">
+              PAST
+            </span>
+          }
+
+        </div>
+
+        <h1>{{ meeting.title }}</h1>
+
+        <p class="created-info">
+          Organized by
+          <strong>
+            {{ meeting.organizer.firstName }}
+            {{ meeting.organizer.lastName }}
+          </strong>
+          · Created
+          {{ meeting.createdAt | date:'MMM d, y' }}
+        </p>
+
+      </div>
+
+    </div>
+
+    <div class="content-grid">
+
+      <div class="main-column">
+
+        <div class="schedule-card">
+
+          <div class="schedule-icon">
+            ▦
+          </div>
+
+          <div class="schedule-content">
+
+            <div class="schedule-date">
+              {{ meeting.meetingDate | date:'EEEE, MMMM d, y' }}
+            </div>
+
+            <div class="schedule-time">
+              {{ formatTime(meeting.startTime) }}
+              –
+              {{ formatTime(meeting.endTime) }}
+            </div>
+
+            @if (meeting.location) {
+              <div class="schedule-location">
+                <span>⌖</span>
+                {{ meeting.location }}
+              </div>
+            }
+
+          </div>
+
+        </div>
+
+        <div class="content-card">
+
+          <div class="card-header">
+            <h2>Description</h2>
+          </div>
+
+          <div class="card-body description">
+
+            @if (meeting.description) {
+              <p>{{ meeting.description }}</p>
+            } @else {
+              <p class="muted">
+                No description provided.
+              </p>
+            }
+
+          </div>
+
+        </div>
+
+        <div class="content-card">
+
+          <div class="card-header">
+            <h2>Agenda</h2>
+          </div>
+
+          <div class="card-body agenda">
+
+            @if (meeting.agenda) {
+              <pre>{{ meeting.agenda }}</pre>
+            } @else {
+              <p class="muted">
+                No agenda provided.
+              </p>
+            }
+
+          </div>
+
+        </div>
+
+        <div class="content-card">
+
+          <div class="card-header">
+
+            <div>
+              <h2>Participants</h2>
+              <span>
+                {{ meeting.participants.length }} attendees
+              </span>
+            </div>
+
+          </div>
+
+          <div class="participants-grid">
+
+            @for (
+              participant of meeting.participants;
+              track participant.id
+            ) {
+
+              <div class="participant-card">
+
+                <div class="large-avatar">
+                  {{ initials(
+                    participant.firstName,
+                    participant.lastName
+                  ) }}
+                </div>
+
+                <div class="participant-info">
+
+                  <strong>
+                    {{ participant.firstName }}
+                    {{ participant.lastName }}
+                  </strong>
+
+                  <span>
+                    {{ participant.role }}
+                  </span>
+
+                  @if (participant.department) {
+                    <span>
+                      {{ participant.department }}
+                    </span>
+                  }
+
+                </div>
+
+              </div>
+
+            }
+
+          </div>
+
+        </div>
+
+        <div class="content-card">
+
+          <div class="card-header">
+            <div>
+              <h2>Comments</h2>
+              <span>
+                {{ meeting.commentsCount }} comments
+              </span>
+            </div>
+          </div>
+
+          <div class="placeholder-card">
+
+            <div class="placeholder-icon">
+              💬
+            </div>
+
+            <h3>
+              Comments coming soon
+            </h3>
+
+            <p>
+              Participants will be able to discuss this meeting here.
+            </p>
+
+          </div>
+
+        </div>
+
+        <div class="content-card">
+
+          <div class="card-header">
+            <div>
+              <h2>Attachments</h2>
+              <span>
+                {{ meeting.attachmentsCount }} files
+              </span>
+            </div>
+          </div>
+
+          <div class="placeholder-card">
+
+            <div class="placeholder-icon">
+              📎
+            </div>
+
+            <h3>
+              Attachments coming soon
+            </h3>
+
+            <p>
+              Meeting documents will appear here.
+            </p>
+
+          </div>
+
+        </div>
+
+      </div>
+
+      <aside class="side-column">
+
+        <div class="content-card">
+
+          <div class="card-header">
+            <h2>Meeting Details</h2>
+          </div>
+
+          <div class="details-list">
+
+            <div class="detail-row">
+              <span>Status</span>
+
+              <span
+                class="status-badge"
+                [class.scheduled]="meeting.status === 'SCHEDULED'"
+                [class.rescheduled]="meeting.status === 'RESCHEDULED'"
+                [class.completed]="meeting.status === 'COMPLETED'"
+                [class.cancelled]="meeting.status === 'CANCELLED'"
+              >
+                {{ statusLabel(meeting.status) }}
+              </span>
+            </div>
+
+            <div class="detail-row">
+              <span>Meeting Type</span>
+              <strong>
+                {{ typeLabel(meeting.meetingType) }}
+              </strong>
+            </div>
+
+            <div class="detail-row">
+              <span>Date</span>
+              <strong>
+                {{ meeting.meetingDate | date:'MMM d, y' }}
+              </strong>
+            </div>
+
+            <div class="detail-row">
+              <span>Start</span>
+              <strong>
+                {{ formatTime(meeting.startTime) }}
+              </strong>
+            </div>
+
+            <div class="detail-row">
+              <span>End</span>
+              <strong>
+                {{ formatTime(meeting.endTime) }}
+              </strong>
+            </div>
+
+            <div class="detail-row">
+              <span>Location</span>
+              <strong>
+                {{ meeting.location || 'Not specified' }}
+              </strong>
+            </div>
+
+          </div>
+
+        </div>
+
+        <div class="content-card">
+
+          <div class="card-header">
+            <h2>Organizer</h2>
+          </div>
+
+          <div class="person-card">
+
+            <div class="large-avatar">
+              {{ initials(
+                meeting.organizer.firstName,
+                meeting.organizer.lastName
+              ) }}
+            </div>
+
+            <div>
+
+              <strong>
+                {{ meeting.organizer.firstName }}
+                {{ meeting.organizer.lastName }}
+              </strong>
+
+              <span>
+                {{ meeting.organizer.email }}
+              </span>
+
+              <span>
+                {{ meeting.organizer.role }}
+              </span>
+
+            </div>
+
+          </div>
+
+        </div>
+
+        <div class="content-card">
+
+          <div class="card-header">
+            <h2>Actions</h2>
+          </div>
+
+          <div class="workflow-actions">
+
+            @if (
+              meeting.status === 'SCHEDULED' ||
+              meeting.status === 'RESCHEDULED'
+            ) {
+
+              <button
+                class="action-button complete"
+                type="button"
+                (click)="markCompleted()"
+              >
+                ✓ Mark Completed
+              </button>
+
+              <button
+                class="action-button reschedule"
+                type="button"
+                (click)="reschedule()"
+              >
+                ↻ Mark Rescheduled
+              </button>
+
+              <button
+                class="action-button cancel"
+                type="button"
+                (click)="cancelMeeting()"
+              >
+                Cancel Meeting
+              </button>
+
+            }
+
+            @if (meeting.status === 'CANCELLED') {
+
+              <button
+                class="action-button restore"
+                type="button"
+                (click)="restoreMeeting()"
+              >
+                ↻ Restore Meeting
+              </button>
+
+            }
+
+            @if (meeting.status === 'COMPLETED') {
+
+              <button
+                class="action-button restore"
+                type="button"
+                (click)="restoreMeeting()"
+              >
+                ↻ Reopen Meeting
+              </button>
+
+            }
+
+            <button
+              class="action-button delete"
+              type="button"
+              (click)="deleteMeeting()"
+            >
+              Delete Meeting
+            </button>
+
+          </div>
+
+        </div>
+
+      </aside>
+
+    </div>
+
+  } @else {
+
+    <div class="not-found">
+
+      <h2>Meeting not found</h2>
+
+      <p>
+        The meeting may have been deleted or does not exist.
+      </p>
+
+      <a
+        routerLink="/meetings"
+        class="primary-button"
+      >
+        Back to Meetings
+      </a>
+
+    </div>
+
+  }
+
+</section>

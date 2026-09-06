@@ -1,0 +1,312 @@
+<section class="page">
+
+  <div class="page-header">
+
+    <div>
+      <div class="eyebrow">Schedule</div>
+
+      <h1>Meetings</h1>
+
+      <p>
+        Manage executive meetings, participants and schedules.
+      </p>
+    </div>
+
+    <button
+      class="primary-button"
+      type="button"
+      (click)="createMeeting()"
+    >
+      <span>+</span>
+      New Meeting
+    </button>
+
+  </div>
+
+  <div class="summary-grid">
+
+    <div class="summary-card">
+      <div class="summary-label">Total Meetings</div>
+      <div class="summary-value">{{ totalCount() }}</div>
+      <div class="summary-description">All meetings</div>
+    </div>
+
+    <div class="summary-card">
+      <div class="summary-label">Scheduled</div>
+      <div class="summary-value">{{ scheduledCount() }}</div>
+      <div class="summary-description">Upcoming meetings</div>
+    </div>
+
+    <div class="summary-card">
+      <div class="summary-label">Today</div>
+      <div class="summary-value">{{ todayCount() }}</div>
+      <div class="summary-description">Today's schedule</div>
+    </div>
+
+    <div class="summary-card">
+      <div class="summary-label">Upcoming</div>
+      <div class="summary-value">{{ upcomingCount() }}</div>
+      <div class="summary-description">Future meetings</div>
+    </div>
+
+    <div class="summary-card">
+      <div class="summary-label">Completed</div>
+      <div class="summary-value">{{ completedCount() }}</div>
+      <div class="summary-description">Completed meetings</div>
+    </div>
+
+    <div class="summary-card">
+      <div class="summary-label">Cancelled</div>
+      <div class="summary-value">{{ cancelledCount() }}</div>
+      <div class="summary-description">Cancelled meetings</div>
+    </div>
+
+  </div>
+
+  <div class="filters-card">
+
+    <div class="search-field">
+      <span class="search-icon">⌕</span>
+
+      <input
+        type="search"
+        placeholder="Search meetings..."
+        [value]="searchTerm()"
+        (input)="searchTerm.set($any($event.target).value)"
+      />
+    </div>
+
+    <select
+      [value]="statusFilter()"
+      (change)="statusFilter.set($any($event.target).value)"
+    >
+      <option value="ALL">All Statuses</option>
+
+      @for (status of statuses; track status) {
+        <option [value]="status">
+          {{ statusLabel(status) }}
+        </option>
+      }
+    </select>
+
+    <select
+      [value]="typeFilter()"
+      (change)="typeFilter.set($any($event.target).value)"
+    >
+      <option value="ALL">All Types</option>
+
+      @for (type of types; track type) {
+        <option [value]="type">
+          {{ typeLabel(type) }}
+        </option>
+      }
+    </select>
+
+    @if (
+      searchTerm() ||
+      statusFilter() !== 'ALL' ||
+      typeFilter() !== 'ALL'
+    ) {
+      <button
+        class="clear-button"
+        type="button"
+        (click)="clearFilters()"
+      >
+        Clear
+      </button>
+    }
+
+  </div>
+
+  <div class="table-card">
+
+    @if (meetings().length > 0) {
+
+      <div class="table-wrapper">
+
+        <table>
+
+          <thead>
+            <tr>
+              <th>Meeting</th>
+              <th>Date & Time</th>
+              <th>Type</th>
+              <th>Organizer</th>
+              <th>Participants</th>
+              <th>Location</th>
+              <th>Status</th>
+              <th>Activity</th>
+            </tr>
+          </thead>
+
+          <tbody>
+
+            @for (meeting of meetings(); track meeting.id) {
+
+              <tr
+                class="meeting-row"
+                [class.past]="isPast(meeting)"
+                (click)="viewMeeting(meeting.id)"
+              >
+
+                <td>
+
+                  <div class="meeting-cell">
+
+                    <div class="meeting-title">
+                      {{ meeting.title }}
+                    </div>
+
+                    @if (meeting.description) {
+                      <div class="meeting-description">
+                        {{ meeting.description }}
+                      </div>
+                    }
+
+                    @if (meeting.status === 'RESCHEDULED') {
+                      <span class="rescheduled-label">
+                        RESCHEDULED
+                      </span>
+                    }
+
+                  </div>
+
+                </td>
+
+                <td>
+
+                  <div class="date-time">
+
+                    <strong>
+                      {{ formatDate(meeting.meetingDate) }}
+                    </strong>
+
+                    <span>
+                      {{ formatTime(meeting.startTime) }}
+                      –
+                      {{ formatTime(meeting.endTime) }}
+                    </span>
+
+                    @if (meetingService.isToday(meeting)) {
+                      <small>Today</small>
+                    }
+
+                  </div>
+
+                </td>
+
+                <td>
+                  <span class="type-badge">
+                    {{ typeLabel(meeting.meetingType) }}
+                  </span>
+                </td>
+
+                <td>
+
+                  <div class="person">
+
+                    <div class="avatar">
+                      {{ meeting.organizer.firstName.charAt(0) }}{{ meeting.organizer.lastName.charAt(0) }}
+                    </div>
+
+                    <span>
+                      {{ meeting.organizer.firstName }}
+                      {{ meeting.organizer.lastName }}
+                    </span>
+
+                  </div>
+
+                </td>
+
+                <td>
+
+                  <div class="participants">
+
+                    @for (
+                      participant of meeting.participants.slice(0, 3);
+                      track participant.id
+                    ) {
+                      <div
+                        class="participant-avatar"
+                        [title]="participant.firstName + ' ' + participant.lastName"
+                      >
+                        {{ participant.firstName.charAt(0) }}{{ participant.lastName.charAt(0) }}
+                      </div>
+                    }
+
+                    @if (meeting.participants.length > 3) {
+                      <span class="participant-more">
+                        +{{ meeting.participants.length - 3 }}
+                      </span>
+                    }
+
+                  </div>
+
+                </td>
+
+                <td>
+                  <span class="location">
+                    {{ meeting.location || 'Not specified' }}
+                  </span>
+                </td>
+
+                <td>
+
+                  <span
+                    class="status-badge"
+                    [class.scheduled]="meeting.status === 'SCHEDULED'"
+                    [class.rescheduled]="meeting.status === 'RESCHEDULED'"
+                    [class.completed]="meeting.status === 'COMPLETED'"
+                    [class.cancelled]="meeting.status === 'CANCELLED'"
+                  >
+                    {{ statusLabel(meeting.status) }}
+                  </span>
+
+                </td>
+
+                <td>
+
+                  <div class="activity">
+                    <span>💬 {{ meeting.commentsCount }}</span>
+                    <span>📎 {{ meeting.attachmentsCount }}</span>
+                  </div>
+
+                </td>
+
+              </tr>
+
+            }
+
+          </tbody>
+
+        </table>
+
+      </div>
+
+    } @else {
+
+      <div class="empty-state">
+
+        <div class="empty-icon">▦</div>
+
+        <h3>No meetings found</h3>
+
+        <p>
+          Try changing your filters or schedule a new meeting.
+        </p>
+
+        <button
+          class="primary-button"
+          type="button"
+          (click)="createMeeting()"
+        >
+          New Meeting
+        </button>
+
+      </div>
+
+    }
+
+  </div>
+
+</section>

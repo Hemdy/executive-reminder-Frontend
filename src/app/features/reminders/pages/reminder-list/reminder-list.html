@@ -1,0 +1,303 @@
+<section class="reminders-page">
+
+  <header class="page-header">
+    <div>
+      <p class="eyebrow">Time Management</p>
+
+      <h1>Reminders</h1>
+
+      <p class="page-description">
+        Keep important follow-ups and executive reminders on schedule.
+      </p>
+    </div>
+
+    <button
+      type="button"
+      class="primary-button"
+      (click)="createReminder()"
+    >
+      <span>+</span>
+      New Reminder
+    </button>
+  </header>
+
+  <section class="reminder-toolbar">
+
+    <div class="search-box">
+      <span class="search-icon">⌕</span>
+
+      <input
+        type="search"
+        placeholder="Search reminders..."
+        [value]="searchTerm()"
+        (input)="setSearchTerm($any($event.target).value)"
+      />
+    </div>
+
+    <select
+      [value]="statusFilter()"
+      (change)="setStatusFilter($any($event.target).value)"
+    >
+      <option value="ALL">All statuses</option>
+      <option value="PENDING">Pending</option>
+      <option value="TRIGGERED">Triggered</option>
+      <option value="COMPLETED">Completed</option>
+      <option value="DISMISSED">Dismissed</option>
+      <option value="CANCELLED">Cancelled</option>
+    </select>
+
+    <select
+      [value]="priorityFilter()"
+      (change)="setPriorityFilter($any($event.target).value)"
+    >
+      <option value="ALL">All priorities</option>
+      <option value="LOW">Low</option>
+      <option value="MEDIUM">Medium</option>
+      <option value="HIGH">High</option>
+      <option value="URGENT">Urgent</option>
+    </select>
+
+    @if (
+      searchTerm() ||
+      statusFilter() !== 'ALL' ||
+      priorityFilter() !== 'ALL'
+    ) {
+      <button
+        type="button"
+        class="clear-button"
+        (click)="clearFilters()"
+      >
+        Clear
+      </button>
+    }
+
+  </section>
+
+  <section class="reminder-summary">
+
+    <div>
+      <span>All Reminders</span>
+      <strong>{{ reminders().length }}</strong>
+    </div>
+
+    <div>
+      <span>Pending</span>
+      <strong>
+        {{
+          reminders().filter(
+            reminder => reminder.status === 'PENDING'
+          ).length
+        }}
+      </strong>
+    </div>
+
+    <div>
+      <span>Triggered</span>
+      <strong>
+        {{
+          reminders().filter(
+            reminder => reminder.status === 'TRIGGERED'
+          ).length
+        }}
+      </strong>
+    </div>
+
+    <div>
+      <span>Overdue</span>
+      <strong class="danger-text">
+        {{
+          reminders().filter(
+            reminder => isOverdue(reminder)
+          ).length
+        }}
+      </strong>
+    </div>
+
+  </section>
+
+  <section class="reminder-table-card">
+
+    @if (reminders().length === 0) {
+
+      <div class="empty-state">
+
+        <div class="empty-icon">◷</div>
+
+        <h3>No reminders found</h3>
+
+        <p>
+          Try adjusting your search or filters.
+        </p>
+
+        <button
+          type="button"
+          class="secondary-button"
+          (click)="clearFilters()"
+        >
+          Clear Filters
+        </button>
+
+      </div>
+
+    } @else {
+
+      <div class="table-wrapper">
+
+        <table>
+
+          <thead>
+            <tr>
+              <th>Reminder</th>
+              <th>Recipient</th>
+              <th>Priority</th>
+              <th>Schedule</th>
+              <th>Recurrence</th>
+              <th>Status</th>
+              <th>Activity</th>
+              <th></th>
+            </tr>
+          </thead>
+
+          <tbody>
+
+            @for (
+              reminder of reminders();
+              track reminder.id
+            ) {
+
+              <tr
+                class="reminder-row"
+                [class.overdue-row]="isOverdue(reminder)"
+                (click)="viewReminder(reminder)"
+              >
+
+                <td>
+                  <div class="reminder-title">
+                    {{ reminder.title }}
+                  </div>
+
+                  @if (reminder.description) {
+                    <div class="reminder-description">
+                      {{ reminder.description }}
+                    </div>
+                  }
+
+                  <span class="category">
+                    {{ reminder.category }}
+                  </span>
+                </td>
+
+                <td>
+                  <div class="recipient">
+
+                    <div class="avatar">
+                      {{
+                        reminder.recipient.firstName.charAt(0)
+                      }}{{
+                        reminder.recipient.lastName.charAt(0)
+                      }}
+                    </div>
+
+                    <div>
+                      <strong>
+                        {{ reminder.recipient.firstName }}
+                        {{ reminder.recipient.lastName }}
+                      </strong>
+
+                      @if (reminder.recipient.department) {
+                        <small>
+                          {{ reminder.recipient.department }}
+                        </small>
+                      }
+                    </div>
+
+                  </div>
+                </td>
+
+                <td>
+                  <span
+                    class="priority-badge"
+                    [class.priority-low]="reminder.priority === 'LOW'"
+                    [class.priority-medium]="reminder.priority === 'MEDIUM'"
+                    [class.priority-high]="reminder.priority === 'HIGH'"
+                    [class.priority-urgent]="reminder.priority === 'URGENT'"
+                  >
+                    {{ getPriorityLabel(reminder.priority) }}
+                  </span>
+                </td>
+
+                <td>
+                  <div
+                    class="schedule"
+                    [class.overdue]="isOverdue(reminder)"
+                  >
+                    <strong>
+                      {{ reminder.reminderDate }}
+                    </strong>
+
+                    <small>
+                      {{ reminder.reminderTime }}
+                    </small>
+
+                    @if (isOverdue(reminder)) {
+                      <span>Overdue</span>
+                    }
+                  </div>
+                </td>
+
+                <td>
+                  <span class="recurrence">
+                    {{ reminder.recurrence.replace('_', ' ') }}
+                  </span>
+                </td>
+
+                <td>
+                  <span
+                    class="status-badge"
+                    [class.status-pending]="reminder.status === 'PENDING'"
+                    [class.status-triggered]="reminder.status === 'TRIGGERED'"
+                    [class.status-completed]="reminder.status === 'COMPLETED'"
+                    [class.status-dismissed]="reminder.status === 'DISMISSED'"
+                    [class.status-cancelled]="reminder.status === 'CANCELLED'"
+                  >
+                    {{ getStatusLabel(reminder.status) }}
+                  </span>
+                </td>
+
+                <td>
+                  <div class="activity">
+                    <span>
+                      💬 {{ reminder.commentsCount }}
+                    </span>
+
+                    <span>
+                      📎 {{ reminder.attachmentsCount }}
+                    </span>
+                  </div>
+                </td>
+
+                <td>
+                  <button
+                    type="button"
+                    class="row-action"
+                    (click)="$event.stopPropagation(); viewReminder(reminder)"
+                  >
+                    View
+                  </button>
+                </td>
+
+              </tr>
+
+            }
+
+          </tbody>
+
+        </table>
+
+      </div>
+
+    }
+
+  </section>
+
+</section>

@@ -1,0 +1,284 @@
+<section class="tasks-page">
+
+  <header class="page-header">
+    <div>
+      <p class="eyebrow">Work Management</p>
+
+      <h1>Tasks</h1>
+
+      <p class="page-description">
+        Track assignments, deadlines and outstanding work.
+      </p>
+    </div>
+
+    <button
+      type="button"
+      class="primary-button"
+      (click)="createTask()"
+    >
+      <span>+</span>
+      New Task
+    </button>
+  </header>
+
+  <section class="task-toolbar">
+
+    <div class="search-box">
+      <span class="search-icon">⌕</span>
+
+      <input
+        type="search"
+        placeholder="Search tasks..."
+        [value]="searchTerm()"
+        (input)="setSearchTerm($any($event.target).value)"
+      />
+    </div>
+
+    <select
+      [value]="statusFilter()"
+      (change)="setStatusFilter($any($event.target).value)"
+    >
+      <option value="ALL">All statuses</option>
+      <option value="PENDING">Pending</option>
+      <option value="IN_PROGRESS">In Progress</option>
+      <option value="COMPLETED">Completed</option>
+      <option value="CANCELLED">Cancelled</option>
+    </select>
+
+    <select
+      [value]="priorityFilter()"
+      (change)="setPriorityFilter($any($event.target).value)"
+    >
+      <option value="ALL">All priorities</option>
+      <option value="LOW">Low</option>
+      <option value="MEDIUM">Medium</option>
+      <option value="HIGH">High</option>
+      <option value="URGENT">Urgent</option>
+    </select>
+
+    @if (
+      searchTerm() ||
+      statusFilter() !== 'ALL' ||
+      priorityFilter() !== 'ALL'
+    ) {
+      <button
+        type="button"
+        class="clear-button"
+        (click)="clearFilters()"
+      >
+        Clear
+      </button>
+    }
+
+  </section>
+
+  <section class="task-summary">
+    <div>
+      <span class="summary-label">Total</span>
+      <strong>{{ tasks().length }}</strong>
+    </div>
+
+    <div>
+      <span class="summary-label">Pending</span>
+      <strong>
+        {{
+          tasks().filter(task => task.status === 'PENDING').length
+        }}
+      </strong>
+    </div>
+
+    <div>
+      <span class="summary-label">In Progress</span>
+      <strong>
+        {{
+          tasks().filter(task => task.status === 'IN_PROGRESS').length
+        }}
+      </strong>
+    </div>
+
+    <div>
+      <span class="summary-label">Overdue</span>
+      <strong class="danger-text">
+        {{
+          tasks().filter(task => isOverdue(task)).length
+        }}
+      </strong>
+    </div>
+  </section>
+
+  <section class="task-table-card">
+
+    @if (tasks().length === 0) {
+
+      <div class="empty-state">
+        <div class="empty-icon">✓</div>
+
+        <h3>No tasks found</h3>
+
+        <p>
+          Try adjusting your search or filters.
+        </p>
+
+        <button
+          type="button"
+          class="secondary-button"
+          (click)="clearFilters()"
+        >
+          Clear Filters
+        </button>
+      </div>
+
+    } @else {
+
+      <div class="table-wrapper">
+
+        <table>
+
+          <thead>
+            <tr>
+              <th>Task</th>
+              <th>Assignee</th>
+              <th>Priority</th>
+              <th>Status</th>
+              <th>Due</th>
+              <th>Activity</th>
+              <th></th>
+            </tr>
+          </thead>
+
+          <tbody>
+
+            @for (
+              task of tasks();
+              track task.id
+            ) {
+
+              <tr
+                class="task-row"
+                [class.overdue-row]="isOverdue(task)"
+                (click)="viewTask(task)"
+              >
+
+                <td>
+                  <div class="task-title">
+                    {{ task.title }}
+                  </div>
+
+                  @if (task.description) {
+                    <div class="task-description">
+                      {{ task.description }}
+                    </div>
+                  }
+
+                  <span class="category">
+                    {{ task.category }}
+                  </span>
+                </td>
+
+                <td>
+                  <div class="assignee">
+                    <div class="avatar">
+                      {{
+                        task.assignedTo.firstName.charAt(0)
+                      }}{{
+                        task.assignedTo.lastName.charAt(0)
+                      }}
+                    </div>
+
+                    <div>
+                      <strong>
+                        {{ task.assignedTo.firstName }}
+                        {{ task.assignedTo.lastName }}
+                      </strong>
+
+                      @if (task.assignedTo.department) {
+                        <small>
+                          {{ task.assignedTo.department }}
+                        </small>
+                      }
+                    </div>
+                  </div>
+                </td>
+
+                <td>
+                  <span
+                    class="priority-badge"
+                    [class.priority-low]="task.priority === 'LOW'"
+                    [class.priority-medium]="task.priority === 'MEDIUM'"
+                    [class.priority-high]="task.priority === 'HIGH'"
+                    [class.priority-urgent]="task.priority === 'URGENT'"
+                  >
+                    {{ getPriorityLabel(task.priority) }}
+                  </span>
+                </td>
+
+                <td>
+                  <span
+                    class="status-badge"
+                    [class.status-pending]="task.status === 'PENDING'"
+                    [class.status-progress]="task.status === 'IN_PROGRESS'"
+                    [class.status-completed]="task.status === 'COMPLETED'"
+                    [class.status-cancelled]="task.status === 'CANCELLED'"
+                  >
+                    {{ getStatusLabel(task.status) }}
+                  </span>
+                </td>
+
+                <td>
+                  <div
+                    class="due-date"
+                    [class.overdue]="isOverdue(task)"
+                  >
+                    <strong>
+                      {{ task.dueDate }}
+                    </strong>
+
+                    @if (task.dueTime) {
+                      <small>
+                        {{ task.dueTime }}
+                      </small>
+                    }
+
+                    @if (isOverdue(task)) {
+                      <span>Overdue</span>
+                    }
+                  </div>
+                </td>
+
+                <td>
+                  <div class="activity-counts">
+                    <span>
+                      💬 {{ task.commentsCount }}
+                    </span>
+
+                    <span>
+                      📎 {{ task.attachmentsCount }}
+                    </span>
+                  </div>
+                </td>
+
+                <td>
+                  <button
+                    type="button"
+                    class="row-action"
+                    (click)="$event.stopPropagation(); viewTask(task)"
+                  >
+                    View
+                  </button>
+                </td>
+
+              </tr>
+
+            }
+
+          </tbody>
+
+        </table>
+
+      </div>
+
+    }
+
+  </section>
+
+</section>

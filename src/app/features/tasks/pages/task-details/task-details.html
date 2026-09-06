@@ -1,0 +1,350 @@
+<section class="task-details-page">
+
+  @if (task(); as currentTask) {
+
+    <header class="page-header">
+
+      <div>
+        <a
+          routerLink="/tasks"
+          class="back-link"
+        >
+          ← Back to Tasks
+        </a>
+
+        <div class="header-category">
+          {{ currentTask.category }}
+        </div>
+
+        <h1>{{ currentTask.title }}</h1>
+
+        <p class="created-info">
+          Created by
+          <strong>
+            {{ currentTask.createdBy.firstName }}
+            {{ currentTask.createdBy.lastName }}
+          </strong>
+          · {{ currentTask.createdAt | date:'MMM d, yyyy' }}
+        </p>
+      </div>
+
+      <div class="header-actions">
+
+        <button
+          type="button"
+          class="secondary-button"
+          (click)="editTask()"
+        >
+          Edit Task
+        </button>
+
+        @if (currentTask.status === 'PENDING') {
+          <button
+            type="button"
+            class="primary-button"
+            (click)="startTask()"
+          >
+            Start Task
+          </button>
+        }
+
+        @if (currentTask.status === 'IN_PROGRESS') {
+          <button
+            type="button"
+            class="primary-button"
+            (click)="completeTask()"
+          >
+            Complete Task
+          </button>
+        }
+
+      </div>
+
+    </header>
+
+    <div class="details-layout">
+
+      <main>
+
+        <section class="content-card">
+
+          <div class="card-heading">
+            <h2>Description</h2>
+          </div>
+
+          <div class="description">
+            @if (currentTask.description) {
+              <p>{{ currentTask.description }}</p>
+            } @else {
+              <p class="empty-text">
+                No description was provided for this task.
+              </p>
+            }
+          </div>
+
+        </section>
+
+        <section class="content-card">
+
+          <div class="card-heading">
+            <div>
+              <h2>Comments</h2>
+              <span>{{ currentTask.commentsCount }}</span>
+            </div>
+
+            <button
+              type="button"
+              class="text-button"
+            >
+              Add Comment
+            </button>
+          </div>
+
+          <div class="placeholder-panel">
+            <div class="placeholder-icon">💬</div>
+
+            <h3>Comments coming next</h3>
+
+            <p>
+              Task comments will appear here and can be added
+              by authorized users.
+            </p>
+          </div>
+
+        </section>
+
+        <section class="content-card">
+
+          <div class="card-heading">
+            <div>
+              <h2>Attachments</h2>
+              <span>{{ currentTask.attachmentsCount }}</span>
+            </div>
+
+            <button
+              type="button"
+              class="text-button"
+            >
+              Add Attachment
+            </button>
+          </div>
+
+          <div class="placeholder-panel">
+            <div class="placeholder-icon">📎</div>
+
+            <h3>Attachments coming next</h3>
+
+            <p>
+              Files attached to this task will appear here.
+            </p>
+          </div>
+
+        </section>
+
+      </main>
+
+      <aside>
+
+        <section class="content-card">
+
+          <div class="card-heading">
+            <h2>Task Details</h2>
+          </div>
+
+          <div class="detail-list">
+
+            <div class="detail-item">
+              <span>Status</span>
+
+              <strong
+                class="status-badge"
+                [class.status-pending]="currentTask.status === 'PENDING'"
+                [class.status-progress]="currentTask.status === 'IN_PROGRESS'"
+                [class.status-completed]="currentTask.status === 'COMPLETED'"
+                [class.status-cancelled]="currentTask.status === 'CANCELLED'"
+              >
+                {{ getStatusLabel(currentTask.status) }}
+              </strong>
+            </div>
+
+            <div class="detail-item">
+              <span>Priority</span>
+
+              <strong
+                class="priority-badge"
+                [class.priority-low]="currentTask.priority === 'LOW'"
+                [class.priority-medium]="currentTask.priority === 'MEDIUM'"
+                [class.priority-high]="currentTask.priority === 'HIGH'"
+                [class.priority-urgent]="currentTask.priority === 'URGENT'"
+              >
+                {{ getPriorityLabel(currentTask.priority) }}
+              </strong>
+            </div>
+
+            <div class="detail-item">
+              <span>Category</span>
+              <strong>{{ currentTask.category }}</strong>
+            </div>
+
+            <div class="detail-item">
+              <span>Due Date</span>
+
+              <strong
+                [class.danger-text]="isOverdue()"
+              >
+                {{ currentTask.dueDate }}
+
+                @if (currentTask.dueTime) {
+                  <small>
+                    {{ currentTask.dueTime }}
+                  </small>
+                }
+              </strong>
+            </div>
+
+            @if (isOverdue()) {
+              <div class="overdue-alert">
+                <strong>Overdue</strong>
+                <span>
+                  This task has passed its deadline.
+                </span>
+              </div>
+            }
+
+          </div>
+
+        </section>
+
+        <section class="content-card">
+
+          <div class="card-heading">
+            <h2>Assigned To</h2>
+          </div>
+
+          <div class="person">
+
+            <div class="person-avatar">
+              {{
+                getInitials(
+                  currentTask.assignedTo.firstName,
+                  currentTask.assignedTo.lastName
+                )
+              }}
+            </div>
+
+            <div>
+              <strong>
+                {{ currentTask.assignedTo.firstName }}
+                {{ currentTask.assignedTo.lastName }}
+              </strong>
+
+              @if (currentTask.assignedTo.department) {
+                <span>
+                  {{ currentTask.assignedTo.department }}
+                </span>
+              }
+
+              <small>
+                {{ currentTask.assignedTo.email }}
+              </small>
+            </div>
+
+          </div>
+
+        </section>
+
+        <section class="content-card">
+
+          <div class="card-heading">
+            <h2>Actions</h2>
+          </div>
+
+          <div class="action-list">
+
+            @if (
+              currentTask.status === 'PENDING'
+            ) {
+              <button
+                type="button"
+                (click)="startTask()"
+              >
+                Start Task
+              </button>
+            }
+
+            @if (
+              currentTask.status === 'IN_PROGRESS'
+            ) {
+              <button
+                type="button"
+                (click)="completeTask()"
+              >
+                Mark Completed
+              </button>
+            }
+
+            @if (
+              currentTask.status !== 'CANCELLED' &&
+              currentTask.status !== 'COMPLETED'
+            ) {
+              <button
+                type="button"
+                (click)="cancelTask()"
+              >
+                Cancel Task
+              </button>
+            }
+
+            @if (
+              currentTask.status === 'COMPLETED' ||
+              currentTask.status === 'CANCELLED'
+            ) {
+              <button
+                type="button"
+                (click)="reopenTask()"
+              >
+                Reopen Task
+              </button>
+            }
+
+            <button
+              type="button"
+              class="danger-action"
+              (click)="deleteTask()"
+            >
+              Delete Task
+            </button>
+
+          </div>
+
+        </section>
+
+      </aside>
+
+    </div>
+
+  } @else {
+
+    <section class="not-found">
+
+      <div class="not-found-icon">?</div>
+
+      <h1>Task Not Found</h1>
+
+      <p>
+        The task you're looking for doesn't exist or has been removed.
+      </p>
+
+      <button
+        type="button"
+        class="primary-button"
+        (click)="backToTasks()"
+      >
+        Back to Tasks
+      </button>
+
+    </section>
+
+  }
+
+</section>

@@ -1,0 +1,169 @@
+<section class="form-page">
+
+  <div class="page-header">
+    <div>
+      <a class="back-link" routerLink="/requests">
+        ← Back to Requests
+      </a>
+
+      <div class="eyebrow">Workflow</div>
+
+      <h1>
+        {{ isEditMode() ? 'Edit Request' : 'New Request' }}
+      </h1>
+
+      <p>
+        {{ isEditMode()
+          ? 'Update the request details and workflow status.'
+          : 'Create a request for approval, review, information or a decision.'
+        }}
+      </p>
+    </div>
+  </div>
+
+  <form class="form-card" [formGroup]="form" (ngSubmit)="save()">
+
+    <div class="form-section">
+      <div class="section-heading">
+        <h2>Request Information</h2>
+        <p>Provide the basic information about this request.</p>
+      </div>
+
+      <div class="field full">
+        <label for="title">Title <span>*</span></label>
+
+        <input
+          id="title"
+          type="text"
+          formControlName="title"
+          placeholder="e.g. Laptop Purchase Approval"
+        />
+
+        @if (titleControl.invalid && titleControl.touched) {
+          <small class="error">
+            Title is required.
+          </small>
+        }
+      </div>
+
+      <div class="field full">
+        <label for="description">Description</label>
+
+        <textarea
+          id="description"
+          rows="5"
+          formControlName="description"
+          placeholder="Describe what is being requested and any relevant context..."
+        ></textarea>
+      </div>
+
+      <div class="form-grid">
+
+        <div class="field">
+          <label for="type">Request Type <span>*</span></label>
+
+          <select id="type" formControlName="type">
+            @for (type of types; track type) {
+              <option [value]="type">
+                {{ typeLabel(type) }}
+              </option>
+            }
+          </select>
+        </div>
+
+        <div class="field">
+          <label for="priority">Priority <span>*</span></label>
+
+          <select id="priority" formControlName="priority">
+            @for (priority of priorities; track priority) {
+              <option [value]="priority">
+                {{ priority }}
+              </option>
+            }
+          </select>
+        </div>
+
+        <div class="field">
+          <label for="assignedTo">Assigned To <span>*</span></label>
+
+          <select
+            id="assignedTo"
+            formControlName="assignedToId"
+          >
+            <option value="">Select person</option>
+
+            @for (user of users; track user.id) {
+              <option [value]="user.id">
+                {{ user.firstName }} {{ user.lastName }}
+                — {{ user.role }}
+              </option>
+            }
+          </select>
+
+          @if (assignedToControl.invalid && assignedToControl.touched) {
+            <small class="error">
+              Please select a person.
+            </small>
+          }
+        </div>
+
+        <div class="field">
+          <label for="dueDate">Due Date</label>
+
+          <input
+            id="dueDate"
+            type="date"
+            formControlName="dueDate"
+          />
+        </div>
+
+      </div>
+    </div>
+
+    @if (isEditMode()) {
+
+      <div class="form-section">
+
+        <div class="section-heading">
+          <h2>Workflow Status</h2>
+          <p>Update the current state of this request.</p>
+        </div>
+
+        <div class="field">
+          <label for="status">Status</label>
+
+          <select id="status" formControlName="status">
+            @for (status of statuses; track status) {
+              <option [value]="status">
+                {{ statusLabel(status) }}
+              </option>
+            }
+          </select>
+        </div>
+
+      </div>
+
+    }
+
+    <div class="form-actions">
+
+      <button
+        type="button"
+        class="secondary-button"
+        (click)="cancel()"
+      >
+        Cancel
+      </button>
+
+      <button
+        type="submit"
+        class="primary-button"
+      >
+        {{ isEditMode() ? 'Save Changes' : 'Create Request' }}
+      </button>
+
+    </div>
+
+  </form>
+
+</section>

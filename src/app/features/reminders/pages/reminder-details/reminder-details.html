@@ -1,0 +1,393 @@
+<section class="reminder-details-page">
+
+  @if (reminder(); as currentReminder) {
+
+    <header class="page-header">
+
+      <div>
+
+        <a
+          routerLink="/reminders"
+          class="back-link"
+        >
+          ← Back to Reminders
+        </a>
+
+        <div class="header-category">
+          {{ currentReminder.category }}
+        </div>
+
+        <h1>{{ currentReminder.title }}</h1>
+
+        <p class="created-info">
+          Created by
+          <strong>
+            {{ currentReminder.createdBy.firstName }}
+            {{ currentReminder.createdBy.lastName }}
+          </strong>
+
+          ·
+          {{ currentReminder.createdAt | date:'MMM d, yyyy' }}
+        </p>
+
+      </div>
+
+      <div class="header-actions">
+
+        <button
+          type="button"
+          class="secondary-button"
+          (click)="editReminder()"
+        >
+          Edit Reminder
+        </button>
+
+        @if (currentReminder.status === 'PENDING') {
+          <button
+            type="button"
+            class="primary-button"
+            (click)="markTriggered()"
+          >
+            Trigger Reminder
+          </button>
+        }
+
+        @if (currentReminder.status === 'TRIGGERED') {
+          <button
+            type="button"
+            class="primary-button"
+            (click)="completeReminder()"
+          >
+            Complete
+          </button>
+        }
+
+      </div>
+
+    </header>
+
+    <div class="details-layout">
+
+      <main>
+
+        <section class="content-card">
+
+          <div class="card-heading">
+            <h2>Description</h2>
+          </div>
+
+          <div class="description">
+
+            @if (currentReminder.description) {
+              <p>
+                {{ currentReminder.description }}
+              </p>
+            } @else {
+              <p class="empty-text">
+                No description was provided for this reminder.
+              </p>
+            }
+
+          </div>
+
+        </section>
+
+        <section class="content-card">
+
+          <div class="card-heading">
+            <div>
+              <h2>Comments</h2>
+              <span>
+                {{ currentReminder.commentsCount }}
+              </span>
+            </div>
+
+            <button
+              type="button"
+              class="text-button"
+            >
+              Add Comment
+            </button>
+          </div>
+
+          <div class="placeholder-panel">
+
+            <div class="placeholder-icon">
+              💬
+            </div>
+
+            <h3>Comments coming next</h3>
+
+            <p>
+              Reminder comments will appear here.
+            </p>
+
+          </div>
+
+        </section>
+
+        <section class="content-card">
+
+          <div class="card-heading">
+            <div>
+              <h2>Attachments</h2>
+              <span>
+                {{ currentReminder.attachmentsCount }}
+              </span>
+            </div>
+
+            <button
+              type="button"
+              class="text-button"
+            >
+              Add Attachment
+            </button>
+          </div>
+
+          <div class="placeholder-panel">
+
+            <div class="placeholder-icon">
+              📎
+            </div>
+
+            <h3>Attachments coming next</h3>
+
+            <p>
+              Files attached to this reminder will appear here.
+            </p>
+
+          </div>
+
+        </section>
+
+      </main>
+
+      <aside>
+
+        <section class="content-card">
+
+          <div class="card-heading">
+            <h2>Reminder Details</h2>
+          </div>
+
+          <div class="detail-list">
+
+            <div class="detail-item">
+
+              <span>Status</span>
+
+              <strong
+                class="status-badge"
+                [class.status-pending]="currentReminder.status === 'PENDING'"
+                [class.status-triggered]="currentReminder.status === 'TRIGGERED'"
+                [class.status-completed]="currentReminder.status === 'COMPLETED'"
+                [class.status-dismissed]="currentReminder.status === 'DISMISSED'"
+                [class.status-cancelled]="currentReminder.status === 'CANCELLED'"
+              >
+                {{ getStatusLabel(currentReminder.status) }}
+              </strong>
+
+            </div>
+
+            <div class="detail-item">
+
+              <span>Priority</span>
+
+              <strong
+                class="priority-badge"
+                [class.priority-low]="currentReminder.priority === 'LOW'"
+                [class.priority-medium]="currentReminder.priority === 'MEDIUM'"
+                [class.priority-high]="currentReminder.priority === 'HIGH'"
+                [class.priority-urgent]="currentReminder.priority === 'URGENT'"
+              >
+                {{ getPriorityLabel(currentReminder.priority) }}
+              </strong>
+
+            </div>
+
+            <div class="detail-item">
+              <span>Category</span>
+              <strong>
+                {{ currentReminder.category }}
+              </strong>
+            </div>
+
+            <div class="detail-item">
+              <span>Reminder Date</span>
+              <strong>
+                {{ currentReminder.reminderDate }}
+              </strong>
+            </div>
+
+            <div class="detail-item">
+              <span>Reminder Time</span>
+              <strong>
+                {{ currentReminder.reminderTime }}
+              </strong>
+            </div>
+
+            <div class="detail-item">
+              <span>Recurrence</span>
+              <strong>
+                {{ currentReminder.recurrence.replace('_', ' ') }}
+              </strong>
+            </div>
+
+            @if (isOverdue()) {
+              <div class="overdue-alert">
+                <strong>Overdue</strong>
+
+                <span>
+                  This reminder has passed its scheduled time.
+                </span>
+              </div>
+            }
+
+          </div>
+
+        </section>
+
+        <section class="content-card">
+
+          <div class="card-heading">
+            <h2>Recipient</h2>
+          </div>
+
+          <div class="person">
+
+            <div class="person-avatar">
+              {{
+                getInitials(
+                  currentReminder.recipient.firstName,
+                  currentReminder.recipient.lastName
+                )
+              }}
+            </div>
+
+            <div>
+
+              <strong>
+                {{ currentReminder.recipient.firstName }}
+                {{ currentReminder.recipient.lastName }}
+              </strong>
+
+              @if (currentReminder.recipient.department) {
+                <span>
+                  {{ currentReminder.recipient.department }}
+                </span>
+              }
+
+              <small>
+                {{ currentReminder.recipient.email }}
+              </small>
+
+            </div>
+
+          </div>
+
+        </section>
+
+        <section class="content-card">
+
+          <div class="card-heading">
+            <h2>Actions</h2>
+          </div>
+
+          <div class="action-list">
+
+            @if (
+              currentReminder.status === 'PENDING'
+            ) {
+              <button
+                type="button"
+                (click)="markTriggered()"
+              >
+                Trigger Reminder
+              </button>
+            }
+
+            @if (
+              currentReminder.status === 'TRIGGERED'
+            ) {
+              <button
+                type="button"
+                (click)="completeReminder()"
+              >
+                Mark Completed
+              </button>
+
+              <button
+                type="button"
+                (click)="dismissReminder()"
+              >
+                Dismiss Reminder
+              </button>
+            }
+
+            @if (
+              currentReminder.status !== 'CANCELLED' &&
+              currentReminder.status !== 'COMPLETED' &&
+              currentReminder.status !== 'DISMISSED'
+            ) {
+              <button
+                type="button"
+                (click)="cancelReminder()"
+              >
+                Cancel Reminder
+              </button>
+            }
+
+            @if (
+              currentReminder.status === 'COMPLETED' ||
+              currentReminder.status === 'DISMISSED' ||
+              currentReminder.status === 'CANCELLED'
+            ) {
+              <button
+                type="button"
+                (click)="reopenReminder()"
+              >
+                Reopen Reminder
+              </button>
+            }
+
+            <button
+              type="button"
+              class="danger-action"
+              (click)="deleteReminder()"
+            >
+              Delete Reminder
+            </button>
+
+          </div>
+
+        </section>
+
+      </aside>
+
+    </div>
+
+  } @else {
+
+    <section class="not-found">
+
+      <div class="not-found-icon">?</div>
+
+      <h1>Reminder Not Found</h1>
+
+      <p>
+        The reminder you're looking for doesn't exist or has been removed.
+      </p>
+
+      <button
+        type="button"
+        class="primary-button"
+        (click)="backToReminders()"
+      >
+        Back to Reminders
+      </button>
+
+    </section>
+
+  }
+
+</section>

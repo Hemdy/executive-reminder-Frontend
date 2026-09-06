@@ -1,0 +1,371 @@
+<section class="details-page">
+
+  <div class="top-navigation">
+    <button
+      class="back-button"
+      type="button"
+      (click)="backToRequests()"
+    >
+      ← Back to Requests
+    </button>
+
+    <div class="top-actions">
+
+      <button
+        class="secondary-button"
+        type="button"
+        (click)="editRequest()"
+      >
+        Edit Request
+      </button>
+
+      @if (canApprove()) {
+        <button
+          class="approve-button"
+          type="button"
+          (click)="approveRequest()"
+        >
+          ✓ Approve
+        </button>
+      }
+
+    </div>
+  </div>
+
+  @if (request(); as request) {
+
+    <div class="request-header">
+
+      <div class="header-main">
+
+        <div class="header-meta">
+          <span class="type-badge">
+            {{ typeLabel(request.type) }}
+          </span>
+
+          <span
+            class="priority-badge"
+            [class.low]="request.priority === 'LOW'"
+            [class.medium]="request.priority === 'MEDIUM'"
+            [class.high]="request.priority === 'HIGH'"
+            [class.urgent]="request.priority === 'URGENT'"
+          >
+            {{ request.priority }}
+          </span>
+
+          @if (isOverdue()) {
+            <span class="overdue-badge">OVERDUE</span>
+          }
+        </div>
+
+        <h1>{{ request.title }}</h1>
+
+        <p class="created-info">
+          Created by
+          <strong>
+            {{ request.requester.firstName }}
+            {{ request.requester.lastName }}
+          </strong>
+          on
+          {{ request.createdAt | date:'MMM d, y' }}
+        </p>
+
+      </div>
+
+    </div>
+
+    <div class="content-grid">
+
+      <div class="main-column">
+
+        <div class="content-card">
+
+          <div class="card-header">
+            <h2>Description</h2>
+          </div>
+
+          <div class="card-body description">
+            @if (request.description) {
+              <p>{{ request.description }}</p>
+            } @else {
+              <p class="muted">No description provided.</p>
+            }
+          </div>
+
+        </div>
+
+        <div class="content-card">
+
+          <div class="card-header">
+            <div>
+              <h2>Comments</h2>
+              <span>{{ request.commentsCount }} comments</span>
+            </div>
+          </div>
+
+          <div class="placeholder-card">
+            <div class="placeholder-icon">💬</div>
+            <h3>Comments coming soon</h3>
+            <p>
+              Team members will be able to discuss this request here.
+            </p>
+          </div>
+
+        </div>
+
+        <div class="content-card">
+
+          <div class="card-header">
+            <div>
+              <h2>Attachments</h2>
+              <span>{{ request.attachmentsCount }} files</span>
+            </div>
+          </div>
+
+          <div class="placeholder-card">
+            <div class="placeholder-icon">📎</div>
+            <h3>Attachments coming soon</h3>
+            <p>
+              Documents related to this request will appear here.
+            </p>
+          </div>
+
+        </div>
+
+      </div>
+
+      <aside class="side-column">
+
+        <div class="content-card">
+
+          <div class="card-header">
+            <h2>Request Details</h2>
+          </div>
+
+          <div class="details-list">
+
+            <div class="detail-row">
+              <span>Status</span>
+
+              <span
+                class="status-badge"
+                [class.pending]="request.status === 'PENDING'"
+                [class.in-review]="request.status === 'IN_REVIEW'"
+                [class.approved]="request.status === 'APPROVED'"
+                [class.rejected]="request.status === 'REJECTED'"
+                [class.needs-info]="request.status === 'NEEDS_INFORMATION'"
+                [class.completed]="request.status === 'COMPLETED'"
+                [class.cancelled]="request.status === 'CANCELLED'"
+              >
+                {{ statusLabel(request.status) }}
+              </span>
+            </div>
+
+            <div class="detail-row">
+              <span>Type</span>
+              <strong>{{ typeLabel(request.type) }}</strong>
+            </div>
+
+            <div class="detail-row">
+              <span>Priority</span>
+              <strong>{{ request.priority }}</strong>
+            </div>
+
+            <div class="detail-row">
+              <span>Due Date</span>
+
+              <strong [class.danger-text]="isOverdue()">
+                @if (request.dueDate) {
+                  {{ request.dueDate | date:'MMM d, y' }}
+                } @else {
+                  No due date
+                }
+              </strong>
+            </div>
+
+            <div class="detail-row">
+              <span>Last Updated</span>
+              <strong>
+                {{ request.updatedAt | date:'MMM d, y, h:mm a' }}
+              </strong>
+            </div>
+
+          </div>
+
+        </div>
+
+        <div class="content-card">
+
+          <div class="card-header">
+            <h2>Requester</h2>
+          </div>
+
+          <div class="person-card">
+
+            <div class="large-avatar">
+              {{ initials(
+                request.requester.firstName,
+                request.requester.lastName
+              ) }}
+            </div>
+
+            <div>
+              <strong>
+                {{ request.requester.firstName }}
+                {{ request.requester.lastName }}
+              </strong>
+
+              <span>{{ request.requester.email }}</span>
+
+              @if (request.requester.department) {
+                <span>{{ request.requester.department }}</span>
+              }
+            </div>
+
+          </div>
+
+        </div>
+
+        <div class="content-card">
+
+          <div class="card-header">
+            <h2>Assigned To</h2>
+          </div>
+
+          <div class="person-card">
+
+            <div class="large-avatar">
+              {{ initials(
+                request.assignedTo.firstName,
+                request.assignedTo.lastName
+              ) }}
+            </div>
+
+            <div>
+              <strong>
+                {{ request.assignedTo.firstName }}
+                {{ request.assignedTo.lastName }}
+              </strong>
+
+              <span>{{ request.assignedTo.email }}</span>
+
+              @if (request.assignedTo.department) {
+                <span>{{ request.assignedTo.department }}</span>
+              }
+            </div>
+
+          </div>
+
+        </div>
+
+        @if (
+          canApprove() ||
+          canReject() ||
+          canRequestInformation() ||
+          canComplete() ||
+          canReopen()
+        ) {
+
+          <div class="content-card">
+
+            <div class="card-header">
+              <h2>Workflow Actions</h2>
+            </div>
+
+            <div class="workflow-actions">
+
+              @if (canApprove()) {
+                <button
+                  class="action-button approve"
+                  type="button"
+                  (click)="approveRequest()"
+                >
+                  ✓ Approve Request
+                </button>
+              }
+
+              @if (canReject()) {
+                <button
+                  class="action-button reject"
+                  type="button"
+                  (click)="rejectRequest()"
+                >
+                  ✕ Reject Request
+                </button>
+              }
+
+              @if (canRequestInformation()) {
+                <button
+                  class="action-button information"
+                  type="button"
+                  (click)="requestMoreInformation()"
+                >
+                  ? Request More Information
+                </button>
+              }
+
+              @if (canComplete()) {
+                <button
+                  class="action-button complete"
+                  type="button"
+                  (click)="completeRequest()"
+                >
+                  ✓ Mark Completed
+                </button>
+              }
+
+              @if (canReopen()) {
+                <button
+                  class="action-button reopen"
+                  type="button"
+                  (click)="reopenRequest()"
+                >
+                  ↻ Reopen Request
+                </button>
+              }
+
+              @if (
+                request.status !== 'COMPLETED' &&
+                request.status !== 'CANCELLED'
+              ) {
+                <button
+                  class="action-button cancel"
+                  type="button"
+                  (click)="cancelRequest()"
+                >
+                  Cancel Request
+                </button>
+              }
+
+              <button
+                class="action-button delete"
+                type="button"
+                (click)="deleteRequest()"
+              >
+                Delete Request
+              </button>
+
+            </div>
+
+          </div>
+
+        }
+
+      </aside>
+
+    </div>
+
+  } @else {
+
+    <div class="not-found">
+      <h2>Request not found</h2>
+      <p>The request may have been deleted or does not exist.</p>
+
+      <a routerLink="/requests" class="primary-button">
+        Back to Requests
+      </a>
+    </div>
+
+  }
+
+</section>

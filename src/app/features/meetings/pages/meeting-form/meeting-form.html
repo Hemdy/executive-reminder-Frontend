@@ -1,0 +1,322 @@
+<section class="form-page">
+
+  <div class="page-header">
+
+    <div>
+
+      <a
+        class="back-link"
+        routerLink="/meetings"
+      >
+        ← Back to Meetings
+      </a>
+
+      <div class="eyebrow">Schedule</div>
+
+      <h1>
+        {{ isEditMode() ? 'Edit Meeting' : 'New Meeting' }}
+      </h1>
+
+      <p>
+        {{
+          isEditMode()
+            ? 'Update the meeting schedule and participants.'
+            : 'Schedule a meeting with your team or executives.'
+        }}
+      </p>
+
+    </div>
+
+  </div>
+
+  <form
+    class="form-card"
+    [formGroup]="form"
+    (ngSubmit)="save()"
+  >
+
+    <div class="form-section">
+
+      <div class="section-heading">
+        <h2>Meeting Information</h2>
+        <p>Provide the basic information about this meeting.</p>
+      </div>
+
+      <div class="field full">
+
+        <label for="title">
+          Meeting Title <span>*</span>
+        </label>
+
+        <input
+          id="title"
+          type="text"
+          formControlName="title"
+          placeholder="e.g. Executive Board Meeting"
+        />
+
+        @if (
+          titleControl.invalid &&
+          titleControl.touched
+        ) {
+          <small class="error">
+            Meeting title is required.
+          </small>
+        }
+
+      </div>
+
+      <div class="field full">
+
+        <label for="description">
+          Description
+        </label>
+
+        <textarea
+          id="description"
+          rows="4"
+          formControlName="description"
+          placeholder="Describe the purpose of the meeting..."
+        ></textarea>
+
+      </div>
+
+      <div class="field full">
+
+        <label for="agenda">
+          Agenda
+        </label>
+
+        <textarea
+          id="agenda"
+          rows="6"
+          formControlName="agenda"
+          placeholder="List the topics to be discussed..."
+        ></textarea>
+
+      </div>
+
+      <div class="form-grid">
+
+        <div class="field">
+
+          <label for="meetingType">
+            Meeting Type <span>*</span>
+          </label>
+
+          <select
+            id="meetingType"
+            formControlName="meetingType"
+          >
+            @for (
+              type of meetingTypes;
+              track type
+            ) {
+              <option [value]="type">
+                {{ typeLabel(type) }}
+              </option>
+            }
+          </select>
+
+        </div>
+
+        <div class="field">
+
+          <label for="location">
+            Location
+          </label>
+
+          <input
+            id="location"
+            type="text"
+            formControlName="location"
+            placeholder="Conference room or meeting link"
+          />
+
+        </div>
+
+      </div>
+
+    </div>
+
+    <div class="form-section">
+
+      <div class="section-heading">
+
+        <h2>Schedule</h2>
+
+        <p>
+          Choose the date and duration of the meeting.
+        </p>
+
+      </div>
+
+      <div class="form-grid">
+
+        <div class="field">
+
+          <label for="meetingDate">
+            Date <span>*</span>
+          </label>
+
+          <input
+            id="meetingDate"
+            type="date"
+            formControlName="meetingDate"
+          />
+
+        </div>
+
+        <div class="field">
+
+          <label for="startTime">
+            Start Time <span>*</span>
+          </label>
+
+          <input
+            id="startTime"
+            type="time"
+            formControlName="startTime"
+          />
+
+        </div>
+
+        <div class="field">
+
+          <label for="endTime">
+            End Time <span>*</span>
+          </label>
+
+          <input
+            id="endTime"
+            type="time"
+            formControlName="endTime"
+          />
+
+        </div>
+
+      </div>
+
+    </div>
+
+    <div class="form-section">
+
+      <div class="section-heading">
+
+        <h2>Participants</h2>
+
+        <p>
+          Select the people who should attend this meeting.
+        </p>
+
+      </div>
+
+      <div class="participant-list">
+
+        @for (user of users; track user.id) {
+
+          <label class="participant-option">
+
+   <input
+  type="checkbox"
+  [checked]="form.controls.participantIds.value.includes(user.id)"
+  (change)="toggleParticipant(
+    user.id,
+    $any($event.target).checked
+  )"
+/>
+
+            <span class="participant-avatar">
+              {{ user.firstName.charAt(0) }}{{ user.lastName.charAt(0) }}
+            </span>
+
+            <span class="participant-info">
+
+              <strong>
+                {{ user.firstName }}
+                {{ user.lastName }}
+              </strong>
+
+              <small>
+                {{ user.role }}
+                @if (user.department) {
+                  · {{ user.department }}
+                }
+              </small>
+
+            </span>
+
+          </label>
+
+        }
+
+      </div>
+
+    </div>
+
+    @if (isEditMode()) {
+
+      <div class="form-section">
+
+        <div class="section-heading">
+
+          <h2>Status</h2>
+
+          <p>
+            Update the current meeting status.
+          </p>
+
+        </div>
+
+        <div class="field">
+
+          <label for="status">
+            Meeting Status
+          </label>
+
+          <select
+            id="status"
+            formControlName="status"
+          >
+            @for (
+              status of statuses;
+              track status
+            ) {
+              <option [value]="status">
+                {{ statusLabel(status) }}
+              </option>
+            }
+          </select>
+
+        </div>
+
+      </div>
+
+    }
+
+    <div class="form-actions">
+
+      <button
+        type="button"
+        class="secondary-button"
+        (click)="cancel()"
+      >
+        Cancel
+      </button>
+
+      <button
+        type="submit"
+        class="primary-button"
+      >
+        {{
+          isEditMode()
+            ? 'Save Changes'
+            : 'Schedule Meeting'
+        }}
+      </button>
+
+    </div>
+
+  </form>
+
+</section>

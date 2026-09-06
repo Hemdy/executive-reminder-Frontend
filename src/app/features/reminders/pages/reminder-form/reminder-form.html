@@ -1,0 +1,316 @@
+<section class="reminder-form-page">
+
+  <header class="page-header">
+
+    <div>
+      <a
+        routerLink="/reminders"
+        class="back-link"
+      >
+        ← Back to Reminders
+      </a>
+
+      <p class="eyebrow">Reminder Management</p>
+
+      <h1>{{ pageTitle() }}</h1>
+
+      <p class="page-description">
+        {{
+          isEditMode()
+            ? 'Update the reminder schedule and recipient.'
+            : 'Create a reminder for an important follow-up or event.'
+        }}
+      </p>
+    </div>
+
+  </header>
+
+  @if (errorMessage()) {
+    <div class="error-banner">
+      {{ errorMessage() }}
+    </div>
+  }
+
+  <form
+    class="form-card"
+    [formGroup]="reminderForm"
+    (ngSubmit)="save()"
+  >
+
+    <section class="form-section">
+
+      <div class="section-heading">
+        <h2>Reminder Information</h2>
+        <p>Describe what needs to be remembered.</p>
+      </div>
+
+      <div class="form-grid">
+
+        <div class="form-field full-width">
+
+          <label for="title">
+            Reminder Title
+            <span>*</span>
+          </label>
+
+          <input
+            id="title"
+            type="text"
+            formControlName="title"
+            placeholder="e.g. Follow up with Finance"
+          />
+
+          @if (
+            titleControl.invalid &&
+            titleControl.touched
+          ) {
+            <small class="field-error">
+              Reminder title is required.
+            </small>
+          }
+
+        </div>
+
+        <div class="form-field full-width">
+
+          <label for="description">
+            Description
+          </label>
+
+          <textarea
+            id="description"
+            rows="5"
+            formControlName="description"
+            placeholder="Add additional context or instructions..."
+          ></textarea>
+
+        </div>
+
+        <div class="form-field">
+
+          <label for="recipient">
+            Recipient
+            <span>*</span>
+          </label>
+
+          <select
+            id="recipient"
+            formControlName="recipientId"
+          >
+            <option value="" disabled>
+              Select recipient
+            </option>
+
+            @for (
+              recipient of recipients();
+              track recipient.id
+            ) {
+              <option [value]="recipient.id">
+                {{ recipient.firstName }}
+                {{ recipient.lastName }}
+
+                @if (recipient.department) {
+                  — {{ recipient.department }}
+                }
+              </option>
+            }
+          </select>
+
+          @if (
+            recipientControl.invalid &&
+            recipientControl.touched
+          ) {
+            <small class="field-error">
+              Please select a recipient.
+            </small>
+          }
+
+        </div>
+
+        <div class="form-field">
+
+          <label for="category">
+            Category
+            <span>*</span>
+          </label>
+
+          <select
+            id="category"
+            formControlName="category"
+          >
+            @for (
+              category of categories;
+              track category
+            ) {
+              <option [value]="category">
+                {{ category }}
+              </option>
+            }
+          </select>
+
+        </div>
+
+        <div class="form-field">
+
+          <label for="priority">
+            Priority
+            <span>*</span>
+          </label>
+
+          <select
+            id="priority"
+            formControlName="priority"
+          >
+            @for (
+              priority of priorities;
+              track priority
+            ) {
+              <option [value]="priority">
+                {{ priority.replace('_', ' ') }}
+              </option>
+            }
+          </select>
+
+        </div>
+
+        @if (isEditMode()) {
+
+          <div class="form-field">
+
+            <label for="status">
+              Status
+            </label>
+
+            <select
+              id="status"
+              formControlName="status"
+            >
+              @for (
+                status of statuses;
+                track status
+              ) {
+                <option [value]="status">
+                  {{ status.replace('_', ' ') }}
+                </option>
+              }
+            </select>
+
+          </div>
+
+        }
+
+      </div>
+
+    </section>
+
+    <section class="form-section">
+
+      <div class="section-heading">
+        <h2>Schedule</h2>
+        <p>Choose when the reminder should trigger.</p>
+      </div>
+
+      <div class="form-grid">
+
+        <div class="form-field">
+
+          <label for="reminderDate">
+            Date
+            <span>*</span>
+          </label>
+
+          <input
+            id="reminderDate"
+            type="date"
+            formControlName="reminderDate"
+          />
+
+          @if (
+            dateControl.invalid &&
+            dateControl.touched
+          ) {
+            <small class="field-error">
+              Reminder date is required.
+            </small>
+          }
+
+        </div>
+
+        <div class="form-field">
+
+          <label for="reminderTime">
+            Time
+            <span>*</span>
+          </label>
+
+          <input
+            id="reminderTime"
+            type="time"
+            formControlName="reminderTime"
+          />
+
+          @if (
+            timeControl.invalid &&
+            timeControl.touched
+          ) {
+            <small class="field-error">
+              Reminder time is required.
+            </small>
+          }
+
+        </div>
+
+        <div class="form-field">
+
+          <label for="recurrence">
+            Recurrence
+            <span>*</span>
+          </label>
+
+          <select
+            id="recurrence"
+            formControlName="recurrence"
+          >
+            @for (
+              recurrence of recurrences;
+              track recurrence
+            ) {
+              <option [value]="recurrence">
+                {{ recurrence.replace('_', ' ') }}
+              </option>
+            }
+          </select>
+
+        </div>
+
+      </div>
+
+    </section>
+
+    <footer class="form-footer">
+
+      <button
+        type="button"
+        class="secondary-button"
+        (click)="cancel()"
+      >
+        Cancel
+      </button>
+
+      <button
+        type="submit"
+        class="primary-button"
+        [disabled]="isSaving()"
+      >
+        @if (isSaving()) {
+          Saving...
+        } @else {
+          {{ isEditMode() ? 'Save Changes' : 'Create Reminder' }}
+        }
+      </button>
+
+    </footer>
+
+  </form>
+
+</section>
