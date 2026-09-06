@@ -140,26 +140,21 @@ export const routes: Routes = [
 },
 
 
-      //   {
-      //     path: 'meetings',
-      //     loadComponent: () =>
-      //       import('./features/meetings/pages/meeting-list/meeting-list.component')
-      //         .then(m => m.MeetingListComponent)
-      //   },
 
-      //   {
-      //     path: 'calendar',
-      //     loadComponent: () =>
-      //       import('./features/calendar/pages/calendar/calendar.component')
-      //         .then(m => m.CalendarComponent)
-      //   },
 
-      //   {
-      //     path: 'notifications',
-      //     loadComponent: () =>
-      //       import('./features/notifications/pages/notification-center/notification-center.component')
-      //         .then(m => m.NotificationCenterComponent)
-      //   },
+        {
+          path: 'calendar',
+          loadComponent: () =>
+            import('./features/calendar/pages/calendar/calendar')
+              .then(m => m.Calendar)
+        },
+
+        {
+          path: 'notifications',
+          loadComponent: () =>
+            import('./features/notifications/pages/notification-center/notification-center')
+              .then(m => m.NotificationCenter)
+        },
 
       //   {
       //     path: 'users',

@@ -1,0 +1,224 @@
+<div class="notification-page">
+
+  <div class="page-header">
+
+    <div>
+      <h1 class="page-title">Notifications</h1>
+
+      <p class="page-subtitle">
+        Stay up to date with tasks, reminders, meetings,
+        requests, and system activity.
+      </p>
+    </div>
+
+    @if (unreadCount() > 0) {
+      <button
+        type="button"
+        class="btn btn-secondary"
+        (click)="markAllAsRead()"
+      >
+        Mark all as read
+      </button>
+    }
+
+  </div>
+
+  <div class="notification-card">
+
+    <div class="notification-toolbar">
+
+      <div class="notification-tabs">
+
+        <button
+          type="button"
+          [class.active]="filter() === 'ALL'"
+          (click)="setFilter('ALL')"
+        >
+          All
+
+          <span class="tab-count">
+            {{ notifications().length }}
+          </span>
+        </button>
+
+        <button
+          type="button"
+          [class.active]="filter() === 'UNREAD'"
+          (click)="setFilter('UNREAD')"
+        >
+          Unread
+
+          @if (unreadCount() > 0) {
+            <span class="tab-count unread-count">
+              {{ unreadCount() }}
+            </span>
+          }
+        </button>
+
+        <button
+          type="button"
+          [class.active]="filter() === 'READ'"
+          (click)="setFilter('READ')"
+        >
+          Read
+        </button>
+
+      </div>
+
+      <button
+        type="button"
+        class="clear-button"
+        (click)="clearReadNotifications()"
+      >
+        Clear read
+      </button>
+
+    </div>
+
+    @if (hasNotifications()) {
+
+      <div class="notification-list">
+
+        @for (
+          notification of filteredNotifications();
+          track trackByNotification($index, notification)
+        ) {
+
+          <div
+            class="notification-item"
+            [class.unread]="!notification.isRead"
+            [class]="getTypeClass(notification.type)"
+          >
+
+            <button
+              type="button"
+              class="notification-main"
+              (click)="openNotification(notification)"
+            >
+
+              <div
+                class="notification-icon"
+                [class]="getPriorityClass(notification.priority)"
+              >
+                {{ getIcon(notification.type) }}
+              </div>
+
+              <div class="notification-content">
+
+                <div class="notification-heading">
+
+                  <strong>
+                    {{ notification.title }}
+                  </strong>
+
+                  @if (!notification.isRead) {
+                    <span class="unread-dot"></span>
+                  }
+
+                </div>
+
+                <p>
+                  {{ notification.message }}
+                </p>
+
+                <div class="notification-meta">
+
+                  <span>
+                    {{ getTypeLabel(notification.type) }}
+                  </span>
+
+                  <span>
+                    {{ notification.createdAt | date:'MMM d, y, h:mm a' }}
+                  </span>
+
+                </div>
+
+              </div>
+
+            </button>
+
+            <div class="notification-actions">
+
+              @if (notification.isRead) {
+
+                <button
+                  type="button"
+                  title="Mark as unread"
+                  aria-label="Mark as unread"
+                  (click)="markAsUnread(notification)"
+                >
+                  ●
+                </button>
+
+              } @else {
+
+                <button
+                  type="button"
+                  title="Mark as read"
+                  aria-label="Mark as read"
+                  (click)="markAsRead(notification)"
+                >
+                  ✓
+                </button>
+
+              }
+
+              <button
+                type="button"
+                title="Delete notification"
+                aria-label="Delete notification"
+                (click)="deleteNotification(notification)"
+              >
+                ×
+              </button>
+
+            </div>
+
+          </div>
+
+        }
+
+      </div>
+
+    } @else {
+
+      <div class="empty-state">
+
+        <div class="empty-icon">
+          ✓
+        </div>
+
+        @if (filter() === 'UNREAD') {
+
+          <h3>You're all caught up</h3>
+
+          <p>
+            There are no unread notifications.
+          </p>
+
+        } @else if (filter() === 'READ') {
+
+          <h3>No read notifications</h3>
+
+          <p>
+            Read notifications will appear here.
+          </p>
+
+        } @else {
+
+          <h3>No notifications</h3>
+
+          <p>
+            You're all caught up. New activity will
+            appear here.
+          </p>
+
+        }
+
+      </div>
+
+    }
+
+  </div>
+
+</div>

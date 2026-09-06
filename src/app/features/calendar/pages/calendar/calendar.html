@@ -1,0 +1,412 @@
+<div class="calendar-page">
+
+  <div class="page-header">
+    <div>
+      <h1 class="page-title">Calendar</h1>
+      <p class="page-subtitle">
+        Manage meetings, tasks, reminders, and deadlines
+        in one place.
+      </p>
+    </div>
+
+    <button
+      type="button"
+      class="btn btn-primary"
+      (click)="goToToday()"
+    >
+      Today
+    </button>
+  </div>
+
+  <div class="calendar-card">
+
+    <div class="calendar-toolbar">
+
+      <div class="calendar-navigation">
+        <button
+          type="button"
+          class="icon-button"
+          aria-label="Previous"
+          (click)="previous()"
+        >
+          ‹
+        </button>
+
+        <button
+          type="button"
+          class="icon-button"
+          aria-label="Next"
+          (click)="next()"
+        >
+          ›
+        </button>
+
+        <h2>
+          @if (currentView() === 'MONTH' || currentView() === 'AGENDA') {
+            {{ currentMonthLabel() }}
+          } @else {
+            {{ currentDayLabel() }}
+          }
+        </h2>
+      </div>
+
+      <div class="view-switcher">
+
+        <button
+          type="button"
+          [class.active]="currentView() === 'MONTH'"
+          (click)="setView('MONTH')"
+        >
+          Month
+        </button>
+
+        <button
+          type="button"
+          [class.active]="currentView() === 'WEEK'"
+          (click)="setView('WEEK')"
+        >
+          Week
+        </button>
+
+        <button
+          type="button"
+          [class.active]="currentView() === 'DAY'"
+          (click)="setView('DAY')"
+        >
+          Day
+        </button>
+
+        <button
+          type="button"
+          [class.active]="currentView() === 'AGENDA'"
+          (click)="setView('AGENDA')"
+        >
+          Agenda
+        </button>
+
+      </div>
+
+    </div>
+
+    <!-- MONTH -->
+
+    @if (currentView() === 'MONTH') {
+
+      <div class="calendar-month">
+
+        <div class="weekday-row">
+          <div>Sun</div>
+          <div>Mon</div>
+          <div>Tue</div>
+          <div>Wed</div>
+          <div>Thu</div>
+          <div>Fri</div>
+          <div>Sat</div>
+        </div>
+
+        <div class="month-grid">
+
+          @for (
+            day of monthDays();
+            track trackByDate($index, day)
+          ) {
+
+            <div
+              class="calendar-day"
+              [class.other-month]="!day.isCurrentMonth"
+              [class.today]="day.isToday"
+              (click)="selectDate(day.date)"
+            >
+
+              <div class="day-number">
+                {{ day.date.getDate() }}
+              </div>
+
+              <div class="day-events">
+
+                @for (
+                  event of getEventsForDate(day.date).slice(0, 4);
+                  track trackByEvent($index, event)
+                ) {
+
+                  <button
+                    type="button"
+                    class="calendar-event"
+                    [class]="getEventClass(event)"
+                    (click)="openEvent(event); $event.stopPropagation()"
+                  >
+                    <span class="event-time">
+                      {{ event.startTime ? formatTime(event.startTime) : '' }}
+                    </span>
+
+                    <span class="event-title">
+                      {{ event.title }}
+                    </span>
+                  </button>
+
+                }
+
+                @if (getEventsForDate(day.date).length > 4) {
+                  <div class="more-events">
+                    +{{ getEventsForDate(day.date).length - 4 }} more
+                  </div>
+                }
+
+              </div>
+
+            </div>
+
+          }
+
+        </div>
+
+      </div>
+
+    }
+
+    <!-- WEEK -->
+
+    @if (currentView() === 'WEEK') {
+
+      <div class="week-view">
+
+        <div class="week-header">
+
+          @for (day of weekDays(); track day.toISOString()) {
+
+            <button
+              type="button"
+              class="week-day"
+              [class.today]="calendarService.isToday(day)"
+              (click)="selectDate(day)"
+            >
+              <span>
+                {{ day | date:'EEE' }}
+              </span>
+
+              <strong>
+                {{ day | date:'d' }}
+              </strong>
+            </button>
+
+          }
+
+        </div>
+
+        <div class="week-events">
+
+          @for (day of weekDays(); track day.toISOString()) {
+
+            <div class="week-column">
+
+              @for (
+                event of getEventsForDate(day);
+                track trackByEvent($index, event)
+              ) {
+
+                <button
+                  type="button"
+                  class="week-event"
+                  [class]="getEventClass(event)"
+                  (click)="openEvent(event)"
+                >
+                  <strong>{{ event.title }}</strong>
+
+                  <span>
+                    {{ getEventTime(event) }}
+                  </span>
+
+                  <small>
+                    {{ getTypeLabel(event.type) }}
+                  </small>
+                </button>
+
+              }
+
+            </div>
+
+          }
+
+        </div>
+
+      </div>
+
+    }
+
+    <!-- DAY -->
+
+    @if (currentView() === 'DAY') {
+
+      <div class="day-view">
+
+        <div class="day-view-header">
+          <span class="day-name">
+            {{ selectedDate() | date:'EEEE' }}
+          </span>
+
+          <strong>
+            {{ selectedDate() | date:'MMMM d, y' }}
+          </strong>
+        </div>
+
+        @if (dayEvents().length) {
+
+          <div class="agenda-list">
+
+            @for (
+              event of dayEvents();
+              track trackByEvent($index, event)
+            ) {
+
+              <button
+                type="button"
+                class="agenda-item"
+                [class]="getEventClass(event)"
+                (click)="openEvent(event)"
+              >
+
+                <div class="agenda-time">
+                  {{ getEventTime(event) }}
+                </div>
+
+                <div class="agenda-content">
+                  <strong>{{ event.title }}</strong>
+
+                  <span>
+                    {{ getTypeLabel(event.type) }}
+                  </span>
+
+                  @if (event.location) {
+                    <small>
+                      {{ event.location }}
+                    </small>
+                  }
+                </div>
+
+              </button>
+
+            }
+
+          </div>
+
+        } @else {
+
+          <div class="empty-calendar">
+            <div class="empty-icon">□</div>
+            <h3>No events scheduled</h3>
+            <p>
+              There are no meetings, reminders, or tasks
+              scheduled for this day.
+            </p>
+          </div>
+
+        }
+
+      </div>
+
+    }
+
+    <!-- AGENDA -->
+
+    @if (currentView() === 'AGENDA') {
+
+      <div class="agenda-view">
+
+        @if (agendaEvents().length) {
+
+          @for (
+            event of agendaEvents();
+            track trackByEvent($index, event)
+          ) {
+
+            <button
+              type="button"
+              class="agenda-row"
+              [class]="getEventClass(event)"
+              (click)="openEvent(event)"
+            >
+
+              <div class="agenda-date">
+                <strong>
+                  {{ calendarService.parseDate(event.date) | date:'d' }}
+                </strong>
+
+                <span>
+                  {{ calendarService.parseDate(event.date) | date:'MMM' }}
+                </span>
+              </div>
+
+              <div class="agenda-main">
+
+                <div class="agenda-title-row">
+                  <strong>{{ event.title }}</strong>
+
+                  <span class="event-type">
+                    {{ getTypeLabel(event.type) }}
+                  </span>
+                </div>
+
+                <div class="agenda-meta">
+
+                  @if (event.startTime) {
+                    <span>
+                      {{ getEventTime(event) }}
+                    </span>
+                  }
+
+                  @if (event.location) {
+                    <span>
+                      {{ event.location }}
+                    </span>
+                  }
+
+                  <span>
+                    {{ event.status }}
+                  </span>
+
+                </div>
+
+              </div>
+
+            </button>
+
+          }
+
+        } @else {
+
+          <div class="empty-calendar">
+            <div class="empty-icon">□</div>
+            <h3>Your calendar is clear</h3>
+            <p>
+              No upcoming meetings, reminders, or tasks.
+            </p>
+          </div>
+
+        }
+
+      </div>
+
+    }
+
+  </div>
+
+  <div class="calendar-legend">
+
+    <div>
+      <span class="legend-dot meeting"></span>
+      Meetings
+    </div>
+
+    <div>
+      <span class="legend-dot task"></span>
+      Tasks
+    </div>
+
+    <div>
+      <span class="legend-dot reminder"></span>
+      Reminders
+    </div>
+
+  </div>
+
+</div>
