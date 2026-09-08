@@ -94,7 +94,7 @@
 
             @for (user of users; track user.id) {
               <option [value]="user.id">
-                {{ user.firstName }} {{ user.lastName }}
+               {{user.title}} {{ user.firstName }} {{ user.lastName }}
                 — {{ user.role }}
               </option>
             }
