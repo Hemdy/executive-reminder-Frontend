@@ -3,10 +3,21 @@
   display: flex;
 }
 
+.sidebar-backdrop {
+  display: none;
+}
+
 .main-area {
   flex: 1;
   min-width: 0;
   margin-left: var(--sidebar-width);
+  transition: margin-left 180ms ease;
+}
+
+.sidebar-collapsed {
+  .main-area {
+    margin-left: var(--sidebar-collapsed-width);
+  }
 }
 
 .page-content {
@@ -19,7 +30,21 @@
     margin-left: 0;
   }
 
+  .sidebar-collapsed .main-area {
+    margin-left: 0;
+  }
+
   .page-content {
     padding: 20px 16px;
+  }
+
+  .sidebar-backdrop {
+    position: fixed;
+    inset: 0;
+    display: block;
+    padding: 0;
+    border: 0;
+    background: rgba(23, 32, 51, 0.32);
+    z-index: 15;
   }
 }

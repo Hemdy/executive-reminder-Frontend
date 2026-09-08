@@ -1,5 +1,5 @@
 
-import { Component } from '@angular/core';
+import { Component, signal } from '@angular/core';
 import { RouterOutlet } from '@angular/router';
 import { Sidebar } from '../sidebar/sidebar';
 import { Topbar } from '../topbar/topbar';
@@ -14,7 +14,23 @@ import { Topbar } from '../topbar/topbar';
 })
 export class MainLayout {
 
+  readonly sidebarCollapsed = signal(false);
+  readonly mobileSidebarOpen = signal(false);
+
+  toggleSidebar(): void {
+    if (typeof window !== 'undefined' && window.matchMedia('(max-width: 768px)').matches) {
+      this.mobileSidebarOpen.update(open => !open);
+      return;
+    }
+
+    this.sidebarCollapsed.update(collapsed => !collapsed);
+  }
+
+  closeMobileSidebar(): void {
+    this.mobileSidebarOpen.set(false);
+  }
+
+  toggleMobileSidebar(): void {
+    this.mobileSidebarOpen.update(open => !open);
+  }
 }
-
-
-

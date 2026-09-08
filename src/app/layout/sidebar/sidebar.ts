@@ -1,5 +1,5 @@
-import { Component, inject } from '@angular/core';
-import { RouterLink, RouterLinkActive } from '@angular/router';
+import { Component, EventEmitter, inject, Input, Output } from '@angular/core';
+import { Router, RouterLink, RouterLinkActive } from '@angular/router';
 import { AuthService } from '../../core/services/auth.service';
 
 interface NavigationItem {
@@ -21,9 +21,14 @@ interface NavigationItem {
 })
 export class Sidebar {
 
+  @Input() collapsed = false;
+  @Input() mobileOpen = false;
+  @Output() readonly closeMobile = new EventEmitter<void>();
+  @Output() readonly toggleSidebar = new EventEmitter<void>();
+  mobileProfileOpen = false;
 
-
-   readonly authService = inject(AuthService);
+  readonly authService = inject(AuthService);
+  private readonly router = inject(Router);
 
   readonly navigation: NavigationItem[] = [
     {
@@ -86,5 +91,11 @@ export class Sidebar {
     return this.authService.hasRole(
       ...(item.roles as any)
     );
+  }
+
+  logout(): void {
+    this.mobileProfileOpen = false;
+    this.authService.logout();
+    this.router.navigate(['/login']);
   }
 }

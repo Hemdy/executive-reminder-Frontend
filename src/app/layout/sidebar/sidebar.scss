@@ -7,6 +7,7 @@
   background: var(--surface);
   border-right: 1px solid var(--border);
   z-index: 20;
+  transition: width 180ms ease, transform 180ms ease;
 }
 
 .sidebar-brand {
@@ -27,6 +28,29 @@
     font-size: 11px;
     color: var(--text-muted);
     margin-top: 2px;
+  }
+}
+
+.sidebar-close {
+  display: none;
+}
+
+.sidebar-collapse-toggle {
+  width: 28px;
+  height: 28px;
+  display: grid;
+  place-items: center;
+  margin-left: auto;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: var(--surface);
+  color: var(--text-muted);
+  font-size: 18px;
+  line-height: 1;
+
+  &:hover {
+    background: var(--surface-muted);
+    color: var(--text);
   }
 }
 
@@ -79,6 +103,12 @@ nav {
     color: var(--text);
   }
 
+  .nav-text {
+    white-space: nowrap;
+    overflow: hidden;
+    transition: opacity 120ms ease;
+  }
+
   &.active {
     background: #eef3fc;
     color: var(--primary);
@@ -99,26 +129,185 @@ nav {
 .sidebar-footer {
   padding: 18px 20px;
   border-top: 1px solid var(--border);
+}
 
-  span,
-  small {
-    display: block;
+.mobile-profile {
+  display: none;
+}
+
+.sidebar-meta span,
+.sidebar-meta small {
+  display: block;
+}
+
+.sidebar-meta span {
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.sidebar-meta small {
+  margin-top: 3px;
+  color: var(--text-muted);
+  font-size: 10px;
+}
+
+.sidebar.collapsed {
+  width: var(--sidebar-collapsed-width);
+
+  .sidebar-brand {
+    justify-content: center;
+    padding: 0 12px;
+
+    > div:last-of-type {
+      display: none;
+    }
   }
 
-  span {
-    font-size: 12px;
-    font-weight: 600;
+  .sidebar-collapse-toggle {
+    margin-left: 0;
   }
 
-  small {
-    margin-top: 3px;
-    color: var(--text-muted);
-    font-size: 10px;
+  nav {
+    padding-inline: 8px;
+  }
+
+  .nav-label,
+  .nav-text,
+  .sidebar-footer {
+    display: none;
+  }
+
+  .nav-item {
+    justify-content: center;
+    padding-inline: 0;
+  }
+
+  .nav-icon {
+    width: auto;
   }
 }
 
 @media (max-width: 768px) {
   .sidebar {
+    width: min(var(--sidebar-width), 86vw);
+    transform: translateX(-100%);
+    box-shadow: var(--shadow-lg);
+  }
+
+  .sidebar.mobile-open {
+    transform: translateX(0);
+  }
+
+  .sidebar.collapsed {
+    width: min(var(--sidebar-width), 86vw);
+
+    .sidebar-brand {
+      justify-content: flex-start;
+      padding: 0 20px;
+
+      > div:last-of-type {
+        display: block;
+      }
+    }
+
+    nav {
+      padding-inline: 12px;
+    }
+
+    .nav-label,
+    .nav-text,
+    .sidebar-footer {
+      display: block;
+    }
+
+    .nav-item {
+      justify-content: flex-start;
+      padding-inline: 12px;
+    }
+
+    .nav-icon {
+      width: 20px;
+    }
+  }
+
+  .sidebar-close {
+    display: block;
+    margin-left: auto;
+    border: 0;
+    background: transparent;
+    color: var(--text-muted);
+    font-size: 24px;
+    line-height: 1;
+  }
+
+  .sidebar-collapse-toggle {
     display: none;
+  }
+
+  .sidebar-footer {
+    padding: 14px 16px;
+  }
+
+  .mobile-profile {
+    display: block;
+    margin-bottom: 14px;
+  }
+
+  .mobile-profile-trigger {
+    width: 100%;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 0;
+    border: 0;
+    background: transparent;
+    text-align: left;
+  }
+
+  .mobile-avatar {
+    width: 34px;
+    height: 34px;
+    display: grid;
+    place-items: center;
+    flex: 0 0 auto;
+    border-radius: 50%;
+    background: #e8edf5;
+    color: var(--primary);
+    font-size: 13px;
+    font-weight: 700;
+  }
+
+  .mobile-profile-details {
+    min-width: 0;
+
+    strong,
+    small {
+      display: block;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    strong {
+      font-size: 12px;
+    }
+
+    small {
+      margin-top: 2px;
+      color: var(--text-muted);
+      font-size: 10px;
+    }
+  }
+
+  .mobile-logout-button {
+    width: 100%;
+    margin-top: 10px;
+    padding: 8px 10px;
+    border: 1px solid var(--border);
+    border-radius: 7px;
+    background: var(--surface);
+    color: var(--text);
+    text-align: left;
+    font-size: 11px;
   }
 }
