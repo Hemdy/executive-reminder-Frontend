@@ -173,6 +173,15 @@
   }
 }
 
+
+@media (min-width: 1024px) {
+
+  .mobile-menu-button{
+
+    display: none !important;
+}
+}
+
 @media (max-width: 768px) {
 
   .topbar {

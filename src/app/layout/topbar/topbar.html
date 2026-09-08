@@ -30,12 +30,12 @@
           [attr.aria-expanded]="profileOpen"
           (click)="profileOpen = !profileOpen"
         >
-          <span class="avatar">{{ user.firstName.charAt(0) }}</span>
+          <span class="avatar">{{ authService.getInitials(user) }}</span>
         </button>
 
         @if (profileOpen) {
           <div class="profile-dropdown">
-            <strong>{{ user.firstName }} {{ user.lastName }}</strong>
+            <strong>{{user.title}} {{ user.firstName }} {{user.middleName}} {{ user.lastName }}</strong>
             <span>{{ user.role }}</span>
             <button
               class="logout-button"

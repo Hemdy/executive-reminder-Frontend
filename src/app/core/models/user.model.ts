@@ -6,7 +6,9 @@ export type UserRole =
 
 export interface User {
   id: string;
+  title?: string;
   firstName: string;
+  middleName?: string;
   lastName: string;
   email: string;
   role: UserRole;

@@ -63,8 +63,8 @@ export class RequestForm {
   readonly users: User[] = [
     {
       id: 'user-ceo',
-      firstName: 'Michael',
-      lastName: 'Anderson',
+      firstName: 'Dr. Chigozie',
+      lastName: 'F. Oriaku',
       email: 'ceo@exectrack.local',
       role: 'CEO'
     },

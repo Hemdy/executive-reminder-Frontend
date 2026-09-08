@@ -18,8 +18,10 @@ export class AuthService {
     const users: Record<UserRole, User> = {
       CEO: {
         id: 'user-ceo',
-        firstName: 'Michael',
-        lastName: 'Anderson',
+        title: 'Dr.',
+        firstName: 'Chigozie',
+        middleName: 'Frank',
+        lastName: 'Oriaku',
         email: 'ceo@exectrack.local',
         role: 'CEO'
       },
@@ -55,6 +57,13 @@ export class AuthService {
 
   logout(): void {
     this.currentUserSignal.set(null);
+  }
+
+  getInitials(user: User): string {
+    const firstName = user.firstName.trim();
+    const lastName = user.lastName.trim();
+
+    return `${firstName.charAt(0)}${lastName.charAt(0)}`.toUpperCase();
   }
 
   hasRole(...roles: UserRole[]): boolean {

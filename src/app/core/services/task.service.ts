@@ -143,8 +143,9 @@ export class TaskService {
   private loadMockTasks(): void {
     const ceo: User = {
       id: 'user-ceo',
-      firstName: 'Michael',
-      lastName: 'Anderson',
+      title: 'Dr.',
+      firstName: 'Chigozie',
+      lastName: 'F. Oriaku',
       email: 'ceo@exectrack.local',
       role: 'CEO'
     };

@@ -62,8 +62,8 @@ export class TaskForm {
   readonly employees = signal<FormUser[]>([
     {
       id: 'user-ceo',
-      firstName: 'Michael',
-      lastName: 'Anderson'
+      firstName: 'Dr. Chigozie',
+      lastName: 'F. Oriaku'
     },
     {
       id: 'user-employee',

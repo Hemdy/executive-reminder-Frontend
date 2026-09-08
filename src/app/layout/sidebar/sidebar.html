@@ -114,9 +114,9 @@
           [attr.aria-expanded]="mobileProfileOpen"
           (click)="mobileProfileOpen = !mobileProfileOpen"
         >
-          <span class="mobile-avatar">{{ user.firstName.charAt(0) }}</span>
+          <span class="mobile-avatar">{{ authService.getInitials(user) }}</span>
           <span class="mobile-profile-details">
-            <strong>{{ user.firstName }} {{ user.lastName }}</strong>
+            <strong>{{user.title}} {{ user.firstName }} {{ user.lastName }}</strong>
             <small>{{ user.role }}</small>
           </span>
         </button>

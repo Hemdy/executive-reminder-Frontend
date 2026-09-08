@@ -65,8 +65,8 @@ export class ReminderForm {
   readonly recipients = signal<ReminderUser[]>([
     {
       id: 'user-ceo',
-      firstName: 'Michael',
-      lastName: 'Anderson'
+      firstName: 'Dr. Chigozie',
+      lastName: 'F. Oriaku'
     },
     {
       id: 'user-employee',
