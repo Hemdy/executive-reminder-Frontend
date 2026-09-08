@@ -1,25 +1,33 @@
 <header class="topbar">
 
-  <div class="mobile-brand">
-        <div class="brand-mark">E</div>
-    <!-- <strong>ExecTrack</strong> -->
-  </div>
+<div class="mobile-brand">
+  
+      <div class="brand-mark">
+      E
+    </div>
+
+    <div>
+      <strong>ExecTrack</strong>
+      <span>Executive Platform</span>
+    </div>
+</div>
 
   <div class="topbar-actions">
 
-    <a
-      routerLink="/notifications"
-      class="notification-button"
-      aria-label="Notifications"
-    >
-      🔔
+<a
+  routerLink="/notifications"
+  class="notification-button"
+  aria-label="Notifications"
+>
+  <span class="notification-icon">🔔</span>
 
-      @if (unreadNotificationCount() > 0) {
-        <span class="notification-badge">
-          {{ unreadNotificationCount() > 99 ? '99+' : unreadNotificationCount() }}
-        </span>
-      }
-    </a>
+  @if (unreadNotificationCount() > 0) {
+    <span class="notification-badge">
+      {{ unreadNotificationCount() > 99 ? '99+' : unreadNotificationCount() }}
+    </span>
+  }
+</a>
+
 
     @if (authService.currentUser(); as user) {
       <div class="profile-menu">
