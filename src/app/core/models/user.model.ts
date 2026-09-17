@@ -1,8 +1,10 @@
 export type UserRole =
   | 'CEO'
+  | 'EXECUTIVE_ADMIN'
   | 'EMPLOYEE'
   | 'EXECUTIVE_ASSISTANT'
-  | 'ADMIN';
+  | 'ADMIN'
+  | (string & {});
 
 export interface User {
   id: string;
@@ -12,6 +14,8 @@ export interface User {
   lastName: string;
   email: string;
   role: UserRole;
+  permissions?: string[];
+  isActive?: boolean;
   department?: string;
   avatarUrl?: string;
 }

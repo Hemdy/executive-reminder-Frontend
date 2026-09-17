@@ -1,0 +1,89 @@
+<main class="roles-page">
+  <header class="page-header">
+    <div>
+      <span class="eyebrow">Administration</span>
+      <h1>Roles & access</h1>
+      <p>Manage users, roles, and access across your executive workspace.</p>
+    </div>
+    <span class="summary">{{ pageSummary() }}</span>
+  </header>
+
+  @if (statusMessage()) {
+    <p class="status-message" role="status">{{ statusMessage() }}</p>
+  }
+  @if (roleService.errorMessage()) {
+    <p class="form-error" role="alert">{{ roleService.errorMessage() }}</p>
+  }
+
+  <div class="tabs" role="tablist" aria-label="Role administration">
+    <button type="button" role="tab" [attr.aria-selected]="selectedTab() === 'users'" [class.active]="selectedTab() === 'users'" (click)="selectedTab.set('users')">Users</button>
+    <button type="button" role="tab" [attr.aria-selected]="selectedTab() === 'roles'" [class.active]="selectedTab() === 'roles'" (click)="selectedTab.set('roles')">Roles</button>
+  </div>
+
+  @if (selectedTab() === 'users') {
+    <section class="panel" aria-labelledby="users-heading">
+      <div class="panel-header">
+        <div><h2 id="users-heading">Users</h2><p>Invite users and control their account status.</p></div>
+        <button class="primary-button" type="button" (click)="openNewUser()">Add user</button>
+      </div>
+      @if (showUserForm()) {
+        <form class="editor" [formGroup]="userForm" (ngSubmit)="saveUser()">
+          <h3>{{ editingUserId() ? 'Edit user' : 'Create user' }}</h3>
+          <label>Email<input type="email" formControlName="email"></label>
+          <label>Password<input type="password" formControlName="password" [placeholder]="editingUserId() ? 'Leave blank to keep current password' : 'At least 8 characters'"></label>
+          <label>First name<input type="text" formControlName="firstName"></label>
+          <label>Last name<input type="text" formControlName="lastName"></label>
+          <label>Role<select formControlName="role">@for (role of roleService.activeRoles(); track role.id) { <option [value]="role.name">{{ role.name }}</option> }</select></label>
+          <div class="editor-actions"><button type="button" class="secondary-button" (click)="cancelForms()">Cancel</button><button type="submit" class="primary-button">Save user</button></div>
+        </form>
+      }
+      <div class="table-wrap">
+        <table><thead><tr><th>User</th><th>Email</th><th>Role</th><th>Status</th><th><span class="sr-only">Actions</span></th></tr></thead>
+          <tbody>@for (user of roleService.users(); track user.id) {
+            <tr><td><strong>{{ user.firstName }} {{ user.lastName }}</strong></td><td>{{ user.email }}</td><td><span class="role-pill">{{ user.role }}</span></td><td><span [class]="user.isActive ? 'state active-state' : 'state inactive-state'">{{ user.isActive ? 'Active' : 'Inactive' }}</span></td><td class="actions"><button type="button" (click)="editUser(user)">Edit</button><button type="button" (click)="toggleUser(user)">{{ user.isActive ? 'Deactivate' : 'Activate' }}</button><button type="button" class="danger" (click)="removeUser(user)">Delete</button></td></tr>
+          } @empty { <tr><td colspan="5" class="empty">No users found.</td></tr> }</tbody>
+        </table>
+      </div>
+    </section>
+  } @else {
+    <section class="panel" aria-labelledby="roles-heading">
+      <div class="panel-header">
+        <div><h2 id="roles-heading">Roles</h2><p>Create custom access profiles and manage permissions.</p></div>
+        <button class="primary-button" type="button" (click)="openNewRole()">Create role</button>
+      </div>
+      @if (showRoleForm()) {
+        <form class="editor" [formGroup]="roleForm" (ngSubmit)="saveRole()">
+          <h3>{{ editingRoleId() ? 'Edit role' : 'Create role' }}</h3>
+          <label>Role name<input type="text" formControlName="name" placeholder="Manager"></label>
+          <label>Description<textarea formControlName="description" rows="2"></textarea></label>
+          @if (!editingRoleId()) {
+            <label>First name<input type="text" formControlName="firstName"></label>
+            <label>Last name<input type="text" formControlName="lastName"></label>
+            <label>Email address<input type="email" formControlName="email"></label>
+            <label>Password<input type="password" formControlName="password"></label>
+          }
+          <fieldset class="permission-grid">
+            <legend>Permissions</legend>
+            @for (permission of permissionOptions; track permission[0]) {
+              <label class="permission-option">
+                <input type="checkbox" [checked]="hasPermission(permission[0])" (change)="togglePermission(permission[0])">
+                <span>{{ permission[1] }}</span>
+              </label>
+            }
+          </fieldset>
+          @if (formError()) {
+            <p class="form-error" role="alert">{{ formError() }}</p>
+          }
+          <div class="editor-actions"><button type="button" class="secondary-button" (click)="cancelForms()">Cancel</button><button type="submit" class="primary-button">Save role</button></div>
+        </form>
+      }
+      <div class="table-wrap">
+        <table><thead><tr><th>Role</th><th>Description</th><th>Permissions</th><th>Status</th><th><span class="sr-only">Actions</span></th></tr></thead>
+          <tbody>@for (role of roleService.roles(); track role.id) {
+            <tr><td><strong>{{ role.name }}</strong></td><td>{{ role.description || '—' }}</td><td>{{ role.permissions.join(', ') }}</td><td><span [class]="role.isActive ? 'state active-state' : 'state inactive-state'">{{ role.isActive ? 'Active' : 'Inactive' }}</span></td><td class="actions"><button type="button" (click)="editRole(role)">Edit</button><button type="button" (click)="toggleRole(role)">{{ role.isActive ? 'Deactivate' : 'Activate' }}</button><button type="button" class="danger" (click)="removeRole(role)">Delete</button></td></tr>
+          } @empty { <tr><td colspan="5" class="empty">No roles found.</td></tr> }</tbody>
+        </table>
+      </div>
+    </section>
+  }
+</main>

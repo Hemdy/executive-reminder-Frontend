@@ -1,12 +1,14 @@
 import { Component, EventEmitter, inject, Input, Output } from '@angular/core';
 import { Router, RouterLink, RouterLinkActive } from '@angular/router';
 import { AuthService } from '../../core/services/auth.service';
+import { UserRole } from '../../core/models/user.model';
 
 interface NavigationItem {
   label: string;
   icon: string;
   route: string;
   roles?: string[];
+  permission?: string;
 }
 
 @Component({
@@ -65,32 +67,40 @@ export class Sidebar {
       label: 'Notifications',
       icon: '♢',
       route: '/notifications'
-    }
+    },
   ];
 
   readonly adminNavigation: NavigationItem[] = [
     {
+      label: 'Roles',
+      icon: '♢',
+      route: '/roles',
+      permission: 'roles:view'
+    },
+    {
       label: 'Users',
       icon: '♙',
       route: '/users',
-      roles: ['ADMIN']
+      permission: 'users:view'
     },
     {
       label: 'Settings',
       icon: '⚙',
       route: '/settings',
-      roles: ['ADMIN']
+      permission: 'settings:view'
     }
   ];
 
   isVisible(item: NavigationItem): boolean {
+    if (item.permission) {
+      return this.authService.hasPermission(item.permission);
+    }
+
     if (!item.roles?.length) {
       return true;
     }
 
-    return this.authService.hasRole(
-      ...(item.roles as any)
-    );
+    return this.authService.hasRole(...(item.roles as UserRole[]));
   }
 
   logout(): void {

@@ -19,6 +19,7 @@ export interface Task {
   description?: string;
 
   assignedTo: User;
+  participants?: User[];
   createdBy: User;
 
   priority: TaskPriority;
@@ -40,6 +41,7 @@ export interface CreateTaskRequest {
   title: string;
   description?: string;
   assignedToId: string;
+  participantIds?: string[];
   priority: TaskPriority;
   category: string;
   dueDate: string;
@@ -50,6 +52,7 @@ export interface UpdateTaskRequest {
   title: string;
   description?: string;
   assignedToId: string;
+  participantIds?: string[];
   priority: TaskPriority;
   category: string;
   dueDate: string;

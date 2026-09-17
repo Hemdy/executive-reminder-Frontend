@@ -193,7 +193,6 @@ export class RequestDetails {
       return;
     }
 
-    this.requestService.updateStatus(request.id, status);
+    this.requestService.updateStatus(request.id, status).subscribe();
   }
 }
-

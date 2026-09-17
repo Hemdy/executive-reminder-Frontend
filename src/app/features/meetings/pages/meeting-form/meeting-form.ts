@@ -28,6 +28,7 @@ import {
 } from '../../../../core/models/meeting.model';
 
 import { MeetingService } from '../../../../core/services/meeting.service';
+import { RoleService } from '../../../../core/services/role.service';
 
 @Component({
   selector: 'app-meeting-form',
@@ -50,6 +51,7 @@ export class MeetingForm {
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
   private readonly meetingService = inject(MeetingService);
+  private readonly roleService = inject(RoleService);
 
   readonly meetingId = computed(
     () => this.route.snapshot.paramMap.get('id')
@@ -59,37 +61,7 @@ export class MeetingForm {
     () => this.meetingId() !== null
   );
 
-  readonly users: User[] = [
-    {
-      id: 'user-ceo',
-      firstName: 'Dr. Chigozie',
-      lastName: 'F. Oriaku',
-      email: 'ceo@exectrack.local',
-      role: 'CEO'
-    },
-    {
-      id: 'user-employee',
-      firstName: 'John',
-      lastName: 'Doe',
-      email: 'employee@exectrack.local',
-      role: 'EMPLOYEE',
-      department: 'Operations'
-    },
-    {
-      id: 'user-assistant',
-      firstName: 'Sarah',
-      lastName: 'Williams',
-      email: 'assistant@exectrack.local',
-      role: 'EXECUTIVE_ASSISTANT'
-    },
-    {
-      id: 'user-admin',
-      firstName: 'Admin',
-      lastName: 'User',
-      email: 'admin@exectrack.local',
-      role: 'ADMIN'
-    }
-  ];
+  readonly users = this.roleService.users;
 
   readonly meetingTypes: MeetingType[] = [
     'IN_PERSON',
@@ -196,7 +168,7 @@ export class MeetingForm {
 
     const values = this.form.getRawValue();
 
-    const participants = this.users.filter(user =>
+    const participants = this.users().filter(user =>
       values.participantIds.includes(user.id)
     );
 
@@ -218,19 +190,13 @@ export class MeetingForm {
         this.meetingId()!,
         updateRequest,
         participants
-      );
-
-      this.router.navigate([
-        '/meetings',
-        this.meetingId()
-      ]);
+      ).subscribe({
+        next: () => this.router.navigate(['/meetings', this.meetingId()!]),
+        error: error => this.form.setErrors({ api: error.error?.message ?? 'Unable to update the meeting.' })
+      });
 
       return;
     }
-
-    const organizer =
-      this.users.find(user => user.id === 'user-ceo') ??
-      this.users[0];
 
     const createRequest: CreateMeetingRequest = {
       title: values.title,
@@ -244,13 +210,14 @@ export class MeetingForm {
       meetingType: values.meetingType
     };
 
-    const meeting = this.meetingService.createMeeting(
+    this.meetingService.createMeeting(
       createRequest,
-      organizer,
+      undefined,
       participants
-    );
-
-    this.router.navigate(['/meetings', meeting.id]);
+    ).subscribe({
+      next: meeting => this.router.navigate(['/meetings', meeting.id]),
+      error: error => this.form.setErrors({ api: error.error?.message ?? 'Unable to create the meeting.' })
+    });
   }
 
   cancel(): void {

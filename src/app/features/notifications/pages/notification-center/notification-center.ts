@@ -86,46 +86,37 @@ export class NotificationCenter {
   }
 
   markAsRead(notification: Notification): void {
-    this.notificationService.markAsRead(
-      notification.id
-    );
+    this.notificationService.markAsRead(notification.id).subscribe();
   }
 
   markAsUnread(notification: Notification): void {
-    this.notificationService.markAsUnread(
-      notification.id
-    );
+    this.notificationService.markAsUnread(notification.id).subscribe();
   }
 
   markAllAsRead(): void {
-    this.notificationService.markAllAsRead();
+    this.notificationService.markAllAsRead().subscribe();
   }
 
   deleteNotification(
     notification: Notification
   ): void {
-    this.notificationService.deleteNotification(
-      notification.id
-    );
+    this.notificationService.deleteNotification(notification.id).subscribe();
   }
 
   clearReadNotifications(): void {
-    this.notificationService.clearReadNotifications();
+    this.notificationService.clearReadNotifications().subscribe();
   }
 
   openNotification(
     notification: Notification
   ): void {
     if (!notification.isRead) {
-      this.notificationService.markAsRead(
-        notification.id
-      );
+      this.notificationService.markAsRead(notification.id).subscribe();
     }
 
-    if (notification.route) {
-      this.router.navigateByUrl(
-        notification.route
-      );
+    const route = this.notificationService.resourceRoute(notification);
+    if (route) {
+      this.router.navigateByUrl(route);
     }
   }
 

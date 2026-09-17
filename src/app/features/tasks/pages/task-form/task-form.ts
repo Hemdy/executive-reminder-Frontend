@@ -18,6 +18,7 @@ import {
   TaskStatus
 } from '../../../../core/models/task.model';
 import { TaskService } from '../../../../core/services/task.service';
+import { RoleService } from '../../../../core/services/role.service';
 
 interface FormUser {
   id: string;
@@ -50,6 +51,7 @@ export class TaskForm {
   private readonly authService = inject(AuthService);
   private readonly router = inject(Router);
   private readonly route = inject(ActivatedRoute);
+  private readonly roleService = inject(RoleService);
 
   readonly currentUser = this.authService.currentUser;
 
@@ -59,24 +61,7 @@ export class TaskForm {
 
   readonly isSaving = signal(false);
 
-  readonly employees = signal<FormUser[]>([
-    {
-      id: 'user-ceo',
-      firstName: 'Dr. Chigozie',
-      lastName: 'F. Oriaku'
-    },
-    {
-      id: 'user-employee',
-      firstName: 'John',
-      lastName: 'Doe',
-      department: 'Operations'
-    },
-    {
-      id: 'user-assistant',
-      firstName: 'Sarah',
-      lastName: 'Williams'
-    }
-  ]);
+  readonly employees = this.roleService.users;
 
   readonly categories = [
     'General',
@@ -107,6 +92,7 @@ export class TaskForm {
     title: ['', [Validators.required, Validators.maxLength(200)]],
     description: ['', [Validators.maxLength(2000)]],
     assignedToId: ['', Validators.required],
+    participantIds: this.fb.nonNullable.control<string[]>([]),
     priority: ['MEDIUM' as TaskPriority, Validators.required],
     category: ['General', Validators.required],
     dueDate: ['', Validators.required],
@@ -128,6 +114,7 @@ export class TaskForm {
     if (!id) {
       this.taskForm.patchValue({
         assignedToId: this.currentUser()?.id ?? ''
+        , participantIds: this.currentUser()?.id ? [this.currentUser()!.id] : []
       });
 
       return;
@@ -147,6 +134,7 @@ export class TaskForm {
       title: task.title,
       description: task.description ?? '',
       assignedToId: task.assignedTo.id,
+      participantIds: task.participants?.map(user => user.id) ?? [task.assignedTo.id],
       priority: task.priority,
       category: task.category,
       dueDate: task.dueDate,
@@ -174,6 +162,7 @@ export class TaskForm {
     }
 
     const formValue = this.taskForm.getRawValue();
+    const participantIds = formValue.participantIds.length ? formValue.participantIds : [formValue.assignedToId];
 
     const assignedTo = this.employees().find(
       user => user.id === formValue.assignedToId
@@ -186,18 +175,11 @@ export class TaskForm {
 
     this.isSaving.set(true);
 
-    const assignedUser = {
-      id: assignedTo.id,
-      firstName: assignedTo.firstName,
-      lastName: assignedTo.lastName,
-      email: `${assignedTo.id}@exectrack.local`,
-      role: assignedTo.id === 'user-ceo'
-        ? 'CEO' as const
-        : assignedTo.id === 'user-assistant'
-          ? 'EXECUTIVE_ASSISTANT' as const
-          : 'EMPLOYEE' as const,
-      department: assignedTo.department
-    };
+    const assignedUser = this.roleService.users().find(user => user.id === assignedTo.id);
+    if (!assignedUser) {
+      this.errorMessage.set('The selected assignee is no longer available.');
+      return;
+    }
 
     if (this.isEditMode() && this.taskId()) {
       this.taskService.updateTask(
@@ -206,6 +188,7 @@ export class TaskForm {
           title: formValue.title,
           description: formValue.description || undefined,
           assignedToId: formValue.assignedToId,
+          participantIds,
           priority: formValue.priority,
           category: formValue.category,
           dueDate: formValue.dueDate,
@@ -213,15 +196,17 @@ export class TaskForm {
           status: formValue.status
         },
         assignedUser
-      );
-
-      this.router.navigate(['/tasks', this.taskId()]);
+      ).subscribe({
+        next: () => this.router.navigate(['/tasks', this.taskId()!]),
+        error: error => this.errorMessage.set(error.error?.message ?? 'Unable to update the task.')
+      });
     } else {
-      const task = this.taskService.createTask(
+      this.taskService.createTask(
         {
           title: formValue.title,
           description: formValue.description || undefined,
           assignedToId: formValue.assignedToId,
+          participantIds,
           priority: formValue.priority,
           category: formValue.category,
           dueDate: formValue.dueDate,
@@ -229,11 +214,11 @@ export class TaskForm {
         },
         assignedUser,
         currentUser
-      );
-
-      this.router.navigate(['/tasks', task.id]);
+      ).subscribe({
+        next: task => this.router.navigate(['/tasks', task.id]),
+        error: error => this.errorMessage.set(error.error?.message ?? 'Unable to create the task.')
+      });
     }
-
     this.isSaving.set(false);
   }
 
@@ -256,6 +241,13 @@ export class TaskForm {
 
   get assignedToControl() {
     return this.taskForm.controls.assignedToId;
+  }
+
+  toggleParticipant(userId: string, checked: boolean): void {
+    const current = this.taskForm.controls.participantIds.value;
+    const next = checked ? [...new Set([...current, userId])] : current.filter(id => id !== userId);
+    this.taskForm.controls.participantIds.setValue(next);
+    if (next.length) this.taskForm.controls.assignedToId.setValue(next[0]);
   }
 
   get dueDateControl() {

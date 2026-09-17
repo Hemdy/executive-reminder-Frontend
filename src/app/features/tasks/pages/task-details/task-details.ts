@@ -3,7 +3,8 @@ import {
   ChangeDetectionStrategy,
   Component,
   computed,
-  inject
+  inject,
+  OnInit
 } from '@angular/core';
 
 import { DatePipe } from '@angular/common';
@@ -21,7 +22,7 @@ import { TaskService } from '../../../../core/services/task.service';
 })
 
 
-export class TaskDetails {
+export class TaskDetails implements OnInit {
 
 
 
@@ -41,6 +42,11 @@ export class TaskDetails {
 
     return task ? this.taskService.isOverdue(task) : false;
   });
+
+  ngOnInit(): void {
+    const id = this.route.snapshot.paramMap.get('id');
+    if (id) this.taskService.loadTask(id).subscribe();
+  }
 
   editTask(): void {
     const task = this.task();
@@ -63,7 +69,7 @@ export class TaskDetails {
       return;
     }
 
-    this.taskService.updateStatus(task.id, 'IN_PROGRESS');
+    this.taskService.updateStatus(task.id, 'IN_PROGRESS').subscribe();
   }
 
   completeTask(): void {
@@ -73,7 +79,7 @@ export class TaskDetails {
       return;
     }
 
-    this.taskService.updateStatus(task.id, 'COMPLETED');
+    this.taskService.updateStatus(task.id, 'COMPLETED').subscribe();
   }
 
   cancelTask(): void {
@@ -83,7 +89,7 @@ export class TaskDetails {
       return;
     }
 
-    this.taskService.updateStatus(task.id, 'CANCELLED');
+    this.taskService.updateStatus(task.id, 'CANCELLED').subscribe();
   }
 
   reopenTask(): void {
@@ -93,7 +99,7 @@ export class TaskDetails {
       return;
     }
 
-    this.taskService.updateStatus(task.id, 'PENDING');
+    this.taskService.updateStatus(task.id, 'PENDING').subscribe();
   }
 
   deleteTask(): void {
@@ -111,8 +117,9 @@ export class TaskDetails {
       return;
     }
 
-    this.taskService.deleteTask(task.id);
-    this.router.navigate(['/tasks']);
+    this.taskService.deleteTask(task.id).subscribe({
+      next: () => this.router.navigate(['/tasks'])
+    });
   }
 
   getInitials(firstName: string, lastName: string): string {

@@ -93,28 +93,17 @@
             <span>*</span>
           </label>
 
-          <select
-            id="recipient"
-            formControlName="recipientId"
-          >
-            <option value="" disabled>
-              Select recipient
-            </option>
-
-            @for (
-              recipient of recipients();
-              track recipient.id
-            ) {
-              <option [value]="recipient.id">
-                {{ recipient.firstName }}
-                {{ recipient.lastName }}
-
-                @if (recipient.department) {
-                  — {{ recipient.department }}
-                }
-              </option>
+          <div class="participant-list">
+            @for (recipient of recipients(); track recipient.id) {
+              <label class="participant-option">
+                <input type="checkbox"
+                  [checked]="reminderForm.controls.participantIds.value.includes(recipient.id)"
+                  (change)="toggleParticipant(recipient.id, $any($event.target).checked)" />
+                <span>{{ recipient.firstName }} {{ recipient.lastName }}</span>
+                @if (recipient.department) { <small>— {{ recipient.department }}</small> }
+              </label>
             }
-          </select>
+          </div>
 
           @if (
             recipientControl.invalid &&

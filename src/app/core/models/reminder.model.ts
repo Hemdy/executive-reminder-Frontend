@@ -28,6 +28,7 @@ export interface Reminder {
   description?: string;
 
   recipient: User;
+  participants?: User[];
   createdBy: User;
 
   priority: ReminderPriority;
@@ -51,6 +52,7 @@ export interface CreateReminderRequest {
   title: string;
   description?: string;
   recipientId: string;
+  participantIds?: string[];
   priority: ReminderPriority;
   category: string;
   reminderDate: string;
@@ -62,6 +64,7 @@ export interface UpdateReminderRequest {
   title: string;
   description?: string;
   recipientId: string;
+  participantIds?: string[];
   priority: ReminderPriority;
   category: string;
   reminderDate: string;

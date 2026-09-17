@@ -87,24 +87,17 @@
             <span>*</span>
           </label>
 
-          <select
-            id="assignedTo"
-            formControlName="assignedToId"
-          >
-            <option value="" disabled>
-              Select employee
-            </option>
-
+          <div class="participant-list">
             @for (employee of employees(); track employee.id) {
-              <option [value]="employee.id">
-                {{ employee.firstName }}
-                {{ employee.lastName }}
-                @if (employee.department) {
-                  — {{ employee.department }}
-                }
-              </option>
+              <label class="participant-option">
+                <input type="checkbox"
+                  [checked]="taskForm.controls.participantIds.value.includes(employee.id)"
+                  (change)="toggleParticipant(employee.id, $any($event.target).checked)" />
+                <span>{{ employee.firstName }} {{ employee.lastName }}</span>
+                @if (employee.department) { <small>— {{ employee.department }}</small> }
+              </label>
             }
-          </select>
+          </div>
 
           @if (
             assignedToControl.invalid &&

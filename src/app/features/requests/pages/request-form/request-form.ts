@@ -22,6 +22,7 @@ import {
   UpdateRequestRequest
 } from '../../../../core/models/request.model';
 import { RequestService } from '../../../../core/services/request.service';
+import { RoleService } from '../../../../core/services/role.service';
 
 @Component({
   selector: 'app-request-form',
@@ -53,6 +54,7 @@ export class RequestForm {
   private readonly router = inject(Router);
   private readonly authService = inject(AuthService);
   private readonly requestService = inject(RequestService);
+  private readonly roleService = inject(RoleService);
 
   readonly requestId = computed(
     () => this.route.snapshot.paramMap.get('id')
@@ -60,37 +62,7 @@ export class RequestForm {
 
   readonly isEditMode = computed(() => this.requestId() !== null);
 
-  readonly users: User[] = [
-    {
-      id: 'user-ceo',
-      firstName: 'Dr. Chigozie',
-      lastName: 'F. Oriaku',
-      email: 'ceo@exectrack.local',
-      role: 'CEO'
-    },
-    {
-      id: 'user-employee',
-      firstName: 'John',
-      lastName: 'Doe',
-      email: 'employee@exectrack.local',
-      role: 'EMPLOYEE',
-      department: 'Operations'
-    },
-    {
-      id: 'user-assistant',
-      firstName: 'Sarah',
-      lastName: 'Williams',
-      email: 'assistant@exectrack.local',
-      role: 'EXECUTIVE_ASSISTANT'
-    },
-    {
-      id: 'user-admin',
-      firstName: 'Admin',
-      lastName: 'User',
-      email: 'admin@exectrack.local',
-      role: 'ADMIN'
-    }
-  ];
+  readonly users = this.roleService.users;
 
   readonly types: RequestType[] = [
     'GENERAL',
@@ -176,7 +148,7 @@ export class RequestForm {
 
     const values = this.form.getRawValue();
 
-    const assignedTo = this.users.find(
+    const assignedTo = this.users().find(
       user => user.id === values.assignedToId
     );
 
@@ -204,9 +176,10 @@ export class RequestForm {
         this.requestId()!,
         updateRequest,
         assignedTo
-      );
-
-      this.router.navigate(['/requests', this.requestId()]);
+      ).subscribe({
+        next: () => this.router.navigate(['/requests', this.requestId()!]),
+        error: error => this.form.setErrors({ api: error.error?.message ?? 'Unable to update the request.' })
+      });
       return;
     }
 
@@ -221,13 +194,14 @@ export class RequestForm {
         : undefined
     };
 
-    const createdRequest = this.requestService.createRequest(
+    this.requestService.createRequest(
       createRequest,
       requester,
       assignedTo
-    );
-
-    this.router.navigate(['/requests', createdRequest.id]);
+    ).subscribe({
+      next: createdRequest => this.router.navigate(['/requests', createdRequest.id]),
+      error: error => this.form.setErrors({ api: error.error?.message ?? 'Unable to create the request.' })
+    });
   }
 
   cancel(): void {

@@ -1,277 +1,64 @@
-import { Injectable, computed, signal } from '@angular/core';
-import { User } from '../../core/models/user.model';
-import {
-  CreateTaskRequest,
-  Task,
-  TaskPriority,
-  TaskStatus,
-  UpdateTaskRequest
-} from '../models/task.model';
+import { HttpClient } from '@angular/common/http';
+import { Injectable, computed, inject, signal } from '@angular/core';
+import { Observable, tap } from 'rxjs';
+import { User } from '../models/user.model';
+import { CreateTaskRequest, Task, TaskStatus, UpdateTaskRequest } from '../models/task.model';
+import { API_BASE_URL } from '../config/api.config';
 
-@Injectable({
-  providedIn: 'root'
-})
+@Injectable({ providedIn: 'root' })
 export class TaskService {
+  private readonly http = inject(HttpClient);
+  private readonly apiUrl = `${API_BASE_URL}/tasks`;
   private readonly tasksSignal = signal<Task[]>([]);
-
   readonly tasks = this.tasksSignal.asReadonly();
-
-  readonly pendingTasks = computed(() =>
-    this.tasksSignal().filter(task => task.status === 'PENDING')
-  );
-
-  readonly inProgressTasks = computed(() =>
-    this.tasksSignal().filter(task => task.status === 'IN_PROGRESS')
-  );
-
-  readonly completedTasks = computed(() =>
-    this.tasksSignal().filter(task => task.status === 'COMPLETED')
-  );
+  readonly pendingTasks = computed(() => this.tasksSignal().filter(task => task.status === 'PENDING'));
+  readonly inProgressTasks = computed(() => this.tasksSignal().filter(task => task.status === 'IN_PROGRESS'));
+  readonly completedTasks = computed(() => this.tasksSignal().filter(task => task.status === 'COMPLETED'));
 
   constructor() {
-    this.loadMockTasks();
+    this.loadTasks().subscribe({ error: error => console.error('Unable to load tasks', error) });
   }
 
-  getTasks(): Task[] {
-    return this.tasksSignal();
+  getTasks(): Task[] { return this.tasksSignal(); }
+  getTask(id: string): Task | undefined { return this.tasksSignal().find(task => task.id === id); }
+  loadTask(id: string): Observable<Task> {
+    return this.http.get<Task>(`${this.apiUrl}/${id}`).pipe(tap(task => {
+      const normalized = this.normalize(task);
+      this.tasksSignal.update(tasks => tasks.some(item => item.id === normalized.id)
+        ? tasks.map(item => item.id === normalized.id ? normalized : item)
+        : [normalized, ...tasks]);
+    }));
   }
 
-  getTask(id: string): Task | undefined {
-    return this.tasksSignal().find(task => task.id === id);
+  loadTasks(): Observable<Task[]> {
+    return this.http.get<Task[]>(this.apiUrl).pipe(tap(tasks => this.tasksSignal.set(tasks.map(task => this.normalize(task)))));
   }
 
-  createTask(
-    request: CreateTaskRequest,
-    assignedTo: User,
-    createdBy: User
-  ): Task {
-    const now = new Date().toISOString();
-
-    const task: Task = {
-      id: crypto.randomUUID(),
-
-      title: request.title,
-      description: request.description,
-
-      assignedTo,
-      createdBy,
-
-      priority: request.priority,
-      category: request.category,
-
-      dueDate: request.dueDate,
-      dueTime: request.dueTime,
-
-      status: 'PENDING',
-
-      createdAt: now,
-      updatedAt: now,
-
-      commentsCount: 0,
-      attachmentsCount: 0
-    };
-
-    this.tasksSignal.update(tasks => [task, ...tasks]);
-
-    return task;
+  createTask(request: CreateTaskRequest, _assignedTo?: User, _createdBy?: User): Observable<Task> {
+    return this.http.post<Task>(this.apiUrl, request).pipe(tap(task => this.tasksSignal.update(tasks => [this.normalize(task), ...tasks])));
   }
 
-  updateTask(
-    id: string,
-    request: UpdateTaskRequest,
-    assignedTo: User
-  ): void {
-    this.tasksSignal.update(tasks =>
-      tasks.map(task =>
-        task.id === id
-          ? {
-              ...task,
-              title: request.title,
-              description: request.description,
-              assignedTo,
-              priority: request.priority,
-              category: request.category,
-              dueDate: request.dueDate,
-              dueTime: request.dueTime,
-              status: request.status,
-              updatedAt: new Date().toISOString()
-            }
-          : task
-      )
-    );
+  updateTask(id: string, request: UpdateTaskRequest, _assignedTo?: User): Observable<Task> {
+    return this.http.patch<Task>(`${this.apiUrl}/${id}`, request).pipe(tap(task => this.replace(this.normalize(task))));
   }
 
-  updateStatus(id: string, status: TaskStatus): void {
-    this.tasksSignal.update(tasks =>
-      tasks.map(task =>
-        task.id === id
-          ? {
-              ...task,
-              status,
-              updatedAt: new Date().toISOString()
-            }
-          : task
-      )
-    );
+  updateStatus(id: string, status: TaskStatus): Observable<Task> {
+    return this.http.patch<Task>(`${this.apiUrl}/${id}/status`, { status }).pipe(tap(task => this.replace(this.normalize(task))));
   }
 
-  deleteTask(id: string): void {
-    this.tasksSignal.update(tasks =>
-      tasks.filter(task => task.id !== id)
-    );
+  deleteTask(id: string): Observable<void> {
+    return this.http.delete<void>(`${this.apiUrl}/${id}`).pipe(tap(() => this.tasksSignal.update(tasks => tasks.filter(task => task.id !== id))));
   }
 
   isOverdue(task: Task): boolean {
-    if (
-      task.status === 'COMPLETED' ||
-      task.status === 'CANCELLED'
-    ) {
-      return false;
-    }
-
-    const dueDateTime = this.getDueDateTime(task);
-
-    return dueDateTime.getTime() < Date.now();
+    if (task.status === 'COMPLETED' || task.status === 'CANCELLED') return false;
+    return new Date(`${task.dueDate}T${task.dueTime || '23:59'}`).getTime() < Date.now();
   }
 
-  private getDueDateTime(task: Task): Date {
-    const time = task.dueTime || '23:59';
-
-    return new Date(`${task.dueDate}T${time}`);
+  private replace(task: Task): void {
+    this.tasksSignal.update(tasks => tasks.map(existing => existing.id === task.id ? task : existing));
   }
-
-  private loadMockTasks(): void {
-    const ceo: User = {
-      id: 'user-ceo',
-      title: 'Dr.',
-      firstName: 'Chigozie',
-      lastName: 'F. Oriaku',
-      email: 'ceo@exectrack.local',
-      role: 'CEO'
-    };
-
-    const john: User = {
-      id: 'user-employee',
-      firstName: 'John',
-      lastName: 'Doe',
-      email: 'employee@exectrack.local',
-      role: 'EMPLOYEE',
-      department: 'Operations'
-    };
-
-    const sarah: User = {
-      id: 'user-assistant',
-      firstName: 'Sarah',
-      lastName: 'Williams',
-      email: 'assistant@exectrack.local',
-      role: 'EXECUTIVE_ASSISTANT'
-    };
-
-    const now = new Date();
-
-    const yesterday = new Date(now);
-    yesterday.setDate(yesterday.getDate() - 1);
-
-    const tomorrow = new Date(now);
-    tomorrow.setDate(tomorrow.getDate() + 1);
-
-    const inThreeDays = new Date(now);
-    inThreeDays.setDate(inThreeDays.getDate() + 3);
-
-    this.tasksSignal.set([
-      {
-        id: 'task-001',
-        title: 'Review Q3 Financial Report',
-        description:
-          'Review the final Q3 financial report and provide comments before the executive meeting.',
-        assignedTo: ceo,
-        createdBy: sarah,
-        priority: 'HIGH',
-        category: 'Finance',
-        dueDate: this.formatDate(yesterday),
-        dueTime: '16:00',
-        status: 'PENDING',
-        createdAt: now.toISOString(),
-        updatedAt: now.toISOString(),
-        commentsCount: 4,
-        attachmentsCount: 2
-      },
-      {
-        id: 'task-002',
-        title: 'Prepare Board Meeting Agenda',
-        description:
-          'Prepare and circulate the agenda for the upcoming board meeting.',
-        assignedTo: sarah,
-        createdBy: ceo,
-        priority: 'URGENT',
-        category: 'Meetings',
-        dueDate: this.formatDate(now),
-        dueTime: '14:00',
-        status: 'IN_PROGRESS',
-        createdAt: now.toISOString(),
-        updatedAt: now.toISOString(),
-        commentsCount: 2,
-        attachmentsCount: 1
-      },
-      {
-        id: 'task-003',
-        title: 'Office Equipment Inventory',
-        description:
-          'Complete the inventory of office equipment and submit the updated list.',
-        assignedTo: john,
-        createdBy: sarah,
-        priority: 'MEDIUM',
-        category: 'Operations',
-        dueDate: this.formatDate(tomorrow),
-        dueTime: '12:00',
-        status: 'PENDING',
-        createdAt: now.toISOString(),
-        updatedAt: now.toISOString(),
-        commentsCount: 0,
-        attachmentsCount: 0
-      },
-      {
-        id: 'task-004',
-        title: 'Review Annual Contract',
-        description:
-          'Review the annual supplier contract and identify any items requiring renegotiation.',
-        assignedTo: ceo,
-        createdBy: sarah,
-        priority: 'MEDIUM',
-        category: 'Legal',
-        dueDate: this.formatDate(inThreeDays),
-        dueTime: '10:00',
-        status: 'PENDING',
-        createdAt: now.toISOString(),
-        updatedAt: now.toISOString(),
-        commentsCount: 1,
-        attachmentsCount: 1
-      },
-      {
-        id: 'task-005',
-        title: 'Approve Laptop Purchase',
-        description:
-          'Approve the laptop purchase request for the new operations team members.',
-        assignedTo: ceo,
-        createdBy: john,
-        priority: 'URGENT',
-        category: 'Approval',
-        dueDate: this.formatDate(now),
-        dueTime: '17:00',
-        status: 'COMPLETED',
-        createdAt: now.toISOString(),
-        updatedAt: now.toISOString(),
-        commentsCount: 3,
-        attachmentsCount: 2
-      }
-    ]);
-  }
-
-  private formatDate(date: Date): string {
-    const year = date.getFullYear();
-    const month = String(date.getMonth() + 1).padStart(2, '0');
-    const day = String(date.getDate()).padStart(2, '0');
-
-    return `${year}-${month}-${day}`;
+  private normalize(task: Task): Task {
+    return { ...task, dueDate: task.dueDate.slice(0, 10) };
   }
 }

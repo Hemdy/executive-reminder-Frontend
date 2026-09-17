@@ -30,6 +30,7 @@ export interface Notification {
   createdAt: string;
 
   sourceId?: string;
-
+  referenceId?: string;
+  resourceType?: 'task' | 'reminder' | 'meeting' | 'request';
   route?: string;
 }

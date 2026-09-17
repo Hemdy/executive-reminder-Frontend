@@ -26,6 +26,7 @@ import {
   ReminderStatus
 } from '../../../../core/models/reminder.model';
 import { ReminderService } from '../../../../core/services/reminder.service';
+import { RoleService } from '../../../../core/services/role.service';
 
 interface ReminderUser {
   id: string;
@@ -54,6 +55,7 @@ export class ReminderForm {
   private readonly authService = inject(AuthService);
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
+  private readonly roleService = inject(RoleService);
 
   readonly currentUser = this.authService.currentUser;
 
@@ -62,24 +64,7 @@ export class ReminderForm {
   readonly errorMessage = signal('');
   readonly isSaving = signal(false);
 
-  readonly recipients = signal<ReminderUser[]>([
-    {
-      id: 'user-ceo',
-      firstName: 'Dr. Chigozie',
-      lastName: 'F. Oriaku'
-    },
-    {
-      id: 'user-employee',
-      firstName: 'John',
-      lastName: 'Doe',
-      department: 'Operations'
-    },
-    {
-      id: 'user-assistant',
-      firstName: 'Sarah',
-      lastName: 'Williams'
-    }
-  ]);
+  readonly recipients = this.roleService.users;
 
   readonly categories = [
     'General',
@@ -121,6 +106,7 @@ export class ReminderForm {
     title: ['', [Validators.required, Validators.maxLength(200)]],
     description: ['', Validators.maxLength(2000)],
     recipientId: ['', Validators.required],
+    participantIds: this.fb.nonNullable.control<string[]>([]),
     priority: ['MEDIUM' as ReminderPriority, Validators.required],
     category: ['General', Validators.required],
     reminderDate: ['', Validators.required],
@@ -145,6 +131,7 @@ export class ReminderForm {
     if (!id) {
       this.reminderForm.patchValue({
         recipientId: this.currentUser()?.id ?? '',
+        participantIds: this.currentUser()?.id ? [this.currentUser()!.id] : [],
         reminderTime: '09:00'
       });
 
@@ -167,6 +154,7 @@ export class ReminderForm {
       title: reminder.title,
       description: reminder.description ?? '',
       recipientId: reminder.recipient.id,
+      participantIds: reminder.participants?.map(user => user.id) ?? [reminder.recipient.id],
       priority: reminder.priority,
       category: reminder.category,
       reminderDate: reminder.reminderDate,
@@ -200,6 +188,7 @@ export class ReminderForm {
     }
 
     const formValue = this.reminderForm.getRawValue();
+    const participantIds = formValue.participantIds.length ? formValue.participantIds : [formValue.recipientId];
 
     const selectedRecipient = this.recipients().find(
       recipient =>
@@ -214,19 +203,11 @@ export class ReminderForm {
       return;
     }
 
-    const recipient = {
-      id: selectedRecipient.id,
-      firstName: selectedRecipient.firstName,
-      lastName: selectedRecipient.lastName,
-      email: `${selectedRecipient.id}@exectrack.local`,
-      role:
-        selectedRecipient.id === 'user-ceo'
-          ? 'CEO' as const
-          : selectedRecipient.id === 'user-assistant'
-            ? 'EXECUTIVE_ASSISTANT' as const
-            : 'EMPLOYEE' as const,
-      department: selectedRecipient.department
-    };
+    const recipient = this.roleService.users().find(user => user.id === selectedRecipient.id);
+    if (!recipient) {
+      this.errorMessage.set('The selected recipient is no longer available.');
+      return;
+    }
 
     this.isSaving.set(true);
 
@@ -238,6 +219,7 @@ export class ReminderForm {
           description:
             formValue.description || undefined,
           recipientId: formValue.recipientId,
+          participantIds,
           priority: formValue.priority,
           category: formValue.category,
           reminderDate: formValue.reminderDate,
@@ -246,20 +228,18 @@ export class ReminderForm {
           status: formValue.status
         },
         recipient
-      );
-
-      this.router.navigate([
-        '/reminders',
-        this.reminderId()
-      ]);
+      ).subscribe({
+        next: () => this.router.navigate(['/reminders', this.reminderId()!]),
+        error: error => this.errorMessage.set(error.error?.message ?? 'Unable to update the reminder.')
+      });
     } else {
-      const reminder =
-        this.reminderService.createReminder(
+      this.reminderService.createReminder(
           {
             title: formValue.title,
             description:
               formValue.description || undefined,
             recipientId: formValue.recipientId,
+            participantIds,
             priority: formValue.priority,
             category: formValue.category,
             reminderDate: formValue.reminderDate,
@@ -268,12 +248,10 @@ export class ReminderForm {
           },
           recipient,
           currentUser
-        );
-
-      this.router.navigate([
-        '/reminders',
-        reminder.id
-      ]);
+        ).subscribe({
+          next: reminder => this.router.navigate(['/reminders', reminder.id]),
+          error: error => this.errorMessage.set(error.error?.message ?? 'Unable to create the reminder.')
+        });
     }
 
     this.isSaving.set(false);
@@ -306,5 +284,12 @@ export class ReminderForm {
 
   get timeControl() {
     return this.reminderForm.controls.reminderTime;
+  }
+
+  toggleParticipant(userId: string, checked: boolean): void {
+    const current = this.reminderForm.controls.participantIds.value;
+    const next = checked ? [...new Set([...current, userId])] : current.filter(id => id !== userId);
+    this.reminderForm.controls.participantIds.setValue(next);
+    if (next.length) this.reminderForm.controls.recipientId.setValue(next[0]);
   }
 }

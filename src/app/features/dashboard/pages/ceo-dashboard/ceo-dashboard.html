@@ -24,7 +24,7 @@
 
   <section class="summary-grid">
 
-    @for (item of summary; track item.label) {
+    @for (item of summary(); track item.label) {
 
       <article class="summary-card">
 
@@ -55,7 +55,7 @@
 
         <div>
           <h2>Today's Schedule</h2>
-          <span>September 6, 2026</span>
+          <span>Live data from your workspace</span>
         </div>
 
         <a routerLink="/calendar">
@@ -66,7 +66,7 @@
 
       <div class="schedule-list">
 
-        @for (item of schedule; track item.time) {
+        @for (item of schedule(); track item.time + item.title) {
 
           <div class="schedule-item">
 
@@ -107,14 +107,14 @@
         </div>
 
         <span class="attention-count">
-          {{ attentionItems.length }}
+          {{ attentionItems().length }}
         </span>
 
       </div>
 
       <div class="attention-list">
 
-        @for (item of attentionItems; track item.title) {
+        @for (item of attentionItems(); track item.title) {
 
           <div class="attention-item">
 
@@ -144,6 +144,54 @@
 
     </article>
 
+    <article class="dashboard-card">
+      <div class="card-header">
+        <div>
+          <h2>Pending Tasks</h2>
+          <span>Assigned to you or included as a participant</span>
+        </div>
+        <a routerLink="/tasks">View tasks</a>
+      </div>
+      <div class="schedule-list">
+        @for (task of pendingTasks(); track task.id) {
+          <a class="schedule-item" [routerLink]="['/tasks', task.id]">
+            <time>{{ task.dueDate | date:'mediumDate' }}</time>
+            <div class="schedule-marker"></div>
+            <div class="schedule-content">
+              <strong>{{ task.title }}</strong>
+              <span>{{ task.createdBy.firstName }} {{ task.createdBy.lastName }}</span>
+            </div>
+          </a>
+        } @empty {
+          <div class="empty-placeholder">No pending tasks.</div>
+        }
+      </div>
+    </article>
+
+    <article class="dashboard-card">
+      <div class="card-header">
+        <div>
+          <h2>Upcoming Reminders</h2>
+          <span>Assigned to you or included as a participant</span>
+        </div>
+        <a routerLink="/reminders">View reminders</a>
+      </div>
+      <div class="schedule-list">
+        @for (reminder of upcomingReminders(); track reminder.id) {
+          <a class="schedule-item" [routerLink]="['/reminders', reminder.id]">
+            <time>{{ reminder.reminderDate | date:'mediumDate' }}</time>
+            <div class="schedule-marker"></div>
+            <div class="schedule-content">
+              <strong>{{ reminder.title }}</strong>
+              <span>{{ reminder.createdBy.firstName }} {{ reminder.createdBy.lastName }}</span>
+            </div>
+          </a>
+        } @empty {
+          <div class="empty-placeholder">No upcoming reminders.</div>
+        }
+      </div>
+    </article>
+
   </section>
 
 
@@ -158,8 +206,16 @@
         </div>
       </div>
 
-      <div class="empty-placeholder">
-        Upcoming tasks, reminders and meetings will appear here.
+      <div class="schedule-list">
+        @for (item of schedule(); track item.time + item.title) {
+          <div class="schedule-item">
+            <time>{{ item.time }}</time>
+            <div class="schedule-marker"></div>
+            <div class="schedule-content"><strong>{{ item.title }}</strong><span>{{ item.type }}</span></div>
+          </div>
+        } @empty {
+          <div class="empty-placeholder">No upcoming meetings.</div>
+        }
       </div>
 
     </article>
@@ -177,18 +233,8 @@
       <div class="activity-list">
 
         <div>
-          <strong>John completed a task</strong>
-          <span>5 minutes ago</span>
-        </div>
-
-        <div>
-          <strong>Sarah submitted an approval request</strong>
-          <span>32 minutes ago</span>
-        </div>
-
-        <div>
-          <strong>CEO changed task priority</strong>
-          <span>1 hour ago</span>
+          <strong>{{ notifications.unreadCount() }} unread notifications</strong>
+          <span>Loaded from the backend</span>
         </div>
 
       </div>

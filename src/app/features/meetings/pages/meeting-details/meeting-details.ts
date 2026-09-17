@@ -2,7 +2,8 @@ import {
   ChangeDetectionStrategy,
   Component,
   computed,
-  inject
+  inject,
+  OnInit
 } from '@angular/core';
 
 import { DatePipe } from '@angular/common';
@@ -30,7 +31,7 @@ import { MeetingService } from '../../../../core/services/meeting.service';
   changeDetection: ChangeDetectionStrategy.OnPush
 })
 
-export class MeetingDetails {
+export class MeetingDetails implements OnInit {
 
 
 
@@ -55,6 +56,11 @@ export class MeetingDetails {
       ? this.meetingService.isPast(meeting)
       : false;
   });
+
+  ngOnInit(): void {
+    const id = this.route.snapshot.paramMap.get('id');
+    if (id) this.meetingService.loadMeeting(id).subscribe();
+  }
 
   editMeeting(): void {
     const meeting = this.meeting();
@@ -137,6 +143,6 @@ export class MeetingDetails {
     this.meetingService.updateStatus(
       meeting.id,
       status
-    );
+    ).subscribe();
   }
 }

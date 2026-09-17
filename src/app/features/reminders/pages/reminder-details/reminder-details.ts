@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, computed, inject } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, inject, OnInit } from '@angular/core';
 import { DatePipe } from '@angular/common';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { ReminderPriority, ReminderStatus } from '../../../../core/models/reminder.model';
@@ -12,7 +12,7 @@ import { ReminderService } from '../../../../core/services/reminder.service';
   styleUrl: './reminder-details.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class ReminderDetails {
+export class ReminderDetails implements OnInit {
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
   private readonly reminderService = inject(ReminderService);
@@ -29,6 +29,11 @@ export class ReminderDetails {
     return reminder ? this.reminderService.isOverdue(reminder) : false;
   });
 
+  ngOnInit(): void {
+    const id = this.route.snapshot.paramMap.get('id');
+    if (id) this.reminderService.loadReminder(id).subscribe();
+  }
+
   editReminder(): void {
     const reminder = this.reminder();
 
@@ -43,7 +48,7 @@ export class ReminderDetails {
     const reminder = this.reminder();
 
     if (reminder) {
-      this.reminderService.updateStatus(reminder.id, 'TRIGGERED');
+      this.reminderService.updateStatus(reminder.id, 'TRIGGERED').subscribe();
     }
   }
 
@@ -51,7 +56,7 @@ export class ReminderDetails {
     const reminder = this.reminder();
 
     if (reminder) {
-      this.reminderService.updateStatus(reminder.id, 'COMPLETED');
+      this.reminderService.updateStatus(reminder.id, 'COMPLETED').subscribe();
     }
   }
 
@@ -59,7 +64,7 @@ export class ReminderDetails {
     const reminder = this.reminder();
 
     if (reminder) {
-      this.reminderService.updateStatus(reminder.id, 'DISMISSED');
+      this.reminderService.updateStatus(reminder.id, 'DISMISSED').subscribe();
     }
   }
 
@@ -67,7 +72,7 @@ export class ReminderDetails {
     const reminder = this.reminder();
 
     if (reminder) {
-      this.reminderService.updateStatus(reminder.id, 'CANCELLED');
+      this.reminderService.updateStatus(reminder.id, 'CANCELLED').subscribe();
     }
   }
 
@@ -75,7 +80,7 @@ export class ReminderDetails {
     const reminder = this.reminder();
 
     if (reminder) {
-      this.reminderService.updateStatus(reminder.id, 'PENDING');
+      this.reminderService.updateStatus(reminder.id, 'PENDING').subscribe();
     }
   }
 
@@ -92,8 +97,9 @@ export class ReminderDetails {
       return;
     }
 
-    this.reminderService.deleteReminder(reminder.id);
-    this.router.navigate(['/reminders']);
+    this.reminderService.deleteReminder(reminder.id).subscribe({
+      next: () => this.router.navigate(['/reminders'])
+    });
   }
 
   backToReminders(): void {

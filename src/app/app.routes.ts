@@ -2,6 +2,7 @@ import { Routes } from '@angular/router';
 import { MainLayout } from './layout/main-layout/main-layout';
 import { authGuard } from './core/guards/auth.guard';
 import { roleGuard } from './core/guards/role.guard';
+import { permissionGuard } from './core/guards/permission.guard';
 
 export const routes: Routes = [
   {
@@ -141,6 +142,14 @@ loadComponent: () =>
 
 
 
+
+        {
+          path: 'roles',
+          canActivate: [permissionGuard('roles:view')],
+          loadComponent: () =>
+            import('./features/roles/pages/role-management/role-management')
+              .then(m => m.RoleManagement)
+        },
 
         {
           path: 'calendar',

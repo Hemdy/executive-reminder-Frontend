@@ -141,7 +141,7 @@
       </div>
 
 
-      <form class="login-form">
+      <form class="login-form" [formGroup]="loginForm" (ngSubmit)="submit()">
 
         <div class="form-field">
 
@@ -164,6 +164,7 @@
             <input
               id="email"
               type="email"
+              formControlName="email"
               placeholder="you@company.com"
             />
 
@@ -198,13 +199,15 @@
 
             <input
               id="password"
-              type="password"
+              [type]="passwordVisible() ? 'text' : 'password'"
+              formControlName="password"
               placeholder="Enter your password"
             />
 
             <button
               type="button"
               class="password-toggle"
+              (click)="togglePassword()"
             >
               <svg
                 viewBox="0 0 24 24"
@@ -256,12 +259,16 @@
 
         </button>
 
+        @if (loginError()) {
+          <p class="login-error" role="alert">{{ loginError() }}</p>
+        }
+
       </form>
 
 
       <!-- DEVELOPMENT ACCESS -->
 
-      <div class="development-section">
+      <!-- <div class="development-section">
 
         <div class="development-heading">
 
@@ -340,7 +347,7 @@
 
         </div>
 
-      </div>
+      </div> -->
 
 
       <div class="login-footer">
