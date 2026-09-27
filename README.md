@@ -12,6 +12,19 @@ ng serve
 
 Once the server is running, open your browser and navigate to `http://localhost:4200/`. The application will automatically reload whenever you modify any of the source files.
 
+## Backend API
+
+The frontend calls the backend under `/api`. During local development, the
+Angular dev-server proxy in `proxy.conf.json` forwards those requests to
+`http://localhost:3000`. Start the NestJS backend before using the
+authenticated features.
+
+For deployments where the API is not hosted under the frontend's origin, set
+the public `apiBaseUrl` in `public/app-config.js` to the backend API URL,
+including `/api` (for example, `https://api.example.com/api`). This browser
+configuration is public: never put database connection strings, `JWT_SECRET`,
+or other private credentials in it.
+
 ## Code scaffolding
 
 Angular CLI includes powerful code scaffolding tools. To generate a new component, run:
