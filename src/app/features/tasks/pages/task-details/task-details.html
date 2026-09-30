@@ -2,6 +2,10 @@
 
   @if (task(); as currentTask) {
 
+    @if (taskActionError()) {
+      <p class="task-error" role="alert">{{ taskActionError() }}</p>
+    }
+
     <header class="page-header">
 
       <div>
@@ -30,15 +34,17 @@
 
       <div class="header-actions">
 
-        <button
-          type="button"
-          class="secondary-button"
-          (click)="editTask()"
-        >
-          Edit Task
-        </button>
+        @if (canManageTask()) {
+          <button
+            type="button"
+            class="secondary-button"
+            (click)="editTask()"
+          >
+            Edit Task
+          </button>
+        }
 
-        @if (currentTask.status === 'PENDING') {
+        @if (canUpdateTaskStatus() && currentTask.status === 'PENDING') {
           <button
             type="button"
             class="primary-button"
@@ -48,7 +54,7 @@
           </button>
         }
 
-        @if (currentTask.status === 'IN_PROGRESS') {
+        @if (canUpdateTaskStatus() && currentTask.status === 'IN_PROGRESS') {
           <button
             type="button"
             class="primary-button"
@@ -61,6 +67,10 @@
       </div>
 
     </header>
+
+    @if (activityError()) {
+      <p class="task-error" role="alert">{{ activityError() }}</p>
+    }
 
     <div class="details-layout">
 
@@ -91,25 +101,46 @@
               <h2>Comments</h2>
               <span>{{ currentTask.commentsCount }}</span>
             </div>
-
-            <button
-              type="button"
-              class="text-button"
-            >
-              Add Comment
-            </button>
           </div>
 
-          <div class="placeholder-panel">
-            <div class="placeholder-icon">💬</div>
+          @if (comments().length) {
+            <div class="activity-list">
+              @for (comment of comments(); track comment.id) {
+                <article class="task-comment">
+                  <div class="comment-meta">
+                    <strong>
+                      {{ comment.author.title }} {{ comment.author.firstName }} {{ comment.author.lastName }}
+                    </strong>
+                    <time>{{ comment.createdAt | date:'MMM d, yyyy · h:mm a' }}</time>
+                  </div>
+                  <p>{{ comment.body }}</p>
+                </article>
+              }
+            </div>
+          } @else {
+            <p class="activity-empty">No comments yet.</p>
+          }
 
-            <h3>Comments coming next</h3>
-
-            <p>
-              Task comments will appear here and can be added
-              by authorized users.
-            </p>
-          </div>
+          @if (canUseTaskActivity()) {
+            <form class="task-comment-form" (ngSubmit)="submitComment()">
+              <label for="task-comment">Add a comment</label>
+              <textarea
+                id="task-comment"
+                rows="3"
+                maxlength="5000"
+                placeholder="Write a comment..."
+                [value]="commentText()"
+                (input)="updateCommentText($event)"
+              ></textarea>
+              <button
+                type="submit"
+                class="primary-button"
+                [disabled]="submittingComment() || !commentText().trim()"
+              >
+                {{ submittingComment() ? 'Posting...' : 'Post Comment' }}
+              </button>
+            </form>
+          }
 
         </section>
 
@@ -120,24 +151,44 @@
               <h2>Attachments</h2>
               <span>{{ currentTask.attachmentsCount }}</span>
             </div>
-
-            <button
-              type="button"
-              class="text-button"
-            >
-              Add Attachment
-            </button>
           </div>
 
-          <div class="placeholder-panel">
-            <div class="placeholder-icon">📎</div>
+          @if (attachments().length) {
+            <div class="task-attachments">
+              @for (attachment of attachments(); track attachment.id) {
+                <div class="task-attachment">
+                  <span class="attachment-icon" aria-hidden="true">📎</span>
+                  <div class="attachment-details">
+                    <strong>{{ attachment.fileName }}</strong>
+                    <span>{{ formatFileSize(attachment.size) }} · {{ attachment.uploader.firstName }} {{ attachment.uploader.lastName }}</span>
+                  </div>
+                  <button
+                    class="text-button"
+                    type="button"
+                    (click)="downloadAttachment(attachment)"
+                  >
+                    Download
+                  </button>
+                </div>
+              }
+            </div>
+          } @else {
+            <p class="activity-empty">No files attached yet.</p>
+          }
 
-            <h3>Attachments coming next</h3>
-
-            <p>
-              Files attached to this task will appear here.
-            </p>
-          </div>
+          @if (canUseTaskActivity()) {
+            <label class="attachment-upload">
+              <span>{{ uploadingAttachments() ? 'Uploading...' : 'Add files' }}</span>
+              <small>PDF, images, and office documents · 4 MB max per file</small>
+              <input
+                type="file"
+                multiple
+                accept=".pdf,.png,.jpg,.jpeg,.gif,.webp,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.odt,.rtf,.txt"
+                [disabled]="uploadingAttachments()"
+                (change)="uploadAttachments($event)"
+              >
+            </label>
+          }
 
         </section>
 
@@ -262,9 +313,7 @@
 
           <div class="action-list">
 
-            @if (
-              currentTask.status === 'PENDING'
-            ) {
+            @if (canUpdateTaskStatus() && currentTask.status === 'PENDING') {
               <button
                 type="button"
                 (click)="startTask()"
@@ -273,9 +322,7 @@
               </button>
             }
 
-            @if (
-              currentTask.status === 'IN_PROGRESS'
-            ) {
+            @if (canUpdateTaskStatus() && currentTask.status === 'IN_PROGRESS') {
               <button
                 type="button"
                 (click)="completeTask()"
@@ -285,6 +332,7 @@
             }
 
             @if (
+              canManageTask() &&
               currentTask.status !== 'CANCELLED' &&
               currentTask.status !== 'COMPLETED'
             ) {
@@ -297,8 +345,8 @@
             }
 
             @if (
-              currentTask.status === 'COMPLETED' ||
-              currentTask.status === 'CANCELLED'
+              canManageTask() &&
+              (currentTask.status === 'COMPLETED' || currentTask.status === 'CANCELLED')
             ) {
               <button
                 type="button"
@@ -308,13 +356,15 @@
               </button>
             }
 
-            <button
-              type="button"
-              class="danger-action"
-              (click)="deleteTask()"
-            >
-              Delete Task
-            </button>
+            @if (canManageTask()) {
+              <button
+                type="button"
+                class="danger-action"
+                (click)="deleteTask()"
+              >
+                Delete Task
+              </button>
+            }
 
           </div>
 

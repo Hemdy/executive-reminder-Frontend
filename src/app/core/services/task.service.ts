@@ -2,7 +2,14 @@ import { HttpClient } from '@angular/common/http';
 import { Injectable, computed, inject, signal } from '@angular/core';
 import { Observable, tap } from 'rxjs';
 import { User } from '../models/user.model';
-import { CreateTaskRequest, Task, TaskStatus, UpdateTaskRequest } from '../models/task.model';
+import {
+  CreateTaskRequest,
+  Task,
+  TaskAttachment,
+  TaskComment,
+  TaskStatus,
+  UpdateTaskRequest
+} from '../models/task.model';
 import { API_BASE_URL } from '../config/api.config';
 
 @Injectable({ providedIn: 'root' })
@@ -46,6 +53,30 @@ export class TaskService {
     return this.http.patch<Task>(`${this.apiUrl}/${id}/status`, { status }).pipe(tap(task => this.replace(this.normalize(task))));
   }
 
+  getComments(taskId: string): Observable<TaskComment[]> {
+    return this.http.get<TaskComment[]>(`${this.apiUrl}/${taskId}/comments`);
+  }
+
+  addComment(taskId: string, body: string): Observable<TaskComment> {
+    return this.http.post<TaskComment>(`${this.apiUrl}/${taskId}/comments`, { body });
+  }
+
+  getAttachments(taskId: string): Observable<TaskAttachment[]> {
+    return this.http.get<TaskAttachment[]>(`${this.apiUrl}/${taskId}/attachments`);
+  }
+
+  uploadAttachment(taskId: string, file: File): Observable<TaskAttachment> {
+    const formData = new FormData();
+    formData.append('file', file);
+    return this.http.post<TaskAttachment>(`${this.apiUrl}/${taskId}/attachments`, formData);
+  }
+
+  downloadAttachment(taskId: string, attachmentId: string): Observable<Blob> {
+    return this.http.get(`${this.apiUrl}/${taskId}/attachments/${attachmentId}`, {
+      responseType: 'blob'
+    });
+  }
+
   deleteTask(id: string): Observable<void> {
     return this.http.delete<void>(`${this.apiUrl}/${id}`).pipe(tap(() => this.tasksSignal.update(tasks => tasks.filter(task => task.id !== id))));
   }
@@ -59,6 +90,11 @@ export class TaskService {
     this.tasksSignal.update(tasks => tasks.map(existing => existing.id === task.id ? task : existing));
   }
   private normalize(task: Task): Task {
-    return { ...task, dueDate: task.dueDate.slice(0, 10) };
+    return {
+      ...task,
+      dueDate: task.dueDate.slice(0, 10),
+      commentsCount: task._count?.comments ?? task.commentsCount ?? 0,
+      attachmentsCount: task._count?.attachments ?? task.attachmentsCount ?? 0
+    };
   }
 }

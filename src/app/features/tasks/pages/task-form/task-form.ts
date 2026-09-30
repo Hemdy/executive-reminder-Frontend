@@ -134,7 +134,7 @@ export class TaskForm {
       title: task.title,
       description: task.description ?? '',
       assignedToId: task.assignedTo.id,
-      participantIds: task.participants?.map(user => user.id) ?? [task.assignedTo.id],
+      participantIds: task.participants?.map(participant => participant.user.id) ?? [task.assignedTo.id],
       priority: task.priority,
       category: task.category,
       dueDate: task.dueDate,

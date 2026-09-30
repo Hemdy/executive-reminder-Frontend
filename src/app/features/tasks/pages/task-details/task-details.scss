@@ -368,6 +368,133 @@ aside {
   color: var(--danger);
 }
 
+.task-error {
+  padding: 10px 12px;
+  margin: 0 0 16px;
+  border-radius: 6px;
+  background: #fff4f4;
+  color: var(--danger);
+  font-size: 13px;
+}
+
+.activity-list,
+.task-attachments {
+  display: grid;
+}
+
+.task-comment,
+.task-attachment {
+  padding: 16px 20px;
+  border-bottom: 1px solid var(--border);
+}
+
+.comment-meta {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.comment-meta strong,
+.attachment-details strong {
+  font-size: 12px;
+}
+
+.comment-meta time,
+.attachment-details span {
+  color: var(--text-muted);
+  font-size: 11px;
+}
+
+.task-comment p {
+  margin: 8px 0 0;
+  font-size: 13px;
+  line-height: 1.55;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+.activity-empty {
+  padding: 16px 20px;
+  margin: 0;
+  color: var(--text-muted);
+  font-size: 13px;
+}
+
+.task-comment-form {
+  display: grid;
+  justify-items: start;
+  gap: 10px;
+  padding: 16px 20px 20px;
+}
+
+.task-comment-form label {
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.task-comment-form textarea {
+  width: 100%;
+  min-height: 74px;
+  padding: 10px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: var(--surface);
+  color: var(--text);
+  font: inherit;
+  font-size: 13px;
+  resize: vertical;
+}
+
+.task-comment-form .primary-button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.task-attachment {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.attachment-icon {
+  flex: 0 0 auto;
+}
+
+.attachment-details {
+  display: grid;
+  min-width: 0;
+  flex: 1;
+  gap: 4px;
+}
+
+.attachment-details strong {
+  overflow-wrap: anywhere;
+}
+
+.attachment-upload {
+  display: grid;
+  justify-items: start;
+  gap: 5px;
+  padding: 16px 20px 20px;
+  color: var(--primary);
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.attachment-upload small {
+  color: var(--text-muted);
+  font-size: 11px;
+  font-weight: 400;
+}
+
+.attachment-upload input {
+  max-width: 100%;
+  color: var(--text);
+  font-size: 12px;
+}
+
 .not-found {
   padding: 100px 20px;
   text-align: center;

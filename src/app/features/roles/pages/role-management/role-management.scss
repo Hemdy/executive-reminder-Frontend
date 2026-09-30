@@ -1,7 +1,11 @@
 .roles-page {
-//   max-width: 1280px;
+  width: min(100%, 1500px);
+  max-width: 1500px;
+  min-width: 0;
   margin: 0 auto;
-  padding: 32px;
+  padding: 0;
+  box-sizing: border-box;
+  overflow-wrap: anywhere;
 }
 .page-header,
 .panel-header {
@@ -41,6 +45,7 @@ h3 {
 .summary {
   background: var(--surface-muted);
   color: var(--text-muted);
+  max-width: 100%;
 }
 .tabs {
   display: flex;
@@ -62,6 +67,8 @@ h3 {
   color: var(--primary);
 }
 .panel {
+  min-width: 0;
+  max-width: 100%;
   background: var(--surface);
   border: 1px solid var(--border);
   border-radius: 12px;
@@ -124,9 +131,11 @@ h3 {
   font-size: 13px;
   font-weight: 600;
 }
-.editor input,
+.editor input:not([type="checkbox"]),
 .editor select,
 .editor textarea {
+  width: 100%;
+  min-width: 0;
   border: 1px solid var(--border);
   border-radius: 6px;
   padding: 10px;
@@ -144,13 +153,16 @@ h3 {
   gap: 8px;
 }
 .table-wrap {
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
   overflow-x: auto;
   margin-top: 24px;
 }
 table {
   width: 100%;
   border-collapse: collapse;
-  min-width: 760px;
+  min-width: 0;
 }
 th,
 td {
@@ -182,7 +194,7 @@ th {
   display: flex;
   justify-content: flex-end;
   gap: 10px;
-  white-space: nowrap;
+  flex-wrap: wrap;
 }
 .actions button {
   border: 0;
@@ -331,14 +343,28 @@ th {
 }
 @media (max-width: 700px) {
   .roles-page {
-    padding: 20px 16px;
+    width: 100%;
+    padding: 0;
   }
   .page-header,
   .panel-header {
     flex-direction: column;
+    min-width: 0;
+  }
+  .page-header > *,
+  .panel-header > * {
+    max-width: 100%;
+  }
+  .summary {
+    align-self: flex-start;
+  }
+  .panel {
+    padding: 16px;
   }
   .editor {
     grid-template-columns: 1fr;
+    min-width: 0;
+    padding: 16px;
   }
   .permission-grid,
   .role-permission-groups {
@@ -350,5 +376,68 @@ th {
   .role-details-dialog {
     max-height: 90vh;
     padding: 20px;
+  }
+  .table-wrap {
+    overflow: visible;
+  }
+  table,
+  tbody {
+    display: block;
+    width: 100%;
+  }
+  thead {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    clip-path: inset(50%);
+  }
+  tbody tr {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    margin-bottom: 14px;
+    padding: 8px 12px;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    background: var(--surface);
+  }
+  td,
+  tbody tr td {
+    display: grid;
+    grid-template-columns: minmax(80px, 0.7fr) minmax(0, 1.3fr);
+    gap: 12px;
+    min-width: 0;
+    padding: 10px 0;
+    overflow-wrap: anywhere;
+    border-bottom: 1px solid var(--border);
+  }
+  tbody tr td:last-child {
+    border-bottom: 0;
+  }
+  tbody td::before {
+    content: attr(data-label);
+    color: var(--text-muted);
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+  }
+  .actions,
+  td.actions {
+    display: flex;
+    justify-content: flex-start;
+    gap: 8px 14px;
+    white-space: normal;
+  }
+  .actions::before {
+    flex: 0 0 calc((100% - 12px) * 0.35);
+  }
+  .empty {
+    display: block;
+  }
+  .empty::before {
+    content: none;
   }
 }
