@@ -13,6 +13,6 @@ const runtimeProcess = (
   }
 ).process;
 const serverApiUrl = runtimeProcess?.env?.['API_BASE_URL'];
-const defaultApiUrl = 'https://executive-reminder-backend.vercel.app';
+const defaultApiUrl = 'https://executive-reminder-backend.vercel.app/api';
 
 export const API_BASE_URL = (browserApiUrl ?? serverApiUrl ?? defaultApiUrl).replace(/\/+$/, '');

@@ -1,3 +1,3 @@
 window.__APP_CONFIG__ = {
-  apiBaseUrl: '/api'
+  apiBaseUrl: 'https://executive-reminder-backend.vercel.app/api'
 };
