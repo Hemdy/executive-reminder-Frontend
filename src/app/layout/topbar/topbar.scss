@@ -20,8 +20,10 @@
 
 
 .mobile-brand {
+  
+  display: none;
   height: var(--topbar-height);
-  display: flex;
+  // display: flex;
   align-items: center;
   gap: 12px;
   padding: 0 20px;
@@ -237,6 +239,7 @@
   }
 
   .mobile-brand {
+    display: flex;
     color: var(--text);
     font-size: 15px;
     letter-spacing: -0.01em;

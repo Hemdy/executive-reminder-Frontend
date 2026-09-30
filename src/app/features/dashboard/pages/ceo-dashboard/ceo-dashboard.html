@@ -6,7 +6,7 @@
       <span class="eyebrow">Executive Overview</span>
 
       <h1>
-        Good morning,
+        {{ greeting() }},
         {{ authService.currentUser()?.title }} {{ authService.currentUser()?.firstName }}!
       </h1>
 

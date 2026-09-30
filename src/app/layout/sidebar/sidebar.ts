@@ -77,12 +77,12 @@ export class Sidebar {
       route: '/roles',
       permission: 'roles:view'
     },
-    {
-      label: 'Users',
-      icon: '♙',
-      route: '/users',
-      permission: 'users:view'
-    },
+    // {
+    //   label: 'Users',
+    //   icon: '♙',
+    //   route: '/users',
+    //   permission: 'users:view'
+    // },
     {
       label: 'Settings',
       icon: '⚙',
@@ -101,6 +101,10 @@ export class Sidebar {
     }
 
     return this.authService.hasRole(...(item.roles as UserRole[]));
+  }
+
+  isAdministrationVisible(): boolean {
+    return this.adminNavigation.some(item => this.isVisible(item));
   }
 
   logout(): void {

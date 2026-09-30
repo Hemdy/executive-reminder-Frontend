@@ -1,5 +1,14 @@
-import { ChangeDetectionStrategy, Component, computed, inject, OnInit } from '@angular/core';
-import { DatePipe } from '@angular/common';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  computed,
+  inject,
+  OnDestroy,
+  OnInit,
+  PLATFORM_ID,
+  signal
+} from '@angular/core';
+import { DatePipe, isPlatformBrowser } from '@angular/common';
 import { RouterModule } from '@angular/router';
 import { AuthService } from '../../../../core/services/auth.service';
 import { TaskService } from '../../../../core/services/task.service';
@@ -16,19 +25,63 @@ import { NotificationService } from '../../../../core/services/notification.serv
   styleUrl: './ceo-dashboard.scss',
   changeDetection: ChangeDetectionStrategy.OnPush
 })
-export class CeoDashboard implements OnInit {
+export class CeoDashboard implements OnInit, OnDestroy {
+  private readonly platformId = inject(PLATFORM_ID);
+  private greetingTimer?: ReturnType<typeof setTimeout>;
   readonly authService = inject(AuthService);
   readonly tasks = inject(TaskService);
   readonly reminders = inject(ReminderService);
   readonly requests = inject(RequestService);
   readonly meetings = inject(MeetingService);
   readonly notifications = inject(NotificationService);
+  readonly greeting = signal(this.getGreeting());
 
   ngOnInit(): void {
+    if (isPlatformBrowser(this.platformId)) {
+      this.scheduleGreetingUpdate();
+    }
     this.tasks.loadTasks().subscribe();
     this.reminders.loadReminders().subscribe();
     this.meetings.loadMeetings().subscribe();
     this.notifications.loadNotifications().subscribe();
+  }
+
+  ngOnDestroy(): void {
+    if (this.greetingTimer) {
+      clearTimeout(this.greetingTimer);
+    }
+  }
+
+  private getGreeting(): string {
+    const hour = new Date().getHours();
+
+    if (hour < 12) {
+      return 'Good morning';
+    }
+    if (hour < 17) {
+      return 'Good afternoon';
+    }
+    return 'Good evening';
+  }
+
+  private scheduleGreetingUpdate(): void {
+    const now = new Date();
+    const nextNoon = new Date(now);
+    nextNoon.setHours(12, 0, 0, 0);
+    const nextEvening = new Date(now);
+    nextEvening.setHours(17, 0, 0, 0);
+    const nextMidnight = new Date(now);
+    nextMidnight.setDate(nextMidnight.getDate() + 1);
+    nextMidnight.setHours(0, 0, 0, 0);
+
+    const nextChange = [nextNoon, nextEvening, nextMidnight]
+      .filter(boundary => boundary.getTime() > now.getTime())
+      .sort((a, b) => a.getTime() - b.getTime())[0];
+
+    this.greetingTimer = setTimeout(() => {
+      this.greeting.set(this.getGreeting());
+      this.scheduleGreetingUpdate();
+    }, nextChange.getTime() - now.getTime());
   }
 
   readonly summary = computed(() => [

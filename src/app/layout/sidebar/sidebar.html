@@ -7,9 +7,12 @@
 
   <div class="sidebar-brand">
 
-    <div class="brand-mark">
-      E
-    </div>
+    <!-- <div class="brand-mark"> -->
+      
+        <!-- <img src="../../../assets/icons/logo.jpeg" alt="ExecTrack Logo" /> -->
+        <img src="../../../favicon.ico" alt="ExecTrack Logo" width="40" height="30"/>
+      
+    <!-- </div> -->
 
     <div>
       <strong>ExecTrack</strong>
@@ -72,9 +75,7 @@
 
     </div>
 
-    @if (authService.hasPermission('users:view') ||
-      authService.hasPermission('settings:view') ||
-      authService.hasPermission('roles:view')) {
+    @if (isAdministrationVisible()) {
 
       <div class="nav-section admin-section">
 
@@ -84,18 +85,20 @@
 
         @for (item of adminNavigation; track item.route) {
 
-          <a
-            [routerLink]="item.route"
-            routerLinkActive="active"
-            class="nav-item"
-            (click)="closeMobile.emit()"
-          >
-            <span class="nav-icon">
-              {{ item.icon }}
-            </span>
+          @if (isVisible(item)) {
+            <a
+              [routerLink]="item.route"
+              routerLinkActive="active"
+              class="nav-item"
+              (click)="closeMobile.emit()"
+            >
+              <span class="nav-icon">
+                {{ item.icon }}
+              </span>
 
-            <span class="nav-text">{{ item.label }}</span>
-          </a>
+              <span class="nav-text">{{ item.label }}</span>
+            </a>
+          }
 
         }
 

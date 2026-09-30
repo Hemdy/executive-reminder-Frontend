@@ -44,8 +44,32 @@
   line-height: 1;
 }
 
+
+
 .icon-button:hover {
   background: var(--surface-hover);
+}
+
+.page-header{
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+}
+
+.primary-button{
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    min-height: 40px;
+    padding: 0 15px;
+    border: 0;
+    border-radius: 8px;
+    background: var(--primary);
+    color: #fff;
+    font-size: 13px;
+    font-weight: 600;
+    text-decoration: none;
 }
 
 .view-switcher {
