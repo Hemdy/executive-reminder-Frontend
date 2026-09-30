@@ -83,12 +83,12 @@ export class Sidebar {
     //   route: '/users',
     //   permission: 'users:view'
     // },
-    {
-      label: 'Settings',
-      icon: '⚙',
-      route: '/settings',
-      permission: 'settings:view'
-    }
+    // {
+    //   label: 'Settings',
+    //   icon: '⚙',
+    //   route: '/settings',
+    //   permission: 'settings:view'
+    // }
   ];
 
   isVisible(item: NavigationItem): boolean {

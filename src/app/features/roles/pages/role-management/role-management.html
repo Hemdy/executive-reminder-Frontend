@@ -64,6 +64,14 @@
           }
           <fieldset class="permission-grid">
             <legend>Permissions</legend>
+            <button
+              class="secondary-button permission-toggle-all"
+              type="button"
+              [attr.aria-pressed]="allPermissionsSelected()"
+              (click)="toggleAllPermissions()"
+            >
+              {{ allPermissionsSelected() ? 'Deselect All' : 'Select All' }}
+            </button>
             @for (permission of permissionOptions; track permission[0]) {
               <label class="permission-option">
                 <input type="checkbox" [checked]="hasPermission(permission[0])" (change)="togglePermission(permission[0])">
@@ -80,10 +88,79 @@
       <div class="table-wrap">
         <table><thead><tr><th>Role</th><th>Description</th><th>Permissions</th><th>Status</th><th><span class="sr-only">Actions</span></th></tr></thead>
           <tbody>@for (role of roleService.roles(); track role.id) {
-            <tr><td><strong>{{ role.name }}</strong></td><td>{{ role.description || '—' }}</td><td>{{ role.permissions.join(', ') }}</td><td><span [class]="role.isActive ? 'state active-state' : 'state inactive-state'">{{ role.isActive ? 'Active' : 'Inactive' }}</span></td><td class="actions"><button type="button" (click)="editRole(role)">Edit</button><button type="button" (click)="toggleRole(role)">{{ role.isActive ? 'Deactivate' : 'Activate' }}</button><button type="button" class="danger" (click)="removeRole(role)">Delete</button></td></tr>
+            <tr>
+              <td>
+                <button class="role-name-button" type="button" (click)="viewRole(role)">
+                  {{ role.name }}
+                </button>
+              </td>
+              <td>{{ role.description || '—' }}</td>
+              <td>{{ role.permissions.length }} assigned</td>
+              <td><span [class]="role.isActive ? 'state active-state' : 'state inactive-state'">{{ role.isActive ? 'Active' : 'Inactive' }}</span></td>
+              <td class="actions">
+                <button type="button" (click)="editRole(role)">Edit</button>
+                <button type="button" (click)="toggleRole(role)">{{ role.isActive ? 'Deactivate' : 'Activate' }}</button>
+                <button type="button" class="danger" (click)="removeRole(role)">Delete</button>
+              </td>
+            </tr>
           } @empty { <tr><td colspan="5" class="empty">No roles found.</td></tr> }</tbody>
         </table>
       </div>
     </section>
+  }
+
+  @if (selectedRole(); as role) {
+    <div
+      class="role-details-backdrop"
+      role="presentation"
+      tabindex="-1"
+      (click)="closeRoleDetails()"
+      (keydown.escape)="closeRoleDetails()"
+    >
+      <section
+        class="role-details-dialog"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="role-details-title"
+        (click)="$event.stopPropagation()"
+      >
+        <header class="role-details-header">
+          <div>
+            <span class="eyebrow">Role permissions</span>
+            <h2 id="role-details-title">{{ role.name }}</h2>
+            <p>{{ role.description || 'Permissions assigned to this role.' }}</p>
+          </div>
+          <button
+            class="role-details-close-icon"
+            type="button"
+            aria-label="Close role details"
+            (click)="closeRoleDetails()"
+          >
+            ×
+          </button>
+        </header>
+
+        @if (selectedRolePermissionGroups().length) {
+          <div class="role-permission-groups">
+            @for (group of selectedRolePermissionGroups(); track group.label) {
+              <section class="role-permission-group">
+                <h3>{{ group.label }}</h3>
+                <ul>
+                  @for (permission of group.permissions; track permission) {
+                    <li>{{ permissionLabel(permission) }}</li>
+                  }
+                </ul>
+              </section>
+            }
+          </div>
+        } @else {
+          <p class="no-role-permissions">No permissions assigned.</p>
+        }
+
+        <footer class="role-details-footer">
+          <button class="primary-button" type="button" (click)="closeRoleDetails()">Close</button>
+        </footer>
+      </section>
+    </div>
   }
 </main>
