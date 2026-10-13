@@ -126,9 +126,9 @@
 
 .content-card {
   overflow: hidden;
-  border: 1px solid var(--border);
+  border: 1px solid #d5e0f0;
   border-radius: 10px;
-  background: var(--surface);
+  background: #f6f9fe;
   box-shadow: var(--shadow-sm);
 }
 
@@ -170,6 +170,9 @@
 
 .placeholder-card {
   padding: 35px 20px;
+  border: 1px solid #d9dff0;
+  border-radius: 8px;
+  background: #f5f6fc;
   text-align: center;
 
   h3 {
@@ -255,6 +258,9 @@
   align-items: center;
   gap: 12px;
   padding: 18px;
+  border: 1px solid #d1e2d6;
+  border-radius: 9px;
+  background: #f4f8f5;
 }
 
 .large-avatar {

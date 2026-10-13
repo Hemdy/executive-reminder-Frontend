@@ -62,6 +62,7 @@ export class TaskForm {
   readonly isSaving = signal(false);
 
   readonly employees = this.roleService.users;
+  readonly employeesLoading = this.roleService.usersLoading;
 
   readonly categories = [
     'General',

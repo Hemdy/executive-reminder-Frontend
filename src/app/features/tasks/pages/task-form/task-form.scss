@@ -50,8 +50,8 @@ h1 {
 
 .task-form-card {
   overflow: hidden;
-  background: var(--surface);
-  border: 1px solid var(--border);
+  background: #f8f6fd;
+  border: 1px solid #ddd6ef;
   border-radius: 9px;
   box-shadow: var(--shadow-sm);
 }
@@ -90,6 +90,7 @@ h1 {
   display: flex;
   flex-direction: column;
   gap: 7px;
+  min-width: 0;
 }
 
 .form-field label {
@@ -147,6 +148,138 @@ h1 {
 .field-error {
   color: var(--danger);
   font-size: 11px;
+}
+
+.participant-list {
+  width: 100%;
+  max-height: 252px;
+  overflow-y: auto;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--surface);
+}
+
+.participant-option,
+.participant-skeleton {
+  display: grid;
+  grid-template-columns: 18px minmax(0, 1fr) minmax(0, 0.8fr);
+  align-items: center;
+  gap: 10px;
+  min-height: 46px;
+  padding: 8px 12px;
+}
+
+.participant-option + .participant-option,
+.participant-skeleton + .participant-skeleton {
+  border-top: 1px solid var(--border);
+}
+
+.participant-option {
+  cursor: pointer;
+  transition: background-color 120ms ease;
+}
+
+.participant-option:hover {
+  background: var(--surface-hover);
+}
+
+.participant-option:has(input:focus-visible) {
+  outline: 2px solid var(--primary);
+  outline-offset: -2px;
+}
+
+.participant-option input {
+  width: 16px;
+  height: 16px;
+  justify-self: center;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  border-radius: 3px;
+  background: transparent;
+  accent-color: var(--primary);
+}
+
+.participant-option input:focus {
+  box-shadow: none;
+}
+
+.participant-name,
+.participant-detail {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.participant-name {
+  color: var(--text);
+  font-size: 13px;
+  font-weight: 550;
+  line-height: 1.35;
+}
+
+.participant-detail {
+  color: var(--text-muted);
+  font-size: 11px;
+  line-height: 1.35;
+  text-align: right;
+}
+
+.participant-empty {
+  margin: 0;
+  padding: 15px 12px;
+  color: var(--text-muted);
+  font-size: 12px;
+}
+
+.participant-skeletons {
+  overflow: hidden;
+}
+
+.participant-skeleton span {
+  display: block;
+  height: 12px;
+  border-radius: 999px;
+  background: linear-gradient(
+    90deg,
+    var(--surface-muted) 25%,
+    var(--border) 50%,
+    var(--surface-muted) 75%
+  );
+  background-size: 200% 100%;
+  animation: participant-shimmer 1.35s ease-in-out infinite;
+}
+
+.participant-skeleton .skeleton-checkbox {
+  width: 16px;
+  height: 16px;
+  justify-self: center;
+  border-radius: 4px;
+}
+
+.participant-skeleton .skeleton-name {
+  width: min(68%, 190px);
+}
+
+.participant-skeleton .skeleton-detail {
+  width: min(76%, 140px);
+  justify-self: end;
+}
+
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+@keyframes participant-shimmer {
+  to {
+    background-position: -200% 0;
+  }
 }
 
 .deadline-grid {
@@ -214,5 +347,32 @@ h1 {
   .primary-button,
   .secondary-button {
     flex: 1;
+  }
+
+  .participant-list {
+    max-height: 220px;
+  }
+
+  .participant-option,
+  .participant-skeleton {
+    grid-template-columns: 18px minmax(0, 1fr);
+    gap: 8px;
+    padding: 9px 10px;
+  }
+
+  .participant-detail {
+    grid-column: 2;
+    margin-top: -5px;
+    text-align: left;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .participant-option {
+    transition: none;
+  }
+
+  .participant-skeleton span {
+    animation: none;
   }
 }

@@ -87,15 +87,39 @@
             <span>*</span>
           </label>
 
-          <div class="participant-list">
-            @for (employee of employees(); track employee.id) {
-              <label class="participant-option">
-                <input type="checkbox"
-                  [checked]="taskForm.controls.participantIds.value.includes(employee.id)"
-                  (change)="toggleParticipant(employee.id, $any($event.target).checked)" />
-                <span>{{ employee.firstName }} {{ employee.lastName }}</span>
-                @if (employee.department) { <small>— {{ employee.department }}</small> }
-              </label>
+          <div
+            class="participant-list"
+            [attr.aria-busy]="employeesLoading()"
+            role="group"
+            aria-label="Task participants"
+          >
+            @if (employeesLoading()) {
+              <div class="participant-skeletons" aria-hidden="true">
+                @for (placeholder of [0, 1, 2, 3]; track placeholder) {
+                  <div class="participant-skeleton">
+                    <span class="skeleton-checkbox"></span>
+                    <span class="skeleton-name"></span>
+                    <span class="skeleton-detail"></span>
+                  </div>
+                }
+              </div>
+              <span class="visually-hidden" role="status">Loading participants</span>
+            } @else {
+              @for (employee of employees(); track employee.id) {
+                <label class="participant-option">
+                  <input
+                    type="checkbox"
+                    [checked]="taskForm.controls.participantIds.value.includes(employee.id)"
+                    (change)="toggleParticipant(employee.id, $any($event.target).checked)"
+                  />
+                  <span class="participant-name">{{ employee.firstName }} {{ employee.lastName }}</span>
+                  @if (employee.department) {
+                    <small class="participant-detail">{{ employee.department }}</small>
+                  }
+                </label>
+              } @empty {
+                <p class="participant-empty">No participants are available.</p>
+              }
             }
           </div>
 

@@ -68,8 +68,8 @@ h1 {
   gap: 10px;
   padding: 14px;
   margin-bottom: 16px;
-  background: var(--surface);
-  border: 1px solid var(--border);
+  background: #f5f6fc;
+  border: 1px solid #d9dff0;
   border-radius: 9px;
 }
 
@@ -131,14 +131,40 @@ h1 {
 }
 
 .task-summary > div {
+  --summary-bg: #eef4ff;
+  --summary-outline: #cbdaf5;
+  --summary-accent: #315b9b;
+
   display: flex;
   align-items: center;
   justify-content: space-between;
   min-height: 70px;
   padding: 14px 18px;
-  background: var(--surface);
-  border: 1px solid var(--border);
+  background: var(--summary-bg);
+  border: 1px solid var(--summary-outline);
   border-radius: 8px;
+
+  &:nth-child(4n + 2) {
+    --summary-bg: #f3f0fb;
+    --summary-outline: #d9d0ef;
+    --summary-accent: #65538f;
+  }
+
+  &:nth-child(4n + 3) {
+    --summary-bg: #fff6e9;
+    --summary-outline: #eedbb9;
+    --summary-accent: #8a6833;
+  }
+
+  &:nth-child(4n + 4) {
+    --summary-bg: #edf7f2;
+    --summary-outline: #c9e2d4;
+    --summary-accent: #39745a;
+  }
+
+  strong:not(.danger-text) {
+    color: var(--summary-accent);
+  }
 }
 
 .summary-label {
@@ -156,8 +182,8 @@ h1 {
 
 .task-table-card {
   overflow: hidden;
-  background: var(--surface);
-  border: 1px solid var(--border);
+  background: #f6f9fe;
+  border: 1px solid #d5e0f0;
   border-radius: 9px;
   box-shadow: var(--shadow-sm);
 }

@@ -1,6 +1,6 @@
 import { HttpClient } from '@angular/common/http';
 import { Injectable, computed, inject, signal } from '@angular/core';
-import { Observable, map, tap } from 'rxjs';
+import { Observable, finalize, map, tap } from 'rxjs';
 import {
   CreateManagedRoleRequest,
   CreateManagedUserRequest,
@@ -33,6 +33,7 @@ export class RoleService {
   private readonly usersSignal = signal<ManagedUser[]>([]);
   private readonly rolesSignal = signal<ManagedRole[]>([]);
   readonly errorMessage = signal('');
+  readonly usersLoading = signal(true);
 
   readonly users = this.usersSignal.asReadonly();
   readonly roles = this.rolesSignal.asReadonly();
@@ -56,8 +57,10 @@ export class RoleService {
   }
 
   loadUsers(): Observable<ManagedUser[]> {
+    this.usersLoading.set(true);
     return this.http.get<ManagedUser[]>(`${this.apiUrl}/users`).pipe(
-      tap(users => this.usersSignal.set(users))
+      tap(users => this.usersSignal.set(users)),
+      finalize(() => this.usersLoading.set(false))
     );
   }
 

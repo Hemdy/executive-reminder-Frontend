@@ -3,8 +3,8 @@
 }
 
 .notification-card {
-  background: var(--surface);
-  border: 1px solid var(--border);
+  background: #f4f8f5;
+  border: 1px solid #d1e2d6;
   border-radius: 12px;
   box-shadow: var(--shadow-sm);
   overflow: hidden;
@@ -17,7 +17,8 @@
   align-items: center;
   justify-content: space-between;
   gap: 15px;
-  border-bottom: 1px solid var(--border);
+  border-bottom: 1px solid #d1e2d6;
+  background: #edf5ef;
 }
 
 .notification-tabs {
@@ -43,8 +44,8 @@
 }
 
 .notification-tabs button.active {
-  background: #eef3ff;
-  color: var(--primary);
+  background: #dcecdf;
+  color: #32694c;
 }
 
 .tab-count {
@@ -82,7 +83,7 @@
   min-height: 92px;
   display: flex;
   align-items: stretch;
-  border-bottom: 1px solid var(--border);
+  border-bottom: 1px solid #dce7df;
   transition: background 0.15s ease;
 }
 
@@ -91,11 +92,47 @@
 }
 
 .notification-item:hover {
-  background: var(--surface-hover);
+  background: #eff6f1;
 }
 
 .notification-item.unread {
-  background: #fbfcff;
+  background: #f6faf7;
+}
+
+.notification-item.notification-reminder {
+  border-left: 3px solid #9bc5a8;
+}
+
+.notification-item.notification-meeting {
+  border-left: 3px solid #b9addb;
+}
+
+.notification-item.notification-request {
+  border-left: 3px solid #d8bd89;
+}
+
+.notification-item.notification-reminder.unread {
+  background: #edf7f0;
+}
+
+.notification-item.notification-meeting.unread {
+  background: #f4f1fa;
+}
+
+.notification-item.notification-request.unread {
+  background: #fff8ed;
+}
+
+.notification-reminder .notification-heading strong {
+  color: #39745a;
+}
+
+.notification-meeting .notification-heading strong {
+  color: #65538f;
+}
+
+.notification-request .notification-heading strong {
+  color: #8a6833;
 }
 
 .notification-main {

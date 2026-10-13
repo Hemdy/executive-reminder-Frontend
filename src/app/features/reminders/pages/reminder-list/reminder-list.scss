@@ -65,8 +65,8 @@ h1 {
   gap: 10px;
   padding: 14px;
   margin-bottom: 16px;
-  background: var(--surface);
-  border: 1px solid var(--border);
+  background: #f5f6fc;
+  border: 1px solid #d9dff0;
   border-radius: 9px;
 }
 
@@ -128,14 +128,40 @@ h1 {
 }
 
 .reminder-summary > div {
+  --summary-bg: #edf7f2;
+  --summary-outline: #c9e2d4;
+  --summary-accent: #39745a;
+
   display: flex;
   align-items: center;
   justify-content: space-between;
   min-height: 70px;
   padding: 14px 18px;
-  background: var(--surface);
-  border: 1px solid var(--border);
+  background: var(--summary-bg);
+  border: 1px solid var(--summary-outline);
   border-radius: 8px;
+
+  &:nth-child(4n + 2) {
+    --summary-bg: #eef4ff;
+    --summary-outline: #cbdaf5;
+    --summary-accent: #315b9b;
+  }
+
+  &:nth-child(4n + 3) {
+    --summary-bg: #fff6e9;
+    --summary-outline: #eedbb9;
+    --summary-accent: #8a6833;
+  }
+
+  &:nth-child(4n + 4) {
+    --summary-bg: #f3f0fb;
+    --summary-outline: #d9d0ef;
+    --summary-accent: #65538f;
+  }
+
+  strong {
+    color: var(--summary-accent);
+  }
 }
 
 .reminder-summary span {
@@ -153,8 +179,8 @@ h1 {
 
 .reminder-table-card {
   overflow: hidden;
-  background: var(--surface);
-  border: 1px solid var(--border);
+  background: #f6f9fe;
+  border: 1px solid #d5e0f0;
   border-radius: 9px;
   box-shadow: var(--shadow-sm);
 }
@@ -171,12 +197,12 @@ table {
 }
 
 thead {
-  background: var(--surface-muted);
+  background: #eff6f1;
 }
 
 th {
   padding: 13px 16px;
-  border-bottom: 1px solid var(--border);
+  border-bottom: 1px solid #d6e7dc;
   color: var(--text-muted);
   font-size: 11px;
   font-weight: 700;
@@ -198,10 +224,14 @@ tbody tr:last-child td {
 .reminder-row {
   cursor: pointer;
   transition: background 120ms ease;
+
+  &:nth-child(even) {
+    background: #fbfdfb;
+  }
 }
 
 .reminder-row:hover {
-  background: var(--surface-hover);
+  background: #eaf4ed;
 }
 
 .overdue-row {

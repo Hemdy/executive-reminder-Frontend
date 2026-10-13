@@ -62,11 +62,37 @@
 }
 
 .summary-card {
+  --summary-bg: #eef4ff;
+  --summary-outline: #cbdaf5;
+  --summary-accent: #315b9b;
+
   padding: 16px;
-  border: 1px solid var(--border);
+  border: 1px solid var(--summary-outline);
   border-radius: 10px;
-  background: var(--surface);
+  background: var(--summary-bg);
   box-shadow: var(--shadow-sm);
+
+  &:nth-child(4n + 2) {
+    --summary-bg: #f3f0fb;
+    --summary-outline: #d9d0ef;
+    --summary-accent: #65538f;
+  }
+
+  &:nth-child(4n + 3) {
+    --summary-bg: #fff6e9;
+    --summary-outline: #eedbb9;
+    --summary-accent: #8a6833;
+  }
+
+  &:nth-child(4n + 4) {
+    --summary-bg: #edf7f2;
+    --summary-outline: #c9e2d4;
+    --summary-accent: #39745a;
+  }
+
+  .summary-value {
+    color: var(--summary-accent);
+  }
 }
 
 .summary-label {
@@ -93,9 +119,9 @@
   gap: 10px;
   padding: 14px;
   margin-bottom: 14px;
-  border: 1px solid var(--border);
+  border: 1px solid #d9dff0;
   border-radius: 10px;
-  background: var(--surface);
+  background: #f5f6fc;
 }
 
 .search-field {
@@ -150,9 +176,9 @@
 
 .table-card {
   overflow: hidden;
-  border: 1px solid var(--border);
+  border: 1px solid #d5e0f0;
   border-radius: 10px;
-  background: var(--surface);
+  background: #f6f9fe;
   box-shadow: var(--shadow-sm);
 }
 
@@ -168,8 +194,8 @@ table {
 
 th {
   padding: 12px 16px;
-  border-bottom: 1px solid var(--border);
-  background: var(--surface-muted);
+  border-bottom: 1px solid #d4e0f1;
+  background: #eff4fc;
   color: var(--text-muted);
   font-size: 11px;
   font-weight: 700;
@@ -193,8 +219,12 @@ tbody tr:last-child td {
   cursor: pointer;
   transition: background 120ms ease;
 
+  &:nth-child(even) {
+    background: #fbfcfe;
+  }
+
   &:hover {
-    background: var(--surface-hover);
+    background: #edf3fb;
   }
 
   &.overdue {
