@@ -96,6 +96,7 @@
   display: flex;
   align-items: center;
   gap: 13px;
+    margin-bottom: 40px;
 }
 
 .brand-mark {
@@ -599,6 +600,9 @@
 
 .remember-row {
   margin-top: -5px;
+  display: flex;
+  justify-content: space-between;
+  
 }
 
 .checkbox {
