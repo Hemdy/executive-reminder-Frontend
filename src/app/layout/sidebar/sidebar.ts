@@ -75,7 +75,7 @@ export class Sidebar {
       label: 'Roles',
       icon: '♢',
       route: '/roles',
-      permission: 'roles:view'
+      roles: ['ADMIN']
     },
     // {
     //   label: 'Users',
@@ -92,15 +92,11 @@ export class Sidebar {
   ];
 
   isVisible(item: NavigationItem): boolean {
-    if (item.permission) {
-      return this.authService.hasPermission(item.permission);
-    }
-
-    if (!item.roles?.length) {
-      return true;
-    }
-
-    return this.authService.hasRole(...(item.roles as UserRole[]));
+    const hasRequiredRole =
+      !item.roles?.length || this.authService.hasRole(...(item.roles as UserRole[]));
+    const hasRequiredPermission =
+      !item.permission || this.authService.hasPermission(item.permission);
+    return hasRequiredRole && hasRequiredPermission;
   }
 
   isAdministrationVisible(): boolean {

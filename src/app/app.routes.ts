@@ -145,7 +145,7 @@ loadComponent: () =>
 
         {
           path: 'roles',
-          canActivate: [permissionGuard('roles:view')],
+          canActivate: [roleGuard(['ADMIN'])],
           loadComponent: () =>
             import('./features/roles/pages/role-management/role-management')
               .then(m => m.RoleManagement)

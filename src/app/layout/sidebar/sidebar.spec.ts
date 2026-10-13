@@ -7,10 +7,10 @@ import { Sidebar } from './sidebar';
 describe('Sidebar', () => {
   let component: Sidebar;
   let fixture: ComponentFixture<Sidebar>;
-  let permissions: string[];
+  let roles: string[];
 
   beforeEach(async () => {
-    permissions = [];
+    roles = [];
     await TestBed.configureTestingModule({
       imports: [Sidebar],
       providers: [
@@ -18,7 +18,8 @@ describe('Sidebar', () => {
         {
           provide: AuthService,
           useValue: {
-            hasPermission: (permission: string) => permissions.includes(permission),
+            hasRole: (...requiredRoles: string[]) => requiredRoles.some(role => roles.includes(role)),
+            hasPermission: () => false,
             currentUser: () => null,
             getInitials: () => '',
             logout: () => undefined
@@ -37,30 +38,35 @@ describe('Sidebar', () => {
     expect(component).toBeTruthy();
   });
 
-  it('hides Administration when the user has none of its page permissions', () => {
+  it('hides Administration when the user is not an Admin', () => {
     fixture.detectChanges(false);
 
     expect(fixture.nativeElement.textContent).not.toContain('Administration');
     expect(fixture.nativeElement.textContent).not.toContain('Roles');
-    expect(fixture.nativeElement.textContent).not.toContain('Users');
-    expect(fixture.nativeElement.textContent).not.toContain('Settings');
   });
 
-  it.each(['roles:view', 'users:view', 'settings:view'])(
-    'shows only the permitted Administration page when the user has %s',
-    permission => {
-      permissions.push(permission);
-      fixture.destroy();
-      fixture = TestBed.createComponent(Sidebar);
-      component = fixture.componentInstance;
-      fixture.detectChanges();
+  it('shows the Roles navigation item to Admin users', () => {
+    roles.push('ADMIN');
+    fixture.destroy();
+    fixture = TestBed.createComponent(Sidebar);
+    component = fixture.componentInstance;
+    fixture.detectChanges();
 
-      const text = fixture.nativeElement.textContent as string;
-      expect(text).toContain('Administration');
-      const permittedPage = permission.replace(':view', '');
-      for (const page of ['Roles', 'Users', 'Settings']) {
-        expect(text.includes(page)).toBe(page.toLowerCase() === permittedPage);
-      }
-    }
-  );
+    const text = fixture.nativeElement.textContent as string;
+    expect(text).toContain('Administration');
+    expect(text).toContain('Roles');
+  });
+
+  it('does not show Roles to users with roles:view but without the Admin role', () => {
+    fixture.destroy();
+    fixture = TestBed.createComponent(Sidebar);
+    component = fixture.componentInstance;
+    fixture.detectChanges();
+
+    const authService = TestBed.inject(AuthService);
+    vi.spyOn(authService, 'hasPermission').mockReturnValue(true);
+    fixture.detectChanges();
+
+    expect(fixture.nativeElement.textContent).not.toContain('Roles');
+  });
 });
