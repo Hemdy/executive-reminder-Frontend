@@ -32,7 +32,7 @@ describe('TaskDetails', () => {
         lastName: currentUser.lastName
       }
     }),
-    uploadAttachment: () => of({
+    uploadAttachment: vi.fn(() => of({
       id: 'attachment-1',
       fileName: 'brief.pdf',
       mimeType: 'application/pdf',
@@ -43,7 +43,7 @@ describe('TaskDetails', () => {
         firstName: currentUser.firstName,
         lastName: currentUser.lastName
       }
-    }),
+    })),
     downloadAttachment: () => of(new Blob())
   };
 
@@ -78,6 +78,7 @@ describe('TaskDetails', () => {
       attachmentsCount: 0
     };
     taskServiceMock.updateStatus.mockClear();
+    taskServiceMock.uploadAttachment.mockClear();
 
     await TestBed.configureTestingModule({
       imports: [TaskDetails],
@@ -169,5 +170,16 @@ describe('TaskDetails', () => {
 
     expect(component.attachments()).toHaveLength(1);
     expect(component.attachments()[0].fileName).toBe('brief.pdf');
+  });
+
+  it('rejects unsupported task attachment types in the UI', () => {
+    const file = new File(['image'], 'diagram.png', { type: 'image/png' });
+    const input = document.createElement('input');
+    Object.defineProperty(input, 'files', { value: [file] });
+
+    component.uploadAttachments({ target: input } as unknown as Event);
+
+    expect(taskServiceMock.uploadAttachment).not.toHaveBeenCalled();
+    expect(component.activityError()).toContain('Only PDF and Word documents are allowed');
   });
 });

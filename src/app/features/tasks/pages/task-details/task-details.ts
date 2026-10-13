@@ -43,9 +43,12 @@ export class TaskDetails implements OnInit {
   readonly attachments = signal<TaskAttachment[]>([]);
   readonly commentText = signal('');
   readonly activityError = signal('');
+  readonly activityMessage = signal('');
   readonly taskActionError = signal('');
   readonly submittingComment = signal(false);
   readonly uploadingAttachments = signal(false);
+  readonly loadingActivity = signal(false);
+  readonly downloadingAttachmentId = signal<string | null>(null);
 
   readonly task = computed(() => {
     const id = this.route.snapshot.paramMap.get('id');
@@ -159,11 +162,13 @@ export class TaskDetails implements OnInit {
     }
 
     this.activityError.set('');
+    this.activityMessage.set('');
     this.submittingComment.set(true);
     this.taskService.addComment(task.id, body).subscribe({
       next: comment => {
         this.comments.update(comments => [...comments, comment]);
         this.commentText.set('');
+        this.activityMessage.set('Comment posted.');
         this.submittingComment.set(false);
         this.refreshTaskCounts(task.id);
       },
@@ -179,19 +184,35 @@ export class TaskDetails implements OnInit {
     const files = Array.from(input.files ?? []);
     input.value = '';
 
-    const oversizedFile = files.find(file => file.size > 4 * 1024 * 1024);
-    if (oversizedFile) {
-      this.activityError.set(`${oversizedFile.name} is larger than the 4 MB limit.`);
+    const unsupportedFiles = files.filter(file => !this.isSupportedAttachment(file));
+    const oversizedFiles = files.filter(file =>
+      this.isSupportedAttachment(file) && file.size > 4 * 1024 * 1024
+    );
+    const validFiles = files.filter(file =>
+      this.isSupportedAttachment(file) && file.size <= 4 * 1024 * 1024
+    );
+    const validationErrors = [
+      ...(unsupportedFiles.length
+        ? [`Unsupported file type: ${unsupportedFiles.map(file => file.name).join(', ')}. Only PDF and Word documents are allowed.`]
+        : []),
+      ...(oversizedFiles.length
+        ? [`Files over 4 MB: ${oversizedFiles.map(file => file.name).join(', ')}.`]
+        : [])
+    ];
+    if (!validFiles.length) {
+      this.activityError.set(validationErrors.join(' '));
+      this.activityMessage.set('');
       return;
     }
     const task = this.task();
-    if (!task || !files.length || this.uploadingAttachments()) {
+    if (!task || this.uploadingAttachments()) {
       return;
     }
 
-    this.activityError.set('');
+    this.activityError.set(validationErrors.join(' '));
+    this.activityMessage.set('');
     this.uploadingAttachments.set(true);
-    const uploads = files.map(file =>
+    const uploads = validFiles.map(file =>
       this.taskService.uploadAttachment(task.id, file).pipe(
         map(attachment => ({ attachment })),
         catchError(() => of({ failedFile: file.name }))
@@ -207,8 +228,13 @@ export class TaskDetails implements OnInit {
         );
         this.attachments.update(attachments => [...attachments, ...uploaded]);
         this.uploadingAttachments.set(false);
-        if (failedFiles.length) {
-          this.activityError.set(`Unable to upload: ${failedFiles.join(', ')}.`);
+        const uploadErrors = [
+          ...validationErrors,
+          ...(failedFiles.length ? [`Unable to upload: ${failedFiles.join(', ')}.`] : [])
+        ];
+        this.activityError.set(uploadErrors.join(' '));
+        if (uploaded.length) {
+          this.activityMessage.set(`${uploaded.length} file${uploaded.length === 1 ? '' : 's'} uploaded.`);
         }
         if (uploaded.length) {
           this.refreshTaskCounts(task.id);
@@ -223,10 +249,13 @@ export class TaskDetails implements OnInit {
 
   downloadAttachment(attachment: TaskAttachment): void {
     const task = this.task();
-    if (!task) {
+    if (!task || this.downloadingAttachmentId()) {
       return;
     }
 
+    this.activityError.set('');
+    this.activityMessage.set('');
+    this.downloadingAttachmentId.set(attachment.id);
     this.taskService.downloadAttachment(task.id, attachment.id).subscribe({
       next: blob => {
         const url = URL.createObjectURL(blob);
@@ -235,8 +264,13 @@ export class TaskDetails implements OnInit {
         link.download = attachment.fileName;
         link.click();
         window.setTimeout(() => URL.revokeObjectURL(url), 0);
+        this.downloadingAttachmentId.set(null);
+        this.activityMessage.set('Attachment downloaded.');
       },
-      error: () => this.activityError.set('Unable to download this attachment.')
+      error: () => {
+        this.downloadingAttachmentId.set(null);
+        this.activityError.set('Unable to download this attachment.');
+      }
     });
   }
 
@@ -244,10 +278,16 @@ export class TaskDetails implements OnInit {
     if (size < 1024) {
       return `${size} B`;
     }
+
     if (size < 1024 * 1024) {
       return `${(size / 1024).toFixed(1)} KB`;
     }
     return `${(size / (1024 * 1024)).toFixed(1)} MB`;
+  }
+
+  private isSupportedAttachment(file: File): boolean {
+    const extension = file.name.slice(file.name.lastIndexOf('.')).toLowerCase();
+    return ['.pdf', '.doc', '.docx'].includes(extension);
   }
 
   deleteTask(): void {
@@ -290,6 +330,7 @@ export class TaskDetails implements OnInit {
   }
 
   private loadTaskActivity(taskId: string): void {
+    this.loadingActivity.set(true);
     forkJoin({
       comments: this.taskService.getComments(taskId),
       attachments: this.taskService.getAttachments(taskId)
@@ -297,8 +338,12 @@ export class TaskDetails implements OnInit {
       next: activity => {
         this.comments.set(activity.comments);
         this.attachments.set(activity.attachments);
+        this.loadingActivity.set(false);
       },
-      error: () => this.activityError.set('Unable to load task comments and attachments.')
+      error: () => {
+        this.loadingActivity.set(false);
+        this.activityError.set('Unable to load task comments and attachments.');
+      }
     });
   }
 

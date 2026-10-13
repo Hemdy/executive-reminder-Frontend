@@ -71,6 +71,9 @@
     @if (activityError()) {
       <p class="task-error" role="alert">{{ activityError() }}</p>
     }
+    @if (activityMessage()) {
+      <p class="activity-success" role="status">{{ activityMessage() }}</p>
+    }
 
     <div class="details-layout">
 
@@ -103,7 +106,9 @@
             </div>
           </div>
 
-          @if (comments().length) {
+          @if (loadingActivity()) {
+            <p class="activity-empty">Loading comments...</p>
+          } @else if (comments().length) {
             <div class="activity-list">
               @for (comment of comments(); track comment.id) {
                 <article class="task-comment">
@@ -153,7 +158,9 @@
             </div>
           </div>
 
-          @if (attachments().length) {
+          @if (loadingActivity()) {
+            <p class="activity-empty">Loading attachments...</p>
+          } @else if (attachments().length) {
             <div class="task-attachments">
               @for (attachment of attachments(); track attachment.id) {
                 <div class="task-attachment">
@@ -165,9 +172,10 @@
                   <button
                     class="text-button"
                     type="button"
+                    [disabled]="downloadingAttachmentId() !== null"
                     (click)="downloadAttachment(attachment)"
                   >
-                    Download
+                    {{ downloadingAttachmentId() === attachment.id ? 'Downloading...' : 'Download' }}
                   </button>
                 </div>
               }
@@ -179,11 +187,11 @@
           @if (canUseTaskActivity()) {
             <label class="attachment-upload">
               <span>{{ uploadingAttachments() ? 'Uploading...' : 'Add files' }}</span>
-              <small>PDF, images, and office documents · 4 MB max per file</small>
+              <small>PDF and Word documents (.pdf, .doc, .docx) · 4 MB max per file</small>
               <input
                 type="file"
                 multiple
-                accept=".pdf,.png,.jpg,.jpeg,.gif,.webp,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.odt,.rtf,.txt"
+                accept=".pdf,.doc,.docx,application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document"
                 [disabled]="uploadingAttachments()"
                 (change)="uploadAttachments($event)"
               >

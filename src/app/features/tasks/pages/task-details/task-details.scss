@@ -328,6 +328,10 @@ aside {
   display: block;
 }
 
+.activity-success {
+  color: var(--success-color, #18794e);
+}
+
 .person strong {
   font-size: 13px;
 }
