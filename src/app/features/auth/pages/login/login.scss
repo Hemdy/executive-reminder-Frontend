@@ -683,6 +683,12 @@
   transform: translateY(0);
 }
 
+.primary-button:disabled {
+  cursor: wait;
+  opacity: 0.75;
+  transform: none;
+}
+
 
 /* =========================================================
    DEVELOPMENT LOGIN

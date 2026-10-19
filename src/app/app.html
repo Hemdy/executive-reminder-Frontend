@@ -1,3 +1,12 @@
 
-
-<router-outlet />
+<main class="app-content" [attr.inert]="loading.isLoading() ? '' : null">
+  <router-outlet />
+  @if (startupError()) {
+    <section class="startup-error" role="alert">
+      <h1>Unable to load ExecTrack</h1>
+      <p>{{ startupError() }}</p>
+      <button type="button" (click)="retryStartup()">Retry</button>
+    </section>
+  }
+</main>
+<app-loading-overlay />

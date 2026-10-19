@@ -246,9 +246,11 @@
         <button
           type="submit"
           class="primary-button"
+          [disabled]="isSubmitting()"
+          [attr.aria-busy]="isSubmitting()"
         >
 
-          <span>Sign in to ExecTrack</span>
+          <span>{{ isSubmitting() ? 'Signing you in...' : 'Sign in to ExecTrack' }}</span>
 
           <svg
             viewBox="0 0 24 24"

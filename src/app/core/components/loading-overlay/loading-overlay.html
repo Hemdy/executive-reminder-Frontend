@@ -1,0 +1,23 @@
+<div
+  class="loading-overlay"
+  [class.is-visible]="loading.isLoading()"
+  [attr.aria-hidden]="!loading.isLoading()"
+  [attr.inert]="loading.isLoading() ? null : ''"
+>
+  <div class="loading-content" role="status" aria-live="polite" aria-atomic="true">
+    <div class="loading-mark">
+      <img
+        ngSrc="/icons/icon-192x192.png"
+        alt="ExecTrack"
+        width="96"
+        height="96"
+        priority
+      />
+      <svg class="loading-ring" viewBox="0 0 148 148" aria-hidden="true">
+        <circle class="loading-track" cx="74" cy="74" r="67" />
+        <circle class="loading-progress" cx="74" cy="74" r="67" />
+      </svg>
+    </div>
+    <p>{{ loading.message() }}</p>
+  </div>
+</div>

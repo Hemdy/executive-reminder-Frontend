@@ -1,0 +1,108 @@
+:host {
+  position: relative;
+  z-index: 10000;
+}
+
+.loading-overlay {
+  position: fixed;
+  z-index: 10000;
+  inset: 0;
+  display: grid;
+  min-height: 100vh;
+  min-height: 100dvh;
+  place-items: center;
+  padding:
+    max(1.5rem, env(safe-area-inset-top))
+    max(1.5rem, env(safe-area-inset-right))
+    max(1.5rem, env(safe-area-inset-bottom))
+    max(1.5rem, env(safe-area-inset-left));
+  background: var(--surface-muted, #f6f7f9);
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+  transition:
+    opacity 180ms ease,
+    visibility 0s linear 180ms;
+}
+
+.loading-overlay.is-visible {
+  opacity: 1;
+  visibility: visible;
+  pointer-events: auto;
+  transition:
+    opacity 180ms ease,
+    visibility 0s;
+}
+
+.loading-content {
+  position: relative;
+  width: 148px;
+  height: 148px;
+  color: var(--text-muted, #687386);
+  font-size: 0.9rem;
+  font-weight: 500;
+}
+
+.loading-mark {
+  position: relative;
+  display: grid;
+  width: 148px;
+  height: 148px;
+  place-items: center;
+}
+
+.loading-mark img {
+  z-index: 1;
+  width: 96px;
+  height: 96px;
+  border-radius: 50%;
+  object-fit: contain;
+}
+
+.loading-ring {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  animation: loading-spin 1.1s linear infinite;
+  fill: none;
+  stroke-width: 2.5;
+  transform-box: view-box;
+  transform-origin: 50% 50%;
+}
+
+.loading-track {
+  stroke: rgba(31, 75, 153, 0.14);
+}
+
+.loading-progress {
+  stroke: var(--primary, #1f4b99);
+  stroke-dasharray: 82 339;
+  stroke-linecap: round;
+}
+
+.loading-content p {
+  position: absolute;
+  top: calc(100% + 1rem);
+  left: 50%;
+  margin: 0;
+  transform: translateX(-50%);
+  white-space: nowrap;
+}
+
+@keyframes loading-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .loading-overlay,
+  .loading-overlay.is-visible {
+    transition: none;
+  }
+
+  .loading-ring {
+    animation: none;
+  }
+}

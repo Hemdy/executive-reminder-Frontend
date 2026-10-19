@@ -1,7 +1,7 @@
 import { HttpClient } from '@angular/common/http';
 import { isPlatformBrowser } from '@angular/common';
 import { Injectable, PLATFORM_ID, computed, inject, signal } from '@angular/core';
-import { Observable, catchError, map, of, tap } from 'rxjs';
+import { Observable, map, tap } from 'rxjs';
 import { LoginCredentials, User } from '../models/user.model';
 import { API_BASE_URL } from '../config/api.config';
 
@@ -30,8 +30,7 @@ export class AuthService {
       password: credentials.password
     }).pipe(
       tap(response => this.storeSession(response)),
-      map(() => true),
-      catchError(() => of(false))
+      map(() => true)
     );
   }
 
