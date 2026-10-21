@@ -2,6 +2,25 @@
   margin: 0 auto;
 }
 
+.push-status,
+.push-error {
+  margin: 8px 0 0;
+  color: var(--text-muted);
+  font-size: 12px;
+}
+
+.push-error {
+  color: var(--danger);
+}
+
+.header-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
 .notification-card {
   background: #f4f8f5;
   border: 1px solid #d1e2d6;

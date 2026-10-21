@@ -25,6 +25,26 @@ including `/api` (for example, `https://api.example.com/api`). This browser
 configuration is public: never put database connection strings, `JWT_SECRET`,
 or other private credentials in it.
 
+## Device push notifications
+
+Push delivery requires the backend VAPID configuration and the database
+migration documented in the backend README. The Angular service worker is
+enabled for production builds, so test with the deployed HTTPS app or a local
+production build served over HTTPS; `ng serve` does not enable push.
+
+Sign in and open **Notifications** to enable the current device. On Android,
+use Chrome and allow notifications (installing the PWA is recommended). On
+iPhone or iPad, add the site to the Home Screen, open it from its icon, and
+allow notifications; Web Push requires iOS/iPadOS 16.4 or later. The user must
+enable notifications separately on each browser/device.
+
+To test delivery, subscribe two users on separate devices or browser profiles,
+then invite a participant to a meeting, assign a task, add a task/meeting
+comment, or schedule a reminder. Reminder delivery runs through the backend
+Vercel Cron job and requires `CRON_SECRET` and `REMINDER_TIMEZONE` to be set.
+Clicking a push notification should open the linked task, meeting, reminder,
+or comment.
+
 ## Code scaffolding
 
 Angular CLI includes powerful code scaffolding tools. To generate a new component, run:

@@ -22,6 +22,7 @@ export class NotificationService {
   getNotification(id: string): Notification | undefined { return this.notificationsSignal().find(notification => notification.id === id); }
   loadNotifications(): Observable<Notification[]> { return this.http.get<Notification[]>(this.apiUrl).pipe(tap(notifications => this.notificationsSignal.set(notifications))); }
   resourceRoute(notification: Notification): string | undefined {
+    if (notification.route?.startsWith('/')) return notification.route;
     const referenceId = notification.referenceId ?? notification.sourceId;
     if (!referenceId) return notification.route;
     const resource = notification.resourceType

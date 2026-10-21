@@ -218,25 +218,55 @@
             <div>
               <h2>Comments</h2>
               <span>
-                {{ meeting.commentsCount }} comments
+                {{ comments().length }} comments
               </span>
             </div>
           </div>
 
-          <div class="placeholder-card">
-
-            <div class="placeholder-icon">
-              💬
-            </div>
-
-            <h3>
-              Comments coming soon
-            </h3>
-
-            <p>
-              Participants will be able to discuss this meeting here.
-            </p>
-
+          <div class="card-body meeting-comments">
+            @if (commentsError()) {
+              <p class="meeting-comment-error" role="alert">{{ commentsError() }}</p>
+            }
+            @if (commentsLoading()) {
+              <p class="muted">Loading comments...</p>
+            } @else if (comments().length) {
+              <div class="meeting-comment-list">
+                @for (comment of comments(); track comment.id) {
+                  <article
+                    class="meeting-comment"
+                    [class.highlighted-comment]="highlightedCommentId() === comment.id"
+                    [id]="'meeting-comment-' + comment.id"
+                    tabindex="-1"
+                  >
+                    <div class="meeting-comment-meta">
+                      <strong>{{ comment.author.title }} {{ comment.author.firstName }} {{ comment.author.lastName }}</strong>
+                      <time>{{ comment.createdAt | date:'MMM d, y · h:mm a' }}</time>
+                    </div>
+                    <p>{{ comment.body }}</p>
+                  </article>
+                }
+              </div>
+            } @else {
+              <p class="muted">No comments yet.</p>
+            }
+            <form class="meeting-comment-form" (ngSubmit)="submitComment()">
+              <label for="meeting-comment">Add a comment</label>
+              <textarea
+                id="meeting-comment"
+                rows="3"
+                maxlength="5000"
+                placeholder="Write a comment..."
+                [value]="commentText()"
+                (input)="updateCommentText($event)"
+              ></textarea>
+              <button
+                class="primary-button"
+                type="submit"
+                [disabled]="commentSubmitting() || !commentText().trim()"
+              >
+                {{ commentSubmitting() ? 'Posting...' : 'Post Comment' }}
+              </button>
+            </form>
           </div>
 
         </div>

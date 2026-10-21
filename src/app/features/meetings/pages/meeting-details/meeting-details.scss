@@ -297,6 +297,80 @@
   font-size: 26px;
 }
 
+.meeting-comment-list {
+  display: grid;
+  gap: 12px;
+}
+
+.meeting-comment {
+  padding: 13px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--surface);
+  scroll-margin-top: 1rem;
+}
+
+.meeting-comment.highlighted-comment {
+  border-color: var(--primary);
+  box-shadow: 0 0 0 3px rgba(31, 75, 153, 0.14);
+}
+
+.meeting-comment-meta {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: 5px 12px;
+  color: var(--text-muted);
+  font-size: 11px;
+}
+
+.meeting-comment-meta strong {
+  color: var(--text);
+}
+
+.meeting-comment p {
+  margin: 8px 0 0;
+  color: var(--text);
+  font-size: 13px;
+  line-height: 1.55;
+  white-space: pre-wrap;
+}
+
+.meeting-comment-form {
+  display: grid;
+  gap: 8px;
+  margin-top: 16px;
+}
+
+.meeting-comment-form label {
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.meeting-comment-form textarea {
+  width: 100%;
+  padding: 10px;
+  border: 1px solid var(--border);
+  border-radius: 7px;
+  resize: vertical;
+  font: inherit;
+}
+
+.meeting-comment-form .primary-button {
+  justify-self: start;
+  cursor: pointer;
+}
+
+.meeting-comment-form .primary-button:disabled {
+  cursor: wait;
+  opacity: 0.7;
+}
+
+.meeting-comment-error {
+  color: var(--danger);
+  font-size: 12px;
+}
+
 .details-list {
   padding: 8px 18px 12px;
 }

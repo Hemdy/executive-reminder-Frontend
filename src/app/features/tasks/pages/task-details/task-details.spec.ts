@@ -86,7 +86,12 @@ describe('TaskDetails', () => {
         provideRouter([]),
         {
           provide: ActivatedRoute,
-          useValue: { snapshot: { paramMap: new Map([['id', 'task-1']]) } }
+          useValue: {
+            snapshot: {
+              paramMap: new Map([['id', 'task-1']]),
+              queryParamMap: new Map<string, string>(),
+            }
+          }
         },
         { provide: TaskService, useValue: taskServiceMock },
         {

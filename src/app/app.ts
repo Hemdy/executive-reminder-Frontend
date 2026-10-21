@@ -10,6 +10,7 @@ import {
 import { filter, take } from 'rxjs';
 import { LoadingOverlay } from './core/components/loading-overlay/loading-overlay';
 import { LoadingService } from './core/services/loading.service';
+import { PushNotificationsService } from './core/services/push-notifications.service';
 
 @Component({
   selector: 'app-root',
@@ -24,6 +25,7 @@ export class App {
 
   private readonly router = inject(Router);
   private readonly document = inject(DOCUMENT);
+  private readonly pushNotifications = inject(PushNotificationsService);
   private startupTask = this.loading.begin('Loading...');
   private startupPending = true;
 

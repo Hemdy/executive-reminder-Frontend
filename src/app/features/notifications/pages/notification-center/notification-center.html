@@ -9,17 +9,56 @@
         Stay up to date with tasks, reminders, meetings,
         requests, and system activity.
       </p>
+      @if (pushNotifications.isSupported()) {
+        <p class="push-status" role="status">
+          @if (pushNotifications.statusMessage()) {
+            {{ pushNotifications.statusMessage() }}
+          } @else if (pushNotifications.isSubscribed()) {
+            Push notifications are enabled on this device.
+          } @else {
+            Enable device notifications for important updates.
+          }
+        </p>
+        @if (pushNotifications.statusError()) {
+          <p class="push-error" role="alert">{{ pushNotifications.statusError() }}</p>
+        }
+      } @else {
+        <p class="push-status">
+          Device notifications are not supported in this browser or app mode.
+        </p>
+      }
     </div>
 
-    @if (unreadCount() > 0) {
-      <button
-        type="button"
-        class="btn btn-secondary"
-        (click)="markAllAsRead()"
-      >
-        Mark all as read
-      </button>
-    }
+    <div class="header-actions">
+      @if (pushNotifications.canEnable()) {
+        <button
+          type="button"
+          class="btn btn-secondary"
+          [disabled]="pushNotifications.isBusy() || pushNotifications.isConfigLoading()"
+          (click)="pushNotifications.enable()"
+        >
+          {{ pushNotifications.isConfigLoading() ? 'Checking availability...' : pushNotifications.isBusy() ? 'Enabling...' : 'Enable device notifications' }}
+        </button>
+      } @else if (pushNotifications.isSubscribed()) {
+        <button
+          type="button"
+          class="btn btn-secondary"
+          [disabled]="pushNotifications.isBusy()"
+          (click)="pushNotifications.disable()"
+        >
+          {{ pushNotifications.isBusy() ? 'Updating...' : 'Disable device notifications' }}
+        </button>
+      }
+      @if (unreadCount() > 0) {
+        <button
+          type="button"
+          class="btn btn-secondary"
+          (click)="markAllAsRead()"
+        >
+          Mark all as read
+        </button>
+      }
+    </div>
 
   </div>
 

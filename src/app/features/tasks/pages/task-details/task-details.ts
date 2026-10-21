@@ -8,7 +8,7 @@ import {
   signal
 } from '@angular/core';
 
-import { DatePipe } from '@angular/common';
+import { DatePipe, DOCUMENT } from '@angular/common';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { catchError, forkJoin, map, of } from 'rxjs';
 import {
@@ -39,7 +39,9 @@ export class TaskDetails implements OnInit {
   private readonly router = inject(Router);
   private readonly taskService = inject(TaskService);
   private readonly authService = inject(AuthService);
+  private readonly document = inject(DOCUMENT);
   readonly comments = signal<TaskComment[]>([]);
+  readonly highlightedCommentId = signal<string | null>(null);
   readonly attachments = signal<TaskAttachment[]>([]);
   readonly commentText = signal('');
   readonly activityError = signal('');
@@ -339,6 +341,14 @@ export class TaskDetails implements OnInit {
         this.comments.set(activity.comments);
         this.attachments.set(activity.attachments);
         this.loadingActivity.set(false);
+        const commentId = this.route.snapshot.queryParamMap.get('comment');
+        if (commentId && activity.comments.some(comment => comment.id === commentId)) {
+          this.highlightedCommentId.set(commentId);
+          this.document.defaultView?.requestAnimationFrame(() => {
+            this.document.getElementById(`task-comment-${commentId}`)
+              ?.scrollIntoView({ block: 'center' });
+          });
+        }
       },
       error: () => {
         this.loadingActivity.set(false);

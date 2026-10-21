@@ -38,6 +38,13 @@ export interface Meeting {
   attachmentsCount: number;
 }
 
+export interface MeetingComment {
+  id: string;
+  body: string;
+  createdAt: string;
+  author: Pick<User, 'id' | 'title' | 'firstName' | 'lastName'>;
+}
+
 export interface CreateMeetingRequest {
   title: string;
   description?: string;

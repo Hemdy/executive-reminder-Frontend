@@ -111,7 +111,12 @@
           } @else if (comments().length) {
             <div class="activity-list">
               @for (comment of comments(); track comment.id) {
-                <article class="task-comment">
+                <article
+                  class="task-comment"
+                  [class.highlighted-comment]="highlightedCommentId() === comment.id"
+                  [id]="'task-comment-' + comment.id"
+                  tabindex="-1"
+                >
                   <div class="comment-meta">
                     <strong>
                       {{ comment.author.title }} {{ comment.author.firstName }} {{ comment.author.lastName }}

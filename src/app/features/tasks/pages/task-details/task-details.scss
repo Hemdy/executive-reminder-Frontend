@@ -395,6 +395,12 @@ aside {
   border-bottom: 1px solid var(--border);
 }
 
+.task-comment.highlighted-comment {
+  background: #eef4ff;
+  box-shadow: inset 3px 0 var(--primary);
+  scroll-margin-top: 1rem;
+}
+
 .comment-meta {
   display: flex;
   align-items: baseline;

@@ -21,6 +21,7 @@ import {
 } from '../../../../core/models/notification.model';
 
 import { NotificationService } from '../../../../core/services/notification.service';
+import { PushNotificationsService } from '../../../../core/services/push-notifications.service';
 
 type NotificationFilter =
   | 'ALL'
@@ -44,6 +45,7 @@ export class NotificationCenter {
 
   private readonly notificationService =
     inject(NotificationService);
+  readonly pushNotifications = inject(PushNotificationsService);
 
   private readonly router = inject(Router);
 

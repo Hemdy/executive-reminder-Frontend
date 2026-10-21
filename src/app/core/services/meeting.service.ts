@@ -2,7 +2,7 @@ import { HttpClient } from '@angular/common/http';
 import { Injectable, computed, inject, signal } from '@angular/core';
 import { Observable, tap } from 'rxjs';
 import { User } from '../models/user.model';
-import { CreateMeetingRequest, Meeting, MeetingStatus, MeetingType, UpdateMeetingRequest } from '../models/meeting.model';
+import { CreateMeetingRequest, Meeting, MeetingComment, MeetingStatus, MeetingType, UpdateMeetingRequest } from '../models/meeting.model';
 import { API_BASE_URL } from '../config/api.config';
 
 @Injectable({ providedIn: 'root' })
@@ -41,6 +41,12 @@ export class MeetingService {
   }
   updateStatus(id: string, status: MeetingStatus): Observable<Meeting> {
     return this.http.patch<Meeting>(`${this.apiUrl}/${id}/status`, { status }).pipe(tap(meeting => this.replace(this.normalize(meeting))));
+  }
+  getComments(meetingId: string): Observable<MeetingComment[]> {
+    return this.http.get<MeetingComment[]>(`${this.apiUrl}/${meetingId}/comments`);
+  }
+  addComment(meetingId: string, body: string): Observable<MeetingComment> {
+    return this.http.post<MeetingComment>(`${this.apiUrl}/${meetingId}/comments`, { body });
   }
   deleteMeeting(id: string): Observable<void> {
     return this.http.delete<void>(`${this.apiUrl}/${id}`).pipe(tap(() => this.meetingsSignal.update(meetings => meetings.filter(meeting => meeting.id !== id))));
