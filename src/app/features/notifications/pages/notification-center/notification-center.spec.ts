@@ -16,6 +16,7 @@ describe('NotificationCenter', () => {
         useValue: {
           isSupported: signal(false),
           isSubscribed: signal(false),
+          isRegistered: signal(false),
           isBusy: signal(false),
           isConfigLoading: signal(false),
           statusMessage: signal(''),

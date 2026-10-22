@@ -83,12 +83,14 @@ export class Sidebar {
     //   route: '/users',
     //   permission: 'users:view'
     // },
-    // {
-    //   label: 'Settings',
-    //   icon: '⚙',
-    //   route: '/settings',
-    //   permission: 'settings:view'
-    // }
+    {
+      label: 'Settings',
+      icon: '⚙',
+      route: '/settings',
+      permission: 'settings:view',
+      
+      roles: ['ADMIN']
+    }
   ];
 
   isVisible(item: NavigationItem): boolean {

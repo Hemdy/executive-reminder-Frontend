@@ -29,7 +29,10 @@ export class PushNotificationsService {
   private readonly config = signal<PushConfig | null>(null);
   readonly isConfigLoading = signal(false);
 
-  readonly isSupported = signal(this.browser && this.swPush.isEnabled);
+  readonly isSupported = signal(
+    this.browser && this.swPush.isEnabled && typeof Notification !== 'undefined',
+  );
+  readonly permission = signal<NotificationPermission>('default');
   readonly isSubscribed = signal(false);
   readonly isRegistered = signal(false);
   readonly isBusy = signal(false);
@@ -37,12 +40,28 @@ export class PushNotificationsService {
   readonly statusError = signal('');
   private registeredUserId: string | null = null;
   readonly canEnable = computed(() =>
-    this.isSupported() && (!this.isSubscribed() || !this.isRegistered())
+    this.isSupported() &&
+    this.permission() !== 'denied' &&
+    (!this.isSubscribed() || !this.isRegistered())
   );
 
   constructor() {
-    if (!this.browser || !this.swPush.isEnabled) {
+    if (!this.browser) {
       return;
+    }
+
+    if (typeof Notification !== 'undefined') {
+      this.permission.set(Notification.permission);
+    }
+
+    if (!this.isSupported()) {
+      return;
+    }
+
+    if (this.permission() === 'denied') {
+      this.statusError.set(
+        'Notifications are blocked in browser settings. Allow them there to enable push notifications.',
+      );
     }
 
     this.loadConfig();
@@ -101,6 +120,7 @@ export class PushNotificationsService {
     const config = this.config();
     if (!config) {
       this.isBusy.set(false);
+      this.statusError.set('Unable to check push notification availability. Please try again.');
       this.loadConfig();
       return;
     }
@@ -127,8 +147,9 @@ export class PushNotificationsService {
       )),
       catchError(error => {
         console.error('Unable to enable push notifications', error);
+        this.refreshPermission();
         this.statusError.set(
-          Notification.permission === 'denied'
+          this.permission() === 'denied'
             ? 'Notifications are blocked in browser settings. Allow them there and try again.'
             : 'Unable to enable push notifications. Please try again.',
         );
@@ -136,6 +157,7 @@ export class PushNotificationsService {
       }),
       finalize(() => this.isBusy.set(false)),
     ).subscribe(() => {
+      this.refreshPermission();
       this.isSubscribed.set(true);
       this.isRegistered.set(true);
       this.statusMessage.set('Push notifications are enabled on this device.');
@@ -179,6 +201,7 @@ export class PushNotificationsService {
     this.http.post<void>(`${this.apiUrl}/subscription`, subscription.toJSON()).pipe(
       catchError(error => {
         console.error('Unable to refresh push subscription', error);
+        this.statusError.set('Unable to register this device for push notifications. Please try again.');
         return EMPTY;
       }),
       takeUntilDestroyed(this.destroyRef),
@@ -204,7 +227,19 @@ export class PushNotificationsService {
       takeUntilDestroyed(this.destroyRef),
     ).subscribe(config => {
       this.config.set(config);
-      this.statusError.set(config.enabled ? '' : 'Push notifications are not configured on the server yet.');
+      this.statusError.set(
+        !config.enabled
+          ? 'Push notifications are not configured on the server yet.'
+          : this.permission() === 'denied'
+            ? 'Notifications are blocked in browser settings. Allow them there to enable push notifications.'
+            : '',
+      );
     });
+  }
+
+  private refreshPermission(): void {
+    if (this.browser && typeof Notification !== 'undefined') {
+      this.permission.set(Notification.permission);
+    }
   }
 }

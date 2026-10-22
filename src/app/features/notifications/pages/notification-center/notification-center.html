@@ -13,11 +13,13 @@
         <p class="push-status" role="status">
           @if (pushNotifications.statusMessage()) {
             {{ pushNotifications.statusMessage() }}
-          } @else if (pushNotifications.isSubscribed()) {
+        } @else if (pushNotifications.isSubscribed() && pushNotifications.isRegistered()) {
             Push notifications are enabled on this device.
-          } @else {
-            Enable device notifications for important updates.
-          }
+        } @else if (pushNotifications.isSubscribed()) {
+          Registering push notifications for this device...
+        } @else {
+          Enable device notifications for important updates.
+        }
         </p>
         @if (pushNotifications.statusError()) {
           <p class="push-error" role="alert">{{ pushNotifications.statusError() }}</p>
@@ -37,7 +39,7 @@
           [disabled]="pushNotifications.isBusy() || pushNotifications.isConfigLoading()"
           (click)="pushNotifications.enable()"
         >
-          {{ pushNotifications.isConfigLoading() ? 'Checking availability...' : pushNotifications.isBusy() ? 'Enabling...' : 'Enable device notifications' }}
+          {{ pushNotifications.isConfigLoading() ? 'Checking availability...' : pushNotifications.isBusy() ? 'Enabling...' : pushNotifications.isSubscribed() ? 'Finish enabling notifications' : 'Enable device notifications' }}
         </button>
       } @else if (pushNotifications.isSubscribed()) {
         <button
