@@ -373,9 +373,10 @@
               <button
                 type="button"
                 class="danger-action"
+                [disabled]="isDeleting()"
                 (click)="deleteTask()"
               >
-                Delete Task
+                {{ isDeleting() ? 'Deleting task...' : 'Delete Task' }}
               </button>
             }
 

@@ -9,6 +9,7 @@ import {
 } from '@angular/core';
 
 import { DatePipe, DOCUMENT } from '@angular/common';
+import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { catchError, forkJoin, map, of } from 'rxjs';
 import {
@@ -19,11 +20,13 @@ import {
 } from '../../../../core/models/task.model';
 import { AuthService } from '../../../../core/services/auth.service';
 import { TaskService } from '../../../../core/services/task.service';
+import { LoadingService } from '../../../../core/services/loading.service';
+import { ToastService } from '../../../../core/services/toast.service';
 
 @Component({
   selector: 'app-task-details',
   standalone: true,
-  imports: [RouterLink, DatePipe],
+  imports: [RouterLink, DatePipe, FormsModule],
   templateUrl: './task-details.html',
   styleUrl: './task-details.scss',
   changeDetection: ChangeDetectionStrategy.OnPush
@@ -40,6 +43,8 @@ export class TaskDetails implements OnInit {
   private readonly taskService = inject(TaskService);
   private readonly authService = inject(AuthService);
   private readonly document = inject(DOCUMENT);
+  private readonly loading = inject(LoadingService);
+  private readonly toast = inject(ToastService);
   readonly comments = signal<TaskComment[]>([]);
   readonly highlightedCommentId = signal<string | null>(null);
   readonly attachments = signal<TaskAttachment[]>([]);
@@ -47,6 +52,7 @@ export class TaskDetails implements OnInit {
   readonly activityError = signal('');
   readonly activityMessage = signal('');
   readonly taskActionError = signal('');
+  readonly isDeleting = signal(false);
   readonly submittingComment = signal(false);
   readonly uploadingAttachments = signal(false);
   readonly loadingActivity = signal(false);
@@ -295,7 +301,7 @@ export class TaskDetails implements OnInit {
   deleteTask(): void {
     const task = this.task();
 
-    if (!task) {
+    if (!task || this.isDeleting()) {
       return;
     }
 
@@ -307,8 +313,20 @@ export class TaskDetails implements OnInit {
       return;
     }
 
+    this.isDeleting.set(true);
+    const loadingTask = this.loading.begin('Deleting task…');
     this.taskService.deleteTask(task.id).subscribe({
-      next: () => this.router.navigate(['/tasks'])
+      next: () => {
+        this.isDeleting.set(false);
+        this.loading.end(loadingTask);
+        this.toast.success('Task deleted successfully');
+        void this.router.navigate(['/tasks']);
+      },
+      error: error => {
+        this.isDeleting.set(false);
+        this.loading.end(loadingTask);
+        this.toast.error(error.error?.message ?? 'Unable to delete the task.');
+      }
     });
   }
 

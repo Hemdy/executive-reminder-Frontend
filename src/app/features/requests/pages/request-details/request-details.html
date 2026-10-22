@@ -341,9 +341,10 @@
               <button
                 class="action-button delete"
                 type="button"
+                [disabled]="isDeleting()"
                 (click)="deleteRequest()"
               >
-                Delete Request
+                {{ isDeleting() ? 'Deleting request...' : 'Delete Request' }}
               </button>
 
             </div>

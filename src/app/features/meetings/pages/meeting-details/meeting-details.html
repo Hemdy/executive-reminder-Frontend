@@ -467,9 +467,10 @@
             <button
               class="action-button delete"
               type="button"
+              [disabled]="isDeleting()"
               (click)="deleteMeeting()"
             >
-              Delete Meeting
+              {{ isDeleting() ? 'Deleting meeting...' : 'Delete Meeting' }}
             </button>
 
           </div>

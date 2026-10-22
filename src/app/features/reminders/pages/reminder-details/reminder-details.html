@@ -353,9 +353,10 @@
             <button
               type="button"
               class="danger-action"
+              [disabled]="isDeleting()"
               (click)="deleteReminder()"
             >
-              Delete Reminder
+              {{ isDeleting() ? 'Deleting reminder...' : 'Delete Reminder' }}
             </button>
 
           </div>

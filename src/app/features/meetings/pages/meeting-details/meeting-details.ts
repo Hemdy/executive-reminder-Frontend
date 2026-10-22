@@ -23,6 +23,8 @@ import {
 } from '../../../../core/models/meeting.model';
 
 import { MeetingService } from '../../../../core/services/meeting.service';
+import { LoadingService } from '../../../../core/services/loading.service';
+import { ToastService } from '../../../../core/services/toast.service';
 
 @Component({
   selector: 'app-meeting-details',
@@ -43,6 +45,9 @@ export class MeetingDetails implements OnInit {
   private readonly router = inject(Router);
   private readonly meetingService = inject(MeetingService);
   private readonly document = inject(DOCUMENT);
+  private readonly loading = inject(LoadingService);
+  private readonly toast = inject(ToastService);
+  readonly isDeleting = signal(false);
   readonly comments = signal<MeetingComment[]>([]);
   readonly commentText = signal('');
   readonly commentsLoading = signal(false);
@@ -105,7 +110,7 @@ export class MeetingDetails implements OnInit {
   deleteMeeting(): void {
     const meeting = this.meeting();
 
-    if (!meeting) {
+    if (!meeting || this.isDeleting()) {
       return;
     }
 
@@ -117,9 +122,21 @@ export class MeetingDetails implements OnInit {
       return;
     }
 
-    this.meetingService.deleteMeeting(meeting.id);
-
-    this.router.navigate(['/meetings']);
+    this.isDeleting.set(true);
+    const loadingTask = this.loading.begin('Deleting meeting…');
+    this.meetingService.deleteMeeting(meeting.id).subscribe({
+      next: () => {
+        this.isDeleting.set(false);
+        this.loading.end(loadingTask);
+        this.toast.success('Meeting deleted successfully');
+        void this.router.navigate(['/meetings']);
+      },
+      error: error => {
+        this.isDeleting.set(false);
+        this.loading.end(loadingTask);
+        this.toast.error(error.error?.message ?? 'Unable to delete the meeting.');
+      }
+    });
   }
 
   backToMeetings(): void {

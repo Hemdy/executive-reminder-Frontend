@@ -1,8 +1,10 @@
-import { ChangeDetectionStrategy, Component, computed, inject, OnInit } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, inject, OnInit, signal } from '@angular/core';
 import { DatePipe } from '@angular/common';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { ReminderPriority, ReminderStatus } from '../../../../core/models/reminder.model';
 import { ReminderService } from '../../../../core/services/reminder.service';
+import { LoadingService } from '../../../../core/services/loading.service';
+import { ToastService } from '../../../../core/services/toast.service';
 
 @Component({
   selector: 'app-reminder-details',
@@ -16,6 +18,9 @@ export class ReminderDetails implements OnInit {
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
   private readonly reminderService = inject(ReminderService);
+  private readonly loading = inject(LoadingService);
+  private readonly toast = inject(ToastService);
+  readonly isDeleting = signal(false);
 
   readonly reminder = computed(() => {
     const id = this.route.snapshot.paramMap.get('id');
@@ -37,7 +42,7 @@ export class ReminderDetails implements OnInit {
   editReminder(): void {
     const reminder = this.reminder();
 
-    if (!reminder) {
+    if (!reminder || this.isDeleting()) {
       return;
     }
 
@@ -97,8 +102,20 @@ export class ReminderDetails implements OnInit {
       return;
     }
 
+    this.isDeleting.set(true);
+    const loadingTask = this.loading.begin('Deleting reminder…');
     this.reminderService.deleteReminder(reminder.id).subscribe({
-      next: () => this.router.navigate(['/reminders'])
+      next: () => {
+        this.isDeleting.set(false);
+        this.loading.end(loadingTask);
+        this.toast.success('Reminder deleted successfully');
+        void this.router.navigate(['/reminders']);
+      },
+      error: error => {
+        this.isDeleting.set(false);
+        this.loading.end(loadingTask);
+        this.toast.error(error.error?.message ?? 'Unable to delete the reminder.');
+      }
     });
   }
 

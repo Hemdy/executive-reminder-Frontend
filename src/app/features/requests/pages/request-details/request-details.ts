@@ -2,7 +2,8 @@ import {
   ChangeDetectionStrategy,
   Component,
   computed,
-  inject
+  inject,
+  signal
 } from '@angular/core';
 import { DatePipe } from '@angular/common';
 import { ActivatedRoute, Router, RouterLink, RouterModule } from '@angular/router';
@@ -14,6 +15,8 @@ import {
   RequestType
 } from '../../../../core/models/request.model';
 import { RequestService } from '../../../../core/services/request.service';
+import { LoadingService } from '../../../../core/services/loading.service';
+import { ToastService } from '../../../../core/services/toast.service';
 
 @Component({
   selector: 'app-request-details',
@@ -36,6 +39,9 @@ export class RequestDetails {
   private readonly router = inject(Router);
   private readonly requestService = inject(RequestService);
   private readonly authService = inject(AuthService);
+  private readonly loading = inject(LoadingService);
+  private readonly toast = inject(ToastService);
+  readonly isDeleting = signal(false);
 
   readonly request = computed(() => {
     const id = this.route.snapshot.paramMap.get('id');
@@ -154,7 +160,7 @@ export class RequestDetails {
   deleteRequest(): void {
     const request = this.request();
 
-    if (!request) {
+    if (!request || this.isDeleting()) {
       return;
     }
 
@@ -166,8 +172,21 @@ export class RequestDetails {
       return;
     }
 
-    this.requestService.deleteRequest(request.id);
-    this.router.navigate(['/requests']);
+    this.isDeleting.set(true);
+    const loadingTask = this.loading.begin('Deleting request…');
+    this.requestService.deleteRequest(request.id).subscribe({
+      next: () => {
+        this.isDeleting.set(false);
+        this.loading.end(loadingTask);
+        this.toast.success('Request deleted successfully');
+        void this.router.navigate(['/requests']);
+      },
+      error: error => {
+        this.isDeleting.set(false);
+        this.loading.end(loadingTask);
+        this.toast.error(error.error?.message ?? 'Unable to delete the request.');
+      }
+    });
   }
 
   backToRequests(): void {

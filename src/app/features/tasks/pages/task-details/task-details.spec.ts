@@ -22,7 +22,7 @@ describe('TaskDetails', () => {
     isOverdue: () => false,
     updateStatus: vi.fn(() => of(currentTask)),
     deleteTask: () => of(undefined),
-    addComment: (_taskId: string, body: string) => of({
+    addComment: vi.fn((_taskId: string, body: string) => of({
       id: 'comment-1',
       body,
       createdAt: '2026-09-30T12:00:00.000Z',
@@ -31,7 +31,7 @@ describe('TaskDetails', () => {
         firstName: currentUser.firstName,
         lastName: currentUser.lastName
       }
-    }),
+    })),
     uploadAttachment: vi.fn(() => of({
       id: 'attachment-1',
       fileName: 'brief.pdf',
@@ -79,6 +79,7 @@ describe('TaskDetails', () => {
     };
     taskServiceMock.updateStatus.mockClear();
     taskServiceMock.uploadAttachment.mockClear();
+    taskServiceMock.addComment.mockClear();
 
     await TestBed.configureTestingModule({
       imports: [TaskDetails],
@@ -157,11 +158,19 @@ describe('TaskDetails', () => {
     expect((fixture.nativeElement as HTMLElement).textContent).not.toContain('Start Task');
   });
 
-  it('allows the assigned user to post a comment', () => {
+  it('intercepts comment form submission and posts without a browser document navigation', () => {
     component.commentText.set('Started reviewing the report.');
+    fixture.detectChanges();
+    const form = fixture.nativeElement.querySelector('.task-comment-form') as HTMLFormElement;
+    const submitEvent = new Event('submit', { bubbles: true, cancelable: true });
 
-    component.submitComment();
+    form.dispatchEvent(submitEvent);
 
+    expect(submitEvent.defaultPrevented).toBe(true);
+    expect(taskServiceMock.addComment).toHaveBeenCalledWith(
+      'task-1',
+      'Started reviewing the report.'
+    );
     expect(component.comments()).toHaveLength(1);
     expect(component.comments()[0].body).toBe('Started reviewing the report.');
   });
