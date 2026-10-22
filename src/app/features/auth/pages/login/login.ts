@@ -23,11 +23,13 @@ export class Login {
   private readonly destroyRef = inject(DestroyRef);
 
   readonly loginError = signal('');
+  readonly rememberMeError = signal('');
   readonly passwordVisible = signal(false);
   readonly isSubmitting = signal(false);
   readonly loginForm = this.fb.nonNullable.group({
     email: ['', [Validators.required, Validators.email]],
-    password: ['', Validators.required]
+    password: ['', Validators.required],
+    rememberMe: [false]
   });
 
   private loadingTask: number | null = null;
@@ -35,6 +37,16 @@ export class Login {
   private navigationStarted = false;
 
   constructor() {
+    try {
+      const rememberedEmail = this.authService.getRememberedEmail();
+      if (rememberedEmail) {
+        this.loginForm.patchValue({ email: rememberedEmail, rememberMe: true });
+      }
+    } catch (error) {
+      console.error('Unable to load remembered sign-in email', error);
+      this.rememberMeError.set('Remember Me is unavailable in this browser.');
+    }
+
     this.destroyRef.onDestroy(() => {
       if (!this.navigationStarted && this.loadingTask !== null) {
         this.loginSubscription?.unsubscribe();
@@ -57,7 +69,8 @@ export class Login {
 
     this.isSubmitting.set(true);
     this.loadingTask = this.loading.begin('Signing you in...');
-    this.loginSubscription = this.authService.login(this.loginForm.getRawValue()).pipe(
+    const { email, password } = this.loginForm.getRawValue();
+    this.loginSubscription = this.authService.login({ email, password }).pipe(
       finalize(() => {
         if (!this.navigationStarted) {
           this.finishLogin();
@@ -70,6 +83,7 @@ export class Login {
           return;
         }
 
+        this.updateRememberedEmail(email);
         this.navigationStarted = true;
         void this.router.navigate(['/dashboard']).then(
           navigated => {
@@ -100,6 +114,34 @@ export class Login {
 
   togglePassword(): void {
     this.passwordVisible.update(visible => !visible);
+  }
+
+  onRememberMeChange(): void {
+    this.rememberMeError.set('');
+    if (this.loginForm.controls.rememberMe.value) {
+      return;
+    }
+
+    try {
+      this.authService.clearRememberedEmail();
+    } catch (error) {
+      console.error('Unable to clear remembered sign-in email', error);
+      this.rememberMeError.set('Unable to remove the saved email from this browser.');
+    }
+  }
+
+  private updateRememberedEmail(email: string): void {
+    this.rememberMeError.set('');
+    try {
+      if (this.loginForm.controls.rememberMe.value) {
+        this.authService.rememberEmail(email);
+      } else {
+        this.authService.clearRememberedEmail();
+      }
+    } catch (error) {
+      console.error('Unable to save remembered sign-in email', error);
+      this.rememberMeError.set('You are signed in, but your email could not be saved on this browser.');
+    }
   }
 
   private finishLogin(): void {

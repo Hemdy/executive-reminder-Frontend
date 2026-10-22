@@ -93,15 +93,48 @@
             <span>*</span>
           </label>
 
-          <div class="participant-list">
-            @for (recipient of recipients(); track recipient.id) {
-              <label class="participant-option">
-                <input type="checkbox"
-                  [checked]="reminderForm.controls.participantIds.value.includes(recipient.id)"
-                  (change)="toggleParticipant(recipient.id, $any($event.target).checked)" />
-                <span>{{ recipient.firstName }} {{ recipient.lastName }}</span>
-                @if (recipient.department) { <small>— {{ recipient.department }}</small> }
-              </label>
+          <div
+            class="participant-list"
+            [attr.aria-busy]="recipientsLoading()"
+            role="group"
+            aria-label="Reminder recipients"
+          >
+            @if (recipientsLoading()) {
+              <div class="participant-skeletons" aria-hidden="true">
+                @for (placeholder of [0, 1, 2, 3]; track placeholder) {
+                  <div class="participant-skeleton">
+                    <span class="skeleton-checkbox"></span>
+                    <span class="skeleton-avatar"></span>
+                    <span class="skeleton-name"></span>
+                    <span class="skeleton-detail"></span>
+                  </div>
+                }
+              </div>
+              <span class="visually-hidden" role="status">Loading recipients</span>
+            } @else {
+              @for (recipient of recipients(); track recipient.id) {
+                <label class="participant-option">
+                  <input
+                    type="checkbox"
+                    [checked]="reminderForm.controls.participantIds.value.includes(recipient.id)"
+                    (change)="toggleParticipant(recipient.id, $any($event.target).checked)"
+                  />
+                  <span class="participant-avatar" aria-hidden="true">
+                    {{ recipient.firstName.charAt(0) }}{{ recipient.lastName.charAt(0) }}
+                  </span>
+                  <span class="participant-info">
+                    <strong>{{ recipient.firstName }} {{ recipient.lastName }}</strong>
+                    <small>
+                      {{ recipient.role }}
+                      @if (recipient.department) {
+                        · {{ recipient.department }}
+                      }
+                    </small>
+                  </span>
+                </label>
+              } @empty {
+                <p class="participant-empty">No recipients are available.</p>
+              }
             }
           </div>
 
@@ -292,7 +325,7 @@
         [disabled]="isSaving()"
       >
         @if (isSaving()) {
-          Saving...
+          {{ isEditMode() ? 'Saving changes...' : 'Creating reminder...' }}
         } @else {
           {{ isEditMode() ? 'Save Changes' : 'Create Reminder' }}
         }

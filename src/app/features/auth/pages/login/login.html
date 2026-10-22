@@ -223,7 +223,11 @@
 
           <label class="checkbox">
 
-            <input type="checkbox">
+            <input
+              type="checkbox"
+              formControlName="rememberMe"
+              (change)="onRememberMeChange()"
+            >
 
             <span></span>
 
@@ -231,6 +235,7 @@
 
           </label>
 
+          <small class="remember-note">Saves your email only. Your password is never stored.</small>
 
           
                   <!-- <div>
@@ -266,6 +271,9 @@
 
         @if (loginError()) {
           <p class="login-error" role="alert">{{ loginError() }}</p>
+        }
+        @if (rememberMeError()) {
+          <p class="login-error" role="alert">{{ rememberMeError() }}</p>
         }
 
       </form>

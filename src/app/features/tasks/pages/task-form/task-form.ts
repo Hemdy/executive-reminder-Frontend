@@ -19,11 +19,14 @@ import {
 } from '../../../../core/models/task.model';
 import { TaskService } from '../../../../core/services/task.service';
 import { RoleService } from '../../../../core/services/role.service';
+import { LoadingService } from '../../../../core/services/loading.service';
+import { ToastService } from '../../../../core/services/toast.service';
 
 interface FormUser {
   id: string;
   firstName: string;
   lastName: string;
+  role?: string;
   department?: string;
 }
 
@@ -52,6 +55,8 @@ export class TaskForm {
   private readonly router = inject(Router);
   private readonly route = inject(ActivatedRoute);
   private readonly roleService = inject(RoleService);
+  private readonly loading = inject(LoadingService);
+  private readonly toast = inject(ToastService);
 
   readonly currentUser = this.authService.currentUser;
 
@@ -145,6 +150,10 @@ export class TaskForm {
   }
 
   save(): void {
+    if (this.isSaving()) {
+      return;
+    }
+
     this.errorMessage.set('');
 
     if (this.taskForm.invalid) {
@@ -174,13 +183,13 @@ export class TaskForm {
       return;
     }
 
-    this.isSaving.set(true);
-
     const assignedUser = this.roleService.users().find(user => user.id === assignedTo.id);
     if (!assignedUser) {
       this.errorMessage.set('The selected assignee is no longer available.');
       return;
     }
+
+    this.isSaving.set(true);
 
     if (this.isEditMode() && this.taskId()) {
       this.taskService.updateTask(
@@ -198,10 +207,17 @@ export class TaskForm {
         },
         assignedUser
       ).subscribe({
-        next: () => this.router.navigate(['/tasks', this.taskId()!]),
-        error: error => this.errorMessage.set(error.error?.message ?? 'Unable to update the task.')
+        next: () => {
+          this.isSaving.set(false);
+          void this.router.navigate(['/tasks', this.taskId()!]);
+        },
+        error: error => {
+          this.isSaving.set(false);
+          this.errorMessage.set(error.error?.message ?? 'Unable to update the task.');
+        }
       });
     } else {
+      const loadingTask = this.loading.begin('Creating task…');
       this.taskService.createTask(
         {
           title: formValue.title,
@@ -216,11 +232,21 @@ export class TaskForm {
         assignedUser,
         currentUser
       ).subscribe({
-        next: task => this.router.navigate(['/tasks', task.id]),
-        error: error => this.errorMessage.set(error.error?.message ?? 'Unable to create the task.')
+        next: task => {
+          this.isSaving.set(false);
+          this.loading.end(loadingTask);
+          this.toast.success('Task created successfully');
+          void this.router.navigate(['/tasks', task.id]);
+        },
+        error: error => {
+          this.isSaving.set(false);
+          this.loading.end(loadingTask);
+          const message = error.error?.message ?? 'Unable to create the task.';
+          this.errorMessage.set(message);
+          this.toast.error(message);
+        }
       });
     }
-    this.isSaving.set(false);
   }
 
   cancel(): void {

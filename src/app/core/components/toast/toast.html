@@ -1,0 +1,12 @@
+@if (toast.current(); as message) {
+  <div
+    class="toast"
+    [class.toast-success]="message.type === 'success'"
+    [class.toast-error]="message.type === 'error'"
+    [attr.role]="message.type === 'error' ? 'alert' : 'status'"
+    [attr.aria-live]="message.type === 'error' ? 'assertive' : 'polite'"
+  >
+    <span>{{ message.message }}</span>
+    <button type="button" aria-label="Dismiss message" (click)="toast.dismiss()">×</button>
+  </div>
+}

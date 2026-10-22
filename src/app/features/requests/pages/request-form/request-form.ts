@@ -3,7 +3,8 @@ import {
   Component,
   OnInit,
   computed,
-  inject
+  inject,
+  signal
 } from '@angular/core';
 import {
   FormBuilder,
@@ -23,6 +24,8 @@ import {
 } from '../../../../core/models/request.model';
 import { RequestService } from '../../../../core/services/request.service';
 import { RoleService } from '../../../../core/services/role.service';
+import { LoadingService } from '../../../../core/services/loading.service';
+import { ToastService } from '../../../../core/services/toast.service';
 
 @Component({
   selector: 'app-request-form',
@@ -55,6 +58,9 @@ export class RequestForm {
   private readonly authService = inject(AuthService);
   private readonly requestService = inject(RequestService);
   private readonly roleService = inject(RoleService);
+  private readonly loading = inject(LoadingService);
+  private readonly toast = inject(ToastService);
+  readonly isSaving = signal(false);
 
   readonly requestId = computed(
     () => this.route.snapshot.paramMap.get('id')
@@ -134,6 +140,10 @@ export class RequestForm {
   }
 
   save(): void {
+    if (this.isSaving()) {
+      return;
+    }
+
     if (this.form.invalid) {
       this.form.markAllAsTouched();
       return;
@@ -194,13 +204,25 @@ export class RequestForm {
         : undefined
     };
 
+    this.isSaving.set(true);
+    const loadingTask = this.loading.begin('Creating request…');
     this.requestService.createRequest(
       createRequest,
       requester,
       assignedTo
     ).subscribe({
-      next: createdRequest => this.router.navigate(['/requests', createdRequest.id]),
-      error: error => this.form.setErrors({ api: error.error?.message ?? 'Unable to create the request.' })
+      next: createdRequest => {
+        this.isSaving.set(false);
+        this.loading.end(loadingTask);
+        this.toast.success('Request created successfully');
+        void this.router.navigate(['/requests', createdRequest.id]);
+      },
+      error: error => {
+        this.isSaving.set(false);
+        this.loading.end(loadingTask);
+        const message = error.error?.message ?? 'Unable to create the request.';
+        this.toast.error(message);
+      }
     });
   }
 

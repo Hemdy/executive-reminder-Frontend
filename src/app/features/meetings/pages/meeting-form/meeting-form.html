@@ -307,12 +307,13 @@
       <button
         type="submit"
         class="primary-button"
+        [disabled]="isSaving()"
       >
-        {{
-          isEditMode()
-            ? 'Save Changes'
-            : 'Schedule Meeting'
-        }}
+        @if (isSaving()) {
+          {{ isEditMode() ? 'Saving changes...' : 'Scheduling meeting...' }}
+        } @else {
+          {{ isEditMode() ? 'Save Changes' : 'Schedule Meeting' }}
+        }
       </button>
 
     </div>

@@ -98,6 +98,7 @@
                 @for (placeholder of [0, 1, 2, 3]; track placeholder) {
                   <div class="participant-skeleton">
                     <span class="skeleton-checkbox"></span>
+                    <span class="skeleton-avatar"></span>
                     <span class="skeleton-name"></span>
                     <span class="skeleton-detail"></span>
                   </div>
@@ -112,10 +113,18 @@
                     [checked]="taskForm.controls.participantIds.value.includes(employee.id)"
                     (change)="toggleParticipant(employee.id, $any($event.target).checked)"
                   />
-                  <span class="participant-name">{{ employee.firstName }} {{ employee.lastName }}</span>
-                  @if (employee.department) {
-                    <small class="participant-detail">{{ employee.department }}</small>
-                  }
+                  <span class="participant-avatar" aria-hidden="true">
+                    {{ employee.firstName.charAt(0) }}{{ employee.lastName.charAt(0) }}
+                  </span>
+                  <span class="participant-info">
+                    <strong>{{ employee.firstName }} {{ employee.lastName }}</strong>
+                    <small>
+                      {{ employee.role }}
+                      @if (employee.department) {
+                        · {{ employee.department }}
+                      }
+                    </small>
+                  </span>
                 </label>
               } @empty {
                 <p class="participant-empty">No participants are available.</p>
@@ -257,7 +266,7 @@
         [disabled]="isSaving()"
       >
         @if (isSaving()) {
-          Saving...
+          {{ isEditMode() ? 'Saving changes...' : 'Creating task...' }}
         } @else {
           {{ isEditMode() ? 'Save Changes' : 'Create Task' }}
         }

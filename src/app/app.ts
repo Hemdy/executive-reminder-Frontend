@@ -9,12 +9,13 @@ import {
 } from '@angular/router';
 import { filter, take } from 'rxjs';
 import { LoadingOverlay } from './core/components/loading-overlay/loading-overlay';
+import { Toast } from './core/components/toast/toast';
 import { LoadingService } from './core/services/loading.service';
 import { PushNotificationsService } from './core/services/push-notifications.service';
 
 @Component({
   selector: 'app-root',
-  imports: [RouterOutlet, LoadingOverlay],
+  imports: [RouterOutlet, LoadingOverlay, Toast],
   templateUrl: './app.html',
   styleUrl: './app.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,

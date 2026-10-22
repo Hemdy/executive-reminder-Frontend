@@ -3,7 +3,8 @@ import {
   Component,
   OnInit,
   computed,
-  inject
+  inject,
+  signal
 } from '@angular/core';
 
 import {
@@ -29,6 +30,8 @@ import {
 
 import { MeetingService } from '../../../../core/services/meeting.service';
 import { RoleService } from '../../../../core/services/role.service';
+import { LoadingService } from '../../../../core/services/loading.service';
+import { ToastService } from '../../../../core/services/toast.service';
 
 @Component({
   selector: 'app-meeting-form',
@@ -52,6 +55,9 @@ export class MeetingForm {
   private readonly router = inject(Router);
   private readonly meetingService = inject(MeetingService);
   private readonly roleService = inject(RoleService);
+  private readonly loading = inject(LoadingService);
+  private readonly toast = inject(ToastService);
+  readonly isSaving = signal(false);
 
   readonly meetingId = computed(
     () => this.route.snapshot.paramMap.get('id')
@@ -161,6 +167,10 @@ export class MeetingForm {
   }
 
   save(): void {
+    if (this.isSaving()) {
+      return;
+    }
+
     if (this.form.invalid) {
       this.form.markAllAsTouched();
       return;
@@ -210,13 +220,25 @@ export class MeetingForm {
       meetingType: values.meetingType
     };
 
+    this.isSaving.set(true);
+    const loadingTask = this.loading.begin('Scheduling meeting…');
     this.meetingService.createMeeting(
       createRequest,
       undefined,
       participants
     ).subscribe({
-      next: meeting => this.router.navigate(['/meetings', meeting.id]),
-      error: error => this.form.setErrors({ api: error.error?.message ?? 'Unable to create the meeting.' })
+      next: meeting => {
+        this.isSaving.set(false);
+        this.loading.end(loadingTask);
+        this.toast.success('Meeting scheduled successfully');
+        void this.router.navigate(['/meetings', meeting.id]);
+      },
+      error: error => {
+        this.isSaving.set(false);
+        this.loading.end(loadingTask);
+        const message = error.error?.message ?? 'Unable to create the meeting.';
+        this.toast.error(message);
+      }
     });
   }
 

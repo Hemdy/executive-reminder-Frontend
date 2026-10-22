@@ -468,7 +468,6 @@
 .login-form {
   display: flex;
   flex-direction: column;
-
   gap: 20px;
 }
 
@@ -601,11 +600,14 @@
 .remember-row {
   margin-top: -5px;
   display: flex;
+  align-items: flex-start;
+  flex-direction: column;
   justify-content: space-between;
-  
+  gap: 6px;
 }
 
 .checkbox {
+  position: relative;
   display: flex;
   align-items: center;
 
@@ -619,10 +621,16 @@
 }
 
 .checkbox input {
-  display: none;
+  position: absolute;
+  width: 16px;
+  height: 16px;
+  margin: 0;
+  opacity: 0;
+  cursor: pointer;
 }
 
 .checkbox span {
+  flex: 0 0 16px;
   width: 16px;
   height: 16px;
 
@@ -633,6 +641,22 @@
   background: white;
 }
 
+.checkbox input:checked + span {
+  border-color: #315f9f;
+  background: #315f9f;
+  box-shadow: inset 0 0 0 3px white;
+}
+
+.checkbox input:focus-visible + span {
+  outline: 2px solid #315f9f;
+  outline-offset: 2px;
+}
+
+.remember-note {
+  margin-left: 24px;
+  color: #707784;
+  font-size: 10px;
+}
 
 /* BUTTON */
 
@@ -984,7 +1008,7 @@
 // }
 
   .login-wrapper {
-    max-width: 480px;
+    max-width: 280px;
 
     margin: auto;
   }

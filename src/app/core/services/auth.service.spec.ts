@@ -23,6 +23,7 @@ describe('AuthService', () => {
 
   beforeEach(() => {
     sessionStorage.clear();
+    localStorage.clear();
     TestBed.configureTestingModule({
       providers: [
         provideHttpClient(),
@@ -36,6 +37,7 @@ describe('AuthService', () => {
   afterEach(() => {
     httpTesting.verify();
     sessionStorage.clear();
+    localStorage.clear();
   });
 
   it('posts the original credentials and stores the returned session', () => {
@@ -76,5 +78,18 @@ describe('AuthService', () => {
 
     expect(responseStatus).toBe(401);
     expect(sessionStorage.getItem('accessToken')).toBeNull();
+  });
+
+  it('stores and clears only a normalized remembered email', () => {
+    service.rememberEmail(' User@Example.com ');
+
+    expect(service.getRememberedEmail()).toBe('user@example.com');
+    expect(localStorage.getItem('rememberedEmail')).toBe('user@example.com');
+    expect(localStorage.length).toBe(1);
+
+    service.clearRememberedEmail();
+
+    expect(service.getRememberedEmail()).toBeNull();
+    expect(localStorage.length).toBe(0);
   });
 });

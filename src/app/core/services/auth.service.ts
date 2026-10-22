@@ -45,6 +45,23 @@ export class AuthService {
     return this.getStorage()?.getItem('accessToken') ?? null;
   }
 
+  getRememberedEmail(): string | null {
+    const email = this.browser ? localStorage.getItem('rememberedEmail') : null;
+    return email?.trim() || null;
+  }
+
+  rememberEmail(email: string): void {
+    if (this.browser) {
+      localStorage.setItem('rememberedEmail', email.trim().toLowerCase());
+    }
+  }
+
+  clearRememberedEmail(): void {
+    if (this.browser) {
+      localStorage.removeItem('rememberedEmail');
+    }
+  }
+
   getInitials(user: User): string {
     return `${user.firstName.trim().charAt(0)}${user.lastName.trim().charAt(0)}`.toUpperCase();
   }

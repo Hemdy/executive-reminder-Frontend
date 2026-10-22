@@ -27,6 +27,8 @@ import {
 } from '../../../../core/models/reminder.model';
 import { ReminderService } from '../../../../core/services/reminder.service';
 import { RoleService } from '../../../../core/services/role.service';
+import { LoadingService } from '../../../../core/services/loading.service';
+import { ToastService } from '../../../../core/services/toast.service';
 
 interface ReminderUser {
   id: string;
@@ -56,6 +58,8 @@ export class ReminderForm {
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
   private readonly roleService = inject(RoleService);
+  private readonly loading = inject(LoadingService);
+  private readonly toast = inject(ToastService);
 
   readonly currentUser = this.authService.currentUser;
 
@@ -65,6 +69,7 @@ export class ReminderForm {
   readonly isSaving = signal(false);
 
   readonly recipients = this.roleService.users;
+  readonly recipientsLoading = this.roleService.usersLoading;
 
   readonly categories = [
     'General',
@@ -165,6 +170,10 @@ export class ReminderForm {
   }
 
   save(): void {
+    if (this.isSaving()) {
+      return;
+    }
+
     this.errorMessage.set('');
 
     if (this.reminderForm.invalid) {
@@ -229,10 +238,17 @@ export class ReminderForm {
         },
         recipient
       ).subscribe({
-        next: () => this.router.navigate(['/reminders', this.reminderId()!]),
-        error: error => this.errorMessage.set(error.error?.message ?? 'Unable to update the reminder.')
+        next: () => {
+          this.isSaving.set(false);
+          void this.router.navigate(['/reminders', this.reminderId()!]);
+        },
+        error: error => {
+          this.isSaving.set(false);
+          this.errorMessage.set(error.error?.message ?? 'Unable to update the reminder.');
+        }
       });
     } else {
+      const loadingTask = this.loading.begin('Creating reminder…');
       this.reminderService.createReminder(
           {
             title: formValue.title,
@@ -249,12 +265,21 @@ export class ReminderForm {
           recipient,
           currentUser
         ).subscribe({
-          next: reminder => this.router.navigate(['/reminders', reminder.id]),
-          error: error => this.errorMessage.set(error.error?.message ?? 'Unable to create the reminder.')
+          next: reminder => {
+            this.isSaving.set(false);
+            this.loading.end(loadingTask);
+            this.toast.success('Reminder created successfully');
+            void this.router.navigate(['/reminders', reminder.id]);
+          },
+          error: error => {
+            this.isSaving.set(false);
+            this.loading.end(loadingTask);
+            const message = error.error?.message ?? 'Unable to create the reminder.';
+            this.errorMessage.set(message);
+            this.toast.error(message);
+          }
         });
     }
-
-    this.isSaving.set(false);
   }
 
   cancel(): void {

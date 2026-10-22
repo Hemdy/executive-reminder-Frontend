@@ -158,8 +158,13 @@
       <button
         type="submit"
         class="primary-button"
+        [disabled]="isSaving()"
       >
-        {{ isEditMode() ? 'Save Changes' : 'Create Request' }}
+        @if (isSaving()) {
+          {{ isEditMode() ? 'Saving changes...' : 'Creating request...' }}
+        } @else {
+          {{ isEditMode() ? 'Save Changes' : 'Create Request' }}
+        }
       </button>
 
     </div>
