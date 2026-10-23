@@ -2,7 +2,7 @@ import { HttpClient } from '@angular/common/http';
 import { Injectable, computed, inject, signal } from '@angular/core';
 import { Observable, tap } from 'rxjs';
 import { User } from '../models/user.model';
-import { CreateReminderRequest, Reminder, ReminderStatus, UpdateReminderRequest } from '../models/reminder.model';
+import { CreateReminderRequest, Reminder, ReminderAttachment, ReminderComment, ReminderStatus, UpdateReminderRequest } from '../models/reminder.model';
 import { API_BASE_URL } from '../config/api.config';
 
 @Injectable({ providedIn: 'root' })
@@ -45,6 +45,30 @@ export class ReminderService {
     return this.http.patch<Reminder>(`${this.apiUrl}/${id}/status`, { status }).pipe(tap(reminder => this.replace(this.normalize(reminder))));
   }
 
+  getComments(reminderId: string): Observable<ReminderComment[]> {
+    return this.http.get<ReminderComment[]>(`${this.apiUrl}/${reminderId}/comments`);
+  }
+
+  addComment(reminderId: string, body: string): Observable<ReminderComment> {
+    return this.http.post<ReminderComment>(`${this.apiUrl}/${reminderId}/comments`, { body });
+  }
+
+  getAttachments(reminderId: string): Observable<ReminderAttachment[]> {
+    return this.http.get<ReminderAttachment[]>(`${this.apiUrl}/${reminderId}/attachments`);
+  }
+
+  uploadAttachment(reminderId: string, file: File): Observable<ReminderAttachment> {
+    const formData = new FormData();
+    formData.append('file', file);
+    return this.http.post<ReminderAttachment>(`${this.apiUrl}/${reminderId}/attachments`, formData);
+  }
+
+  downloadAttachment(reminderId: string, attachmentId: string): Observable<Blob> {
+    return this.http.get(`${this.apiUrl}/${reminderId}/attachments/${attachmentId}`, {
+      responseType: 'blob'
+    });
+  }
+
   deleteReminder(id: string): Observable<void> {
     return this.http.delete<void>(`${this.apiUrl}/${id}`).pipe(tap(() => this.remindersSignal.update(reminders => reminders.filter(reminder => reminder.id !== id))));
   }
@@ -58,6 +82,11 @@ export class ReminderService {
     this.remindersSignal.update(reminders => reminders.map(existing => existing.id === reminder.id ? reminder : existing));
   }
   private normalize(reminder: Reminder): Reminder {
-    return { ...reminder, reminderDate: reminder.reminderDate.slice(0, 10) };
+    return {
+      ...reminder,
+      reminderDate: reminder.reminderDate.slice(0, 10),
+      commentsCount: reminder._count?.comments ?? reminder.commentsCount ?? 0,
+      attachmentsCount: reminder._count?.attachments ?? reminder.attachmentsCount ?? 0,
+    };
   }
 }

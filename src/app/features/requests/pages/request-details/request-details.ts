@@ -3,16 +3,21 @@ import {
   Component,
   computed,
   inject,
-  signal
+  signal,
+  OnInit,
 } from '@angular/core';
-import { DatePipe } from '@angular/common';
-import { ActivatedRoute, Router, RouterLink, RouterModule } from '@angular/router';
+import { DatePipe, DOCUMENT } from '@angular/common';
+import { FormsModule } from '@angular/forms';
+import { ActivatedRoute, Router, RouterModule } from '@angular/router';
+import { catchError, forkJoin, map, of } from 'rxjs';
 
 import { AuthService } from '../../../../core/services/auth.service';
 import {
+  RequestAttachment,
+  RequestComment,
   RequestPriority,
   RequestStatus,
-  RequestType
+  RequestType,
 } from '../../../../core/models/request.model';
 import { RequestService } from '../../../../core/services/request.service';
 import { LoadingService } from '../../../../core/services/loading.service';
@@ -21,157 +26,194 @@ import { ToastService } from '../../../../core/services/toast.service';
 @Component({
   selector: 'app-request-details',
   standalone: true,
-  imports: [RouterModule, DatePipe],
-
+  imports: [RouterModule, DatePipe, FormsModule],
   templateUrl: './request-details.html',
   styleUrl: './request-details.scss',
-  changeDetection: ChangeDetectionStrategy.OnPush
+  changeDetection: ChangeDetectionStrategy.OnPush,
 })
-
-export class RequestDetails {
-
-
-
-
-
-
+export class RequestDetails implements OnInit {
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
   private readonly requestService = inject(RequestService);
   private readonly authService = inject(AuthService);
   private readonly loading = inject(LoadingService);
   private readonly toast = inject(ToastService);
+  private readonly document = inject(DOCUMENT);
   readonly isDeleting = signal(false);
+  readonly comments = signal<RequestComment[]>([]);
+  readonly attachments = signal<RequestAttachment[]>([]);
+  readonly commentText = signal('');
+  readonly activityError = signal('');
+  readonly activityMessage = signal('');
+  readonly submittingComment = signal(false);
+  readonly uploadingAttachments = signal(false);
+  readonly loadingActivity = signal(false);
+  readonly downloadingAttachmentId = signal<string | null>(null);
+  readonly highlightedCommentId = signal<string | null>(null);
 
   readonly request = computed(() => {
     const id = this.route.snapshot.paramMap.get('id');
-
-    return id
-      ? this.requestService.getRequest(id) ?? null
-      : null;
+    return id ? this.requestService.getRequest(id) ?? null : null;
   });
 
   readonly isOverdue = computed(() => {
     const request = this.request();
-
-    return request
-      ? this.requestService.isOverdue(request)
-      : false;
+    return request ? this.requestService.isOverdue(request) : false;
   });
 
   readonly canApprove = computed(() => {
     const request = this.request();
     const user = this.authService.currentUser();
-
-    if (!request || !user) {
-      return false;
-    }
-
-    return (
-      user.role === 'CEO' &&
-      (request.status === 'PENDING' ||
-        request.status === 'IN_REVIEW' ||
-        request.status === 'NEEDS_INFORMATION')
-    );
+    if (!request || !user) return false;
+    return user.role === 'CEO' && (request.status === 'PENDING' || request.status === 'IN_REVIEW' || request.status === 'NEEDS_INFORMATION');
   });
 
   readonly canReject = computed(() => {
     const request = this.request();
     const user = this.authService.currentUser();
-
-    if (!request || !user) {
-      return false;
-    }
-
-    return (
-      user.role === 'CEO' &&
-      (request.status === 'PENDING' ||
-        request.status === 'IN_REVIEW' ||
-        request.status === 'NEEDS_INFORMATION')
-    );
+    if (!request || !user) return false;
+    return user.role === 'CEO' && (request.status === 'PENDING' || request.status === 'IN_REVIEW' || request.status === 'NEEDS_INFORMATION');
   });
 
   readonly canRequestInformation = computed(() => {
     const request = this.request();
     const user = this.authService.currentUser();
-
-    if (!request || !user) {
-      return false;
-    }
-
-    return (
-      user.role === 'CEO' &&
-      (request.status === 'PENDING' ||
-        request.status === 'IN_REVIEW')
-    );
+    if (!request || !user) return false;
+    return user.role === 'CEO' && (request.status === 'PENDING' || request.status === 'IN_REVIEW');
   });
 
   readonly canComplete = computed(() => {
     const request = this.request();
-
-    return (
-      request?.status === 'APPROVED' ||
-      request?.status === 'IN_REVIEW'
-    );
+    return request?.status === 'APPROVED' || request?.status === 'IN_REVIEW';
   });
 
   readonly canReopen = computed(() => {
     const request = this.request();
-
-    return (
-      request?.status === 'REJECTED' ||
-      request?.status === 'CANCELLED' ||
-      request?.status === 'COMPLETED'
-    );
+    return request?.status === 'REJECTED' || request?.status === 'CANCELLED' || request?.status === 'COMPLETED';
   });
 
-  editRequest(): void {
-    const request = this.request();
-
-    if (request) {
-      this.router.navigate(['/requests', request.id, 'edit']);
+  ngOnInit(): void {
+    const id = this.route.snapshot.paramMap.get('id');
+    if (id) {
+      this.requestService.loadRequest(id).subscribe({
+        next: () => this.loadRequestActivity(id),
+        error: () => this.activityError.set('Unable to load this request.'),
+      });
     }
   }
 
-  approveRequest(): void {
-    this.updateStatus('APPROVED');
+  editRequest(): void {
+    const request = this.request();
+    if (request) this.router.navigate(['/requests', request.id, 'edit']);
   }
 
-  rejectRequest(): void {
-    this.updateStatus('REJECTED');
+  approveRequest(): void { this.updateStatus('APPROVED'); }
+  rejectRequest(): void { this.updateStatus('REJECTED'); }
+  requestMoreInformation(): void { this.updateStatus('NEEDS_INFORMATION'); }
+  completeRequest(): void { this.updateStatus('COMPLETED'); }
+  reopenRequest(): void { this.updateStatus('PENDING'); }
+  cancelRequest(): void { this.updateStatus('CANCELLED'); }
+
+  updateCommentText(event: Event): void {
+    this.commentText.set((event.target as HTMLTextAreaElement).value);
   }
 
-  requestMoreInformation(): void {
-    this.updateStatus('NEEDS_INFORMATION');
+  submitComment(): void {
+    const request = this.request();
+    const body = this.commentText().trim();
+    if (!request || !body || this.submittingComment()) return;
+    this.activityError.set('');
+    this.activityMessage.set('');
+    this.submittingComment.set(true);
+    this.requestService.addComment(request.id, body).subscribe({
+      next: comment => {
+        this.comments.update(comments => [...comments, comment]);
+        this.commentText.set('');
+        this.activityMessage.set('Comment posted.');
+        this.submittingComment.set(false);
+        this.refreshRequestCounts(request.id);
+      },
+      error: () => {
+        this.activityError.set('Unable to post the comment. Please try again.');
+        this.submittingComment.set(false);
+      },
+    });
   }
 
-  completeRequest(): void {
-    this.updateStatus('COMPLETED');
+  uploadAttachments(event: Event): void {
+    const input = event.target as HTMLInputElement;
+    const files = Array.from(input.files ?? []);
+    input.value = '';
+    const unsupportedFiles = files.filter(file => !this.isSupportedAttachment(file));
+    const oversizedFiles = files.filter(file => this.isSupportedAttachment(file) && file.size > 4 * 1024 * 1024);
+    const validFiles = files.filter(file => this.isSupportedAttachment(file) && file.size <= 4 * 1024 * 1024);
+    const validationErrors = [
+      ...(unsupportedFiles.length ? [`Unsupported file type: ${unsupportedFiles.map(file => file.name).join(', ')}. Only PDF and Word documents are allowed.`] : []),
+      ...(oversizedFiles.length ? [`Files over 4 MB: ${oversizedFiles.map(file => file.name).join(', ')}.`] : []),
+    ];
+    if (!validFiles.length) {
+      this.activityError.set(validationErrors.join(' '));
+      this.activityMessage.set('');
+      return;
+    }
+    const request = this.request();
+    if (!request || this.uploadingAttachments()) return;
+    this.activityError.set(validationErrors.join(' '));
+    this.activityMessage.set('');
+    this.uploadingAttachments.set(true);
+    const uploads = validFiles.map(file => this.requestService.uploadAttachment(request.id, file).pipe(
+      map(attachment => ({ attachment })),
+      catchError(() => of({ failedFile: file.name }))
+    ));
+    forkJoin(uploads).subscribe({
+      next: results => {
+        const uploaded = results.flatMap(result => 'attachment' in result ? [result.attachment] : []);
+        const failedFiles = results.flatMap(result => 'failedFile' in result ? [result.failedFile] : []);
+        this.attachments.update(attachments => [...attachments, ...uploaded]);
+        this.uploadingAttachments.set(false);
+        const uploadErrors = [...validationErrors, ...(failedFiles.length ? [`Unable to upload: ${failedFiles.join(', ')}.`] : [])];
+        this.activityError.set(uploadErrors.join(' '));
+        if (uploaded.length) {
+          this.activityMessage.set(`${uploaded.length} file${uploaded.length === 1 ? '' : 's'} uploaded.`);
+          this.refreshRequestCounts(request.id);
+        }
+      },
+      error: () => {
+        this.activityError.set('Unable to upload the selected file(s). Please try again.');
+        this.uploadingAttachments.set(false);
+      },
+    });
   }
 
-  reopenRequest(): void {
-    this.updateStatus('PENDING');
-  }
-
-  cancelRequest(): void {
-    this.updateStatus('CANCELLED');
+  downloadAttachment(attachment: RequestAttachment): void {
+    const request = this.request();
+    if (!request || this.downloadingAttachmentId()) return;
+    this.activityError.set('');
+    this.activityMessage.set('');
+    this.downloadingAttachmentId.set(attachment.id);
+    this.requestService.downloadAttachment(request.id, attachment.id).subscribe({
+      next: blob => {
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = attachment.fileName;
+        link.click();
+        window.setTimeout(() => URL.revokeObjectURL(url), 0);
+        this.downloadingAttachmentId.set(null);
+        this.activityMessage.set('Attachment downloaded.');
+      },
+      error: () => {
+        this.downloadingAttachmentId.set(null);
+        this.activityError.set('Unable to download this attachment.');
+      },
+    });
   }
 
   deleteRequest(): void {
     const request = this.request();
-
-    if (!request || this.isDeleting()) {
-      return;
-    }
-
-    const confirmed = window.confirm(
-      `Delete "${request.title}"? This action cannot be undone.`
-    );
-
-    if (!confirmed) {
-      return;
-    }
-
+    if (!request || this.isDeleting()) return;
+    const confirmed = window.confirm(`Delete "${request.title}"? This action cannot be undone.`);
+    if (!confirmed) return;
     this.isDeleting.set(true);
     const loadingTask = this.loading.begin('Deleting request…');
     this.requestService.deleteRequest(request.id).subscribe({
@@ -185,33 +227,59 @@ export class RequestDetails {
         this.isDeleting.set(false);
         this.loading.end(loadingTask);
         this.toast.error(error.error?.message ?? 'Unable to delete the request.');
-      }
+      },
     });
   }
 
-  backToRequests(): void {
-    this.router.navigate(['/requests']);
-  }
-
-  statusLabel(status: RequestStatus): string {
-    return status.replace('_', ' ');
-  }
-
-  typeLabel(type: RequestType): string {
-    return type.replace('_', ' ');
-  }
-
-  initials(firstName: string, lastName: string): string {
-    return `${firstName.charAt(0)}${lastName.charAt(0)}`;
+  backToRequests(): void { this.router.navigate(['/requests']); }
+  statusLabel(status: RequestStatus): string { return status.replace('_', ' '); }
+  typeLabel(type: RequestType): string { return type.replace('_', ' '); }
+  initials(firstName: string, lastName: string): string { return `${firstName.charAt(0)}${lastName.charAt(0)}`; }
+  formatFileSize(size: number): string {
+    if (size < 1024) return `${size} B`;
+    if (size < 1024 * 1024) return `${(size / 1024).toFixed(1)} KB`;
+    return `${(size / (1024 * 1024)).toFixed(1)} MB`;
   }
 
   private updateStatus(status: RequestStatus): void {
     const request = this.request();
-
-    if (!request) {
-      return;
-    }
-
+    if (!request) return;
     this.requestService.updateStatus(request.id, status).subscribe();
+  }
+
+  private loadRequestActivity(requestId: string): void {
+    this.loadingActivity.set(true);
+    forkJoin({
+      comments: this.requestService.getComments(requestId),
+      attachments: this.requestService.getAttachments(requestId),
+    }).subscribe({
+      next: activity => {
+        this.comments.set(activity.comments);
+        this.attachments.set(activity.attachments);
+        this.loadingActivity.set(false);
+        const commentId = this.route.snapshot.queryParamMap.get('comment');
+        if (commentId && activity.comments.some(comment => comment.id === commentId)) {
+          this.highlightedCommentId.set(commentId);
+          this.document.defaultView?.requestAnimationFrame(() => {
+            this.document.getElementById(`request-comment-${commentId}`)?.scrollIntoView({ block: 'center' });
+          });
+        }
+      },
+      error: () => {
+        this.loadingActivity.set(false);
+        this.activityError.set('Unable to load request comments and attachments.');
+      },
+    });
+  }
+
+  private refreshRequestCounts(requestId: string): void {
+    this.requestService.loadRequest(requestId).subscribe({
+      error: () => this.activityError.set('Activity was saved, but request counts could not be refreshed.'),
+    });
+  }
+
+  private isSupportedAttachment(file: File): boolean {
+    const extension = file.name.slice(file.name.lastIndexOf('.')).toLowerCase();
+    return ['.pdf', '.doc', '.docx'].includes(extension);
   }
 }

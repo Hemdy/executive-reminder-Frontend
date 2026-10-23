@@ -22,8 +22,7 @@
         <p class="created-info">
           Created by
           <strong>
-            {{ currentReminder.createdBy.firstName }}
-            {{ currentReminder.createdBy.lastName }}
+            {{ getFullName(currentReminder.createdBy) }}
           </strong>
 
           ·
@@ -66,7 +65,7 @@
 
     </header>
 
-    <div class="details-layout">
+   
 
       <main>
 
@@ -93,71 +92,73 @@
         </section>
 
         <section class="content-card">
-
           <div class="card-heading">
             <div>
               <h2>Comments</h2>
-              <span>
-                {{ currentReminder.commentsCount }}
-              </span>
+              <span>{{ comments().length }}</span>
             </div>
-
-            <button
-              type="button"
-              class="text-button"
-            >
-              Add Comment
-            </button>
           </div>
-
-          <div class="placeholder-panel">
-
-            <div class="placeholder-icon">
-              💬
-            </div>
-
-            <h3>Comments coming next</h3>
-
-            <p>
-              Reminder comments will appear here.
-            </p>
-
+          <div class="card-body meeting-comments">
+            @if (activityError()) {
+              <p class="meeting-comment-error" role="alert">{{ activityError() }}</p>
+            }
+            @if (loadingActivity()) {
+              <p class="muted">Loading comments...</p>
+            } @else if (comments().length) {
+              <div class="meeting-comment-list">
+                @for (comment of comments(); track comment.id) {
+                  <article class="meeting-comment" [class.highlighted-comment]="highlightedCommentId() === comment.id" [id]="'reminder-comment-' + comment.id" tabindex="-1">
+                    <div class="meeting-comment-meta">
+                      <strong>{{ getFullName(comment.author) }}</strong>
+                      <time>{{ comment.createdAt | date:'MMM d, y · h:mm a' }}</time>
+                    </div>
+                    <p>{{ comment.body }}</p>
+                  </article>
+                }
+              </div>
+            } @else {
+              <p class="muted">No comments yet.</p>
+            }
+            <form class="meeting-comment-form" (ngSubmit)="submitComment()">
+              <label for="reminder-comment">Add a comment</label>
+              <textarea id="reminder-comment" rows="3" maxlength="5000" placeholder="Write a comment..." [value]="commentText()" (input)="updateCommentText($event)"></textarea>
+              <button class="primary-button" type="submit" [disabled]="submittingComment() || !commentText().trim()">
+                {{ submittingComment() ? 'Posting...' : 'Post Comment' }}
+              </button>
+            </form>
           </div>
-
         </section>
 
         <section class="content-card">
-
           <div class="card-heading">
             <div>
               <h2>Attachments</h2>
-              <span>
-                {{ currentReminder.attachmentsCount }}
-              </span>
+              <span>{{ attachments().length }}</span>
             </div>
-
-            <button
-              type="button"
-              class="text-button"
-            >
-              Add Attachment
-            </button>
           </div>
-
-          <div class="placeholder-panel">
-
-            <div class="placeholder-icon">
-              📎
-            </div>
-
-            <h3>Attachments coming next</h3>
-
-            <p>
-              Files attached to this reminder will appear here.
-            </p>
-
+          <div class="card-body meeting-comments">
+            @if (activityMessage()) {
+              <p class="success-message">{{ activityMessage() }}</p>
+            }
+            @if (attachments().length) {
+              <div class="task-attachments">
+                @for (attachment of attachments(); track attachment.id) {
+                  <div class="task-attachment-item">
+                    <button type="button" class="attachment-name" (click)="downloadAttachment(attachment)">
+                      {{ attachment.fileName }}
+                    </button>
+                    <small>{{ formatFileSize(attachment.size) }}</small>
+                  </div>
+                }
+              </div>
+            } @else {
+              <p class="muted">No attachments yet.</p>
+            }
+            <label class="upload-control">
+              <input type="file" multiple accept=".pdf,.doc,.docx" (change)="uploadAttachments($event)" [disabled]="uploadingAttachments()" />
+              <span>{{ uploadingAttachments() ? 'Uploading...' : 'Upload attachment' }}</span>
+            </label>
           </div>
-
         </section>
 
       </main>
@@ -229,7 +230,7 @@
             <div class="detail-item">
               <span>Recurrence</span>
               <strong>
-                {{ currentReminder.recurrence.replace('_', ' ') }}
+                {{ formatRecurrence(currentReminder.recurrence) }}
               </strong>
             </div>
 
@@ -258,8 +259,8 @@
             <div class="person-avatar">
               {{
                 getInitials(
-                  currentReminder.recipient.firstName,
-                  currentReminder.recipient.lastName
+                  currentReminder.recipient?.firstName ?? 'U',
+                  currentReminder.recipient?.lastName ?? ''
                 )
               }}
             </div>
@@ -267,18 +268,17 @@
             <div>
 
               <strong>
-                {{ currentReminder.recipient.firstName }}
-                {{ currentReminder.recipient.lastName }}
+                {{ getFullName(currentReminder.recipient) }}
               </strong>
 
-              @if (currentReminder.recipient.department) {
+              @if (currentReminder.recipient?.department) {
                 <span>
-                  {{ currentReminder.recipient.department }}
+                  {{ currentReminder.recipient?.department }}
                 </span>
               }
 
               <small>
-                {{ currentReminder.recipient.email }}
+                {{ getRecipientEmail(currentReminder.recipient) }}
               </small>
 
             </div>
@@ -365,7 +365,7 @@
 
       </aside>
 
-    </div>
+ 
 
   } @else {
 

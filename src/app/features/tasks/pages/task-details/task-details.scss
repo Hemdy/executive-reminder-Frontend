@@ -553,17 +553,63 @@ aside {
 
   .header-actions {
     width: 100%;
+    flex-wrap: wrap;
   }
 
   .header-actions button {
-    flex: 1;
+    flex: 1 1 180px;
   }
 
   aside {
     display: flex;
   }
 
+  .detail-item {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 6px;
+    padding: 12px 0;
+  }
+
+  .detail-item > strong {
+    text-align: left;
+  }
+
+  .person {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .task-attachment {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
   h1 {
     font-size: 25px;
+  }
+}
+
+@media (max-width: 520px) {
+  .page-header,
+  .content-card,
+  .description,
+  .detail-list,
+  .person,
+  .card-body,
+  .task-comment,
+  .task-attachment,
+  .attachment-upload,
+  .task-comment-form {
+    padding-left: 14px;
+    padding-right: 14px;
+  }
+
+  .meeting-comment-form button,
+  .primary-button,
+  .secondary-button,
+  .attachment-upload,
+  .action-list button {
+    width: 100%;
   }
 }

@@ -143,6 +143,148 @@ aside {
   font-weight: 650;
 }
 
+.card-body {
+  padding: 18px 20px;
+}
+
+.meeting-comments {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.meeting-comment-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.meeting-comment {
+  padding: 12px 14px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.38);
+}
+
+.meeting-comment-meta {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 8px;
+}
+
+.meeting-comment-meta strong {
+  font-size: 12px;
+}
+
+.meeting-comment-meta time {
+  color: var(--text-muted);
+  font-size: 10px;
+}
+
+.meeting-comment p,
+.muted,
+.success-message,
+.meeting-comment-error {
+  margin: 0;
+  font-size: 12px;
+  line-height: 1.6;
+}
+
+.muted,
+.meeting-comment-error {
+  color: var(--text-muted);
+}
+
+.meeting-comment-error {
+  color: var(--danger);
+}
+
+.success-message {
+  color: var(--success);
+}
+
+.meeting-comment-form {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.meeting-comment-form label {
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.meeting-comment-form textarea {
+  width: 100%;
+  min-height: 80px;
+  padding: 10px 12px;
+  border: 1px solid var(--border);
+  border-radius: 7px;
+  background: white;
+  color: var(--text);
+  font: inherit;
+  resize: vertical;
+  box-sizing: border-box;
+}
+
+.meeting-comment-form button {
+  align-self: flex-start;
+}
+
+.task-attachments {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.task-attachment-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 10px 12px;
+  border: 1px solid var(--border);
+  border-radius: 7px;
+  background: rgba(255, 255, 255, 0.4);
+}
+
+.attachment-name {
+  border: 0;
+  background: transparent;
+  color: var(--primary);
+  font-size: 12px;
+  text-align: left;
+  text-decoration: underline;
+  cursor: pointer;
+}
+
+.task-attachment-item small {
+  color: var(--text-muted);
+  font-size: 10px;
+}
+
+.upload-control {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 12px;
+  border: 1px dashed var(--border);
+  border-radius: 7px;
+  background: rgba(255, 255, 255, 0.18);
+  cursor: pointer;
+}
+
+.upload-control input {
+  max-width: 100%;
+}
+
+.upload-control span {
+  font-size: 12px;
+  color: var(--text-muted);
+}
+
 .description {
   padding: 20px;
 }
@@ -388,6 +530,10 @@ aside {
     display: grid;
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
+
+  .detail-list {
+    padding-bottom: 14px;
+  }
 }
 
 @media (max-width: 700px) {
@@ -398,17 +544,79 @@ aside {
 
   .header-actions {
     width: 100%;
+    flex-wrap: wrap;
   }
 
   .header-actions button {
-    flex: 1;
+    flex: 1 1 180px;
   }
 
   aside {
     display: flex;
   }
 
+  .detail-item {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 6px;
+    padding: 12px 0;
+  }
+
+  .detail-item > strong {
+    text-align: left;
+  }
+
+  .person {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .task-attachment-item {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
   h1 {
     font-size: 25px;
+  }
+}
+
+@media (max-width: 520px) {
+  .reminder-details-page {
+    max-width: 100%;
+  }
+
+  .page-header,
+  .content-card,
+  .description,
+  .detail-list,
+  .person,
+  .card-body,
+  .card-heading {
+    padding-left: 14px;
+    padding-right: 14px;
+  }
+
+  .card-heading {
+    min-height: 52px;
+  }
+
+  .card-heading h2 {
+    font-size: 14px;
+  }
+
+  .meeting-comment-form button,
+  .upload-control,
+  .primary-button,
+  .secondary-button {
+    width: 100%;
+  }
+
+  .upload-control {
+    justify-content: center;
+  }
+
+  .action-list button {
+    width: 100%;
   }
 }

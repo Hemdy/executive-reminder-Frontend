@@ -46,6 +46,26 @@ export interface Reminder {
 
   commentsCount: number;
   attachmentsCount: number;
+  _count?: {
+    comments: number;
+    attachments: number;
+  };
+}
+
+export interface ReminderComment {
+  id: string;
+  body: string;
+  createdAt: string;
+  author: Pick<User, 'id' | 'title' | 'firstName' | 'lastName'>;
+}
+
+export interface ReminderAttachment {
+  id: string;
+  fileName: string;
+  mimeType: string;
+  size: number;
+  createdAt: string;
+  uploader: Pick<User, 'id' | 'firstName' | 'lastName'>;
 }
 
 export interface CreateReminderRequest {

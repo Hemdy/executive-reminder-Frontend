@@ -2,7 +2,7 @@ import { HttpClient } from '@angular/common/http';
 import { Injectable, computed, inject, signal } from '@angular/core';
 import { Observable, tap } from 'rxjs';
 import { User } from '../models/user.model';
-import { CreateMeetingRequest, Meeting, MeetingComment, MeetingStatus, MeetingType, UpdateMeetingRequest } from '../models/meeting.model';
+import { CreateMeetingRequest, Meeting, MeetingAttachment, MeetingComment, MeetingStatus, MeetingType, UpdateMeetingRequest } from '../models/meeting.model';
 import { API_BASE_URL } from '../config/api.config';
 
 @Injectable({ providedIn: 'root' })
@@ -48,6 +48,19 @@ export class MeetingService {
   addComment(meetingId: string, body: string): Observable<MeetingComment> {
     return this.http.post<MeetingComment>(`${this.apiUrl}/${meetingId}/comments`, { body });
   }
+  getAttachments(meetingId: string): Observable<MeetingAttachment[]> {
+    return this.http.get<MeetingAttachment[]>(`${this.apiUrl}/${meetingId}/attachments`);
+  }
+  uploadAttachment(meetingId: string, file: File): Observable<MeetingAttachment> {
+    const formData = new FormData();
+    formData.append('file', file);
+    return this.http.post<MeetingAttachment>(`${this.apiUrl}/${meetingId}/attachments`, formData);
+  }
+  downloadAttachment(meetingId: string, attachmentId: string): Observable<Blob> {
+    return this.http.get(`${this.apiUrl}/${meetingId}/attachments/${attachmentId}`, {
+      responseType: 'blob'
+    });
+  }
   deleteMeeting(id: string): Observable<void> {
     return this.http.delete<void>(`${this.apiUrl}/${id}`).pipe(tap(() => this.meetingsSignal.update(meetings => meetings.filter(meeting => meeting.id !== id))));
   }
@@ -62,6 +75,14 @@ export class MeetingService {
   private getMeetingStart(meeting: Meeting): Date { return new Date(`${meeting.meetingDate.slice(0, 10)}T${meeting.startTime}:00`); }
   private getMeetingEnd(meeting: Meeting): Date { return new Date(`${meeting.meetingDate.slice(0, 10)}T${meeting.endTime}:00`); }
   private toDateInputValue(date: Date): string { return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`; }
-  private normalize(meeting: Meeting): Meeting { return { ...meeting, meetingDate: meeting.meetingDate.slice(0, 10), participants: meeting.participants?.map((participant: User | { user: User }) => 'user' in participant ? participant.user : participant) ?? [] }; }
+  private normalize(meeting: Meeting): Meeting {
+    return {
+      ...meeting,
+      meetingDate: meeting.meetingDate.slice(0, 10),
+      commentsCount: meeting._count?.comments ?? meeting.commentsCount ?? 0,
+      attachmentsCount: meeting._count?.attachments ?? meeting.attachmentsCount ?? 0,
+      participants: meeting.participants?.map((participant: User | { user: User }) => 'user' in participant ? participant.user : participant) ?? []
+    };
+  }
   private replace(meeting: Meeting): void { this.meetingsSignal.update(meetings => meetings.map(existing => existing.id === meeting.id ? meeting : existing)); }
 }

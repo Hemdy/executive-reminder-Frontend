@@ -2,7 +2,7 @@ import { HttpClient } from '@angular/common/http';
 import { Injectable, computed, inject, signal } from '@angular/core';
 import { Observable, tap } from 'rxjs';
 import { User } from '../models/user.model';
-import { CreateRequestRequest, Request, RequestStatus, UpdateRequestRequest } from '../models/request.model';
+import { CreateRequestRequest, Request, RequestAttachment, RequestComment, RequestStatus, UpdateRequestRequest } from '../models/request.model';
 import { API_BASE_URL } from '../config/api.config';
 
 @Injectable({ providedIn: 'root' })
@@ -23,6 +23,14 @@ export class RequestService {
 
   getRequests(): Request[] { return this.requestsSignal(); }
   getRequest(id: string): Request | undefined { return this.requestsSignal().find(request => request.id === id); }
+  loadRequest(id: string): Observable<Request> {
+    return this.http.get<Request>(`${this.apiUrl}/${id}`).pipe(tap(request => {
+      const normalized = this.normalize(request);
+      this.requestsSignal.update(requests => requests.some(item => item.id === normalized.id)
+        ? requests.map(item => item.id === normalized.id ? normalized : item)
+        : [normalized, ...requests]);
+    }));
+  }
   loadRequests(): Observable<Request[]> {
     return this.http.get<Request[]>(this.apiUrl).pipe(tap(requests => this.requestsSignal.set(requests.map(request => this.normalize(request)))));
   }
@@ -34,6 +42,25 @@ export class RequestService {
   }
   updateStatus(id: string, status: RequestStatus): Observable<Request> {
     return this.http.patch<Request>(`${this.apiUrl}/${id}/status`, { status }).pipe(tap(updated => this.replace(this.normalize(updated))));
+  }
+  getComments(requestId: string): Observable<RequestComment[]> {
+    return this.http.get<RequestComment[]>(`${this.apiUrl}/${requestId}/comments`);
+  }
+  addComment(requestId: string, body: string): Observable<RequestComment> {
+    return this.http.post<RequestComment>(`${this.apiUrl}/${requestId}/comments`, { body });
+  }
+  getAttachments(requestId: string): Observable<RequestAttachment[]> {
+    return this.http.get<RequestAttachment[]>(`${this.apiUrl}/${requestId}/attachments`);
+  }
+  uploadAttachment(requestId: string, file: File): Observable<RequestAttachment> {
+    const formData = new FormData();
+    formData.append('file', file);
+    return this.http.post<RequestAttachment>(`${this.apiUrl}/${requestId}/attachments`, formData);
+  }
+  downloadAttachment(requestId: string, attachmentId: string): Observable<Blob> {
+    return this.http.get(`${this.apiUrl}/${requestId}/attachments/${attachmentId}`, {
+      responseType: 'blob'
+    });
   }
   deleteRequest(id: string): Observable<void> {
     return this.http.delete<void>(`${this.apiUrl}/${id}`).pipe(tap(() => this.requestsSignal.update(requests => requests.filter(request => request.id !== id))));
@@ -48,6 +75,11 @@ export class RequestService {
     this.requestsSignal.update(requests => requests.map(existing => existing.id === request.id ? request : existing));
   }
   private normalize(request: Request): Request {
-    return { ...request, dueDate: request.dueDate?.slice(0, 10) };
+    return {
+      ...request,
+      dueDate: request.dueDate?.slice(0, 10),
+      commentsCount: request._count?.comments ?? request.commentsCount ?? 0,
+      attachmentsCount: request._count?.attachments ?? request.attachmentsCount ?? 0,
+    };
   }
 }

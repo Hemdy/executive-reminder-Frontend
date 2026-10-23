@@ -497,6 +497,12 @@
   .content-grid {
     grid-template-columns: 1fr;
   }
+
+  .side-column {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 18px;
+  }
 }
 
 @media (max-width: 650px) {
@@ -505,11 +511,63 @@
     flex-direction: column;
   }
 
+  .top-actions {
+    width: 100%;
+    flex-wrap: wrap;
+  }
+
+  .top-actions button {
+    flex: 1 1 180px;
+  }
+
   .header-main h1 {
     font-size: 24px;
   }
 
   .participants-grid {
     grid-template-columns: 1fr;
+  }
+
+  .detail-row {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 6px;
+  }
+
+  .detail-row > strong {
+    text-align: left;
+  }
+
+  .person-card {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .workflow-actions button,
+  .secondary-button,
+  .complete-button {
+    width: 100%;
+  }
+}
+
+@media (max-width: 440px) {
+  .side-column {
+    grid-template-columns: 1fr;
+  }
+
+  .schedule-card {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .card-header,
+  .card-body,
+  .details-list,
+  .schedule-card,
+  .workflow-actions,
+  .participants-grid,
+  .person-card {
+    padding-left: 12px;
+    padding-right: 12px;
   }
 }

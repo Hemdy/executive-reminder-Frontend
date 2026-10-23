@@ -36,6 +36,10 @@ export interface Meeting {
 
   commentsCount: number;
   attachmentsCount: number;
+  _count?: {
+    comments: number;
+    attachments: number;
+  };
 }
 
 export interface MeetingComment {
@@ -43,6 +47,15 @@ export interface MeetingComment {
   body: string;
   createdAt: string;
   author: Pick<User, 'id' | 'title' | 'firstName' | 'lastName'>;
+}
+
+export interface MeetingAttachment {
+  id: string;
+  fileName: string;
+  mimeType: string;
+  size: number;
+  createdAt: string;
+  uploader: Pick<User, 'id' | 'firstName' | 'lastName'>;
 }
 
 export interface CreateMeetingRequest {

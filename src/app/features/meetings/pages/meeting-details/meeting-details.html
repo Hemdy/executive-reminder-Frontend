@@ -224,8 +224,8 @@
           </div>
 
           <div class="card-body meeting-comments">
-            @if (commentsError()) {
-              <p class="meeting-comment-error" role="alert">{{ commentsError() }}</p>
+            @if (commentsError() || activityError()) {
+              <p class="meeting-comment-error" role="alert">{{ commentsError() || activityError() }}</p>
             }
             @if (commentsLoading()) {
               <p class="muted">Loading comments...</p>
@@ -276,26 +276,32 @@
           <div class="card-header">
             <div>
               <h2>Attachments</h2>
-              <span>
-                {{ meeting.attachmentsCount }} files
-              </span>
+              <span>{{ attachments().length }} files</span>
             </div>
           </div>
 
-          <div class="placeholder-card">
-
-            <div class="placeholder-icon">
-              📎
-            </div>
-
-            <h3>
-              Attachments coming soon
-            </h3>
-
-            <p>
-              Meeting documents will appear here.
-            </p>
-
+          <div class="card-body meeting-comments">
+            @if (activityMessage()) {
+              <p class="success-message">{{ activityMessage() }}</p>
+            }
+            @if (attachments().length) {
+              <div class="task-attachments">
+                @for (attachment of attachments(); track attachment.id) {
+                  <div class="task-attachment-item">
+                    <button type="button" class="attachment-name" (click)="downloadAttachment(attachment)">
+                      {{ attachment.fileName }}
+                    </button>
+                    <small>{{ formatFileSize(attachment.size) }}</small>
+                  </div>
+                }
+              </div>
+            } @else {
+              <p class="muted">No attachments yet.</p>
+            }
+            <label class="upload-control">
+              <input type="file" multiple accept=".pdf,.doc,.docx" (change)="uploadAttachments($event)" [disabled]="uploadingAttachments()" />
+              <span>{{ uploadingAttachments() ? 'Uploading...' : 'Upload attachment' }}</span>
+            </label>
           </div>
 
         </div>

@@ -95,41 +95,73 @@
         </div>
 
         <div class="content-card">
-
           <div class="card-header">
             <div>
               <h2>Comments</h2>
-              <span>{{ request.commentsCount }} comments</span>
+              <span>{{ comments().length }} comments</span>
             </div>
           </div>
-
-          <div class="placeholder-card">
-            <div class="placeholder-icon">💬</div>
-            <h3>Comments coming soon</h3>
-            <p>
-              Team members will be able to discuss this request here.
-            </p>
+          <div class="card-body meeting-comments">
+            @if (activityError()) {
+              <p class="meeting-comment-error" role="alert">{{ activityError() }}</p>
+            }
+            @if (loadingActivity()) {
+              <p class="muted">Loading comments...</p>
+            } @else if (comments().length) {
+              <div class="meeting-comment-list">
+                @for (comment of comments(); track comment.id) {
+                  <article class="meeting-comment" [class.highlighted-comment]="highlightedCommentId() === comment.id" [id]="'request-comment-' + comment.id" tabindex="-1">
+                    <div class="meeting-comment-meta">
+                      <strong>{{ comment.author.title }} {{ comment.author.firstName }} {{ comment.author.lastName }}</strong>
+                      <time>{{ comment.createdAt | date:'MMM d, y · h:mm a' }}</time>
+                    </div>
+                    <p>{{ comment.body }}</p>
+                  </article>
+                }
+              </div>
+            } @else {
+              <p class="muted">No comments yet.</p>
+            }
+            <form class="meeting-comment-form" (ngSubmit)="submitComment()">
+              <label for="request-comment">Add a comment</label>
+              <textarea id="request-comment" rows="3" maxlength="5000" placeholder="Write a comment..." [value]="commentText()" (input)="updateCommentText($event)"></textarea>
+              <button class="primary-button" type="submit" [disabled]="submittingComment() || !commentText().trim()">
+                {{ submittingComment() ? 'Posting...' : 'Post Comment' }}
+              </button>
+            </form>
           </div>
-
         </div>
 
         <div class="content-card">
-
           <div class="card-header">
             <div>
               <h2>Attachments</h2>
-              <span>{{ request.attachmentsCount }} files</span>
+              <span>{{ attachments().length }} files</span>
             </div>
           </div>
-
-          <div class="placeholder-card">
-            <div class="placeholder-icon">📎</div>
-            <h3>Attachments coming soon</h3>
-            <p>
-              Documents related to this request will appear here.
-            </p>
+          <div class="card-body meeting-comments">
+            @if (activityMessage()) {
+              <p class="success-message">{{ activityMessage() }}</p>
+            }
+            @if (attachments().length) {
+              <div class="task-attachments">
+                @for (attachment of attachments(); track attachment.id) {
+                  <div class="task-attachment-item">
+                    <button type="button" class="attachment-name" (click)="downloadAttachment(attachment)">
+                      {{ attachment.fileName }}
+                    </button>
+                    <small>{{ formatFileSize(attachment.size) }}</small>
+                  </div>
+                }
+              </div>
+            } @else {
+              <p class="muted">No attachments yet.</p>
+            }
+            <label class="upload-control">
+              <input type="file" multiple accept=".pdf,.doc,.docx" (change)="uploadAttachments($event)" [disabled]="uploadingAttachments()" />
+              <span>{{ uploadingAttachments() ? 'Uploading...' : 'Upload attachment' }}</span>
+            </label>
           </div>
-
         </div>
 
       </div>

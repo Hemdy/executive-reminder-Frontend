@@ -1,5 +1,13 @@
 .notification-page {
-  margin: 0 auto;
+      max-width: 1600px;
+    margin: 0 auto;
+
+}
+
+.page-description {
+    margin: 8px 0 0;
+    color: var(--text-muted);
+    font-size: 12px;
 }
 
 .push-status,
@@ -12,6 +20,8 @@
 .push-error {
   color: var(--danger);
 }
+
+
 
 .header-actions {
   display: flex;
