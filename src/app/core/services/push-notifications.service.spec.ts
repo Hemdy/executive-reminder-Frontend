@@ -110,6 +110,36 @@ describe('PushNotificationsService', () => {
     expect(service.statusError()).toBe('Push notifications are not configured on the server yet.');
   });
 
+  it('replaces an existing subscription created with a different VAPID key', async () => {
+    const previousSubscription = {
+      ...subscription,
+      options: { userVisibleOnly: true, applicationServerKey: Uint8Array.from([3, 2, 1]).buffer },
+    } as PushSubscription;
+    swPush.subscription = of(previousSubscription);
+    currentUser.mockReturnValue({ id: 'user-1' });
+    initializeService({ enabled: true, publicKey: 'AQID' });
+
+    await new Promise(resolve => setTimeout(resolve, 0));
+    http.expectOne(`${API_BASE_URL}/notifications/push/preferences`).flush({
+      tasks: true,
+      reminders: true,
+      requests: true,
+      meetings: true,
+    });
+    const removeRequest = http.expectOne(`${API_BASE_URL}/notifications/push/subscription`);
+    expect(removeRequest.request.method).toBe('DELETE');
+    removeRequest.flush(null);
+
+    await new Promise(resolve => setTimeout(resolve, 0));
+
+    expect(swPush.unsubscribe).toHaveBeenCalledOnce();
+    expect(swPush.requestSubscription).toHaveBeenCalledWith({ serverPublicKey: 'AQID' });
+    const saveRequest = http.expectOne(`${API_BASE_URL}/notifications/push/subscription`);
+    expect(saveRequest.request.method).toBe('POST');
+    saveRequest.flush(null);
+    expect(service.isRegistered()).toBe(true);
+  });
+
   it('saves the authenticated user device notification preferences', () => {
     initializeService();
     currentUser.mockReturnValue({ id: 'user-1' });

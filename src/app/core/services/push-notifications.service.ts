@@ -10,7 +10,7 @@ import { AuthService } from './auth.service';
 
 interface PushConfig {
   enabled: boolean;
-  publicKey: string | null;
+  publicKey: 'BDZyeskJXSbf_DuFygXZmQnOaQ_6B3PJXaFcEVio_cchpaQPXHlmFgiNz21ZmJaZ_6EUtSr2u1449d3iKH6QzmY' | null;
 }
 
 interface PushClickData {
@@ -56,6 +56,7 @@ export class PushNotificationsService {
   readonly preferencesError = signal('');
   readonly preferencesMessage = signal('');
   private registeredUserId: string | null = null;
+  private reconcilingSubscriptionUserId: string | null = null;
   readonly canEnable = computed(() =>
     this.isSupported() &&
     this.permission() !== 'denied' &&
@@ -119,14 +120,7 @@ export class PushNotificationsService {
         return;
       }
       this.loadPreferences(userId);
-      this.swPush.subscription.pipe(
-        take(1),
-        takeUntilDestroyed(this.destroyRef),
-      ).subscribe(subscription => {
-        if (subscription) {
-          this.saveSubscription(subscription, userId);
-        }
-      });
+      this.registerExistingSubscription(userId);
     });
   }
 
@@ -276,7 +270,89 @@ export class PushNotificationsService {
             ? 'Notifications are blocked in browser settings. Allow them there to enable push notifications.'
             : '',
       );
+      const userId = this.auth.currentUser()?.id;
+      if (userId && config.enabled && config.publicKey) {
+        this.registerExistingSubscription(userId);
+      }
     });
+  }
+
+  private registerExistingSubscription(userId: string): void {
+    const config = this.config();
+    if (!config?.enabled || !config.publicKey || this.permission() !== 'granted') {
+      return;
+    }
+    const publicKey = config.publicKey;
+
+    this.swPush.subscription.pipe(
+      take(1),
+      takeUntilDestroyed(this.destroyRef),
+    ).subscribe(subscription => {
+      if (!subscription) {
+        return;
+      }
+      if (this.subscriptionUsesKey(subscription, publicKey)) {
+        this.saveSubscription(subscription, userId);
+        return;
+      }
+      if (this.reconcilingSubscriptionUserId === userId) {
+        return;
+      }
+
+      this.reconcilingSubscriptionUserId = userId;
+      this.isBusy.set(true);
+      this.statusError.set('');
+      this.http.delete<void>(`${this.apiUrl}/subscription`, {
+        body: { endpoint: subscription.endpoint },
+      }).pipe(
+        switchMap(() => from(this.swPush.unsubscribe())),
+        switchMap(() => from(this.swPush.requestSubscription({
+          serverPublicKey: publicKey,
+        }))),
+        switchMap(newSubscription => this.http.post<void>(
+          `${this.apiUrl}/subscription`,
+          newSubscription.toJSON(),
+        )),
+        catchError(error => {
+          console.error('Unable to refresh push subscription for the current VAPID key', error);
+          this.statusError.set(
+            'This device needs to be re-registered for push notifications. Please disable and enable push notifications again.',
+          );
+          return EMPTY;
+        }),
+        finalize(() => {
+          this.isBusy.set(false);
+          if (this.reconcilingSubscriptionUserId === userId) {
+            this.reconcilingSubscriptionUserId = null;
+          }
+        }),
+        takeUntilDestroyed(this.destroyRef),
+      ).subscribe(() => {
+        if (this.auth.currentUser()?.id === userId) {
+          this.isSubscribed.set(true);
+          this.isRegistered.set(true);
+          this.statusMessage.set('Push notifications are enabled on this device.');
+        }
+      });
+    });
+  }
+
+  private subscriptionUsesKey(subscription: PushSubscription, publicKey: string): boolean {
+    const currentKey = subscription.options.applicationServerKey;
+    if (!currentKey) {
+      return true;
+    }
+
+    try {
+      const normalizedKey = publicKey.replace(/-/g, '+').replace(/_/g, '/');
+      const paddedKey = normalizedKey.padEnd(Math.ceil(normalizedKey.length / 4) * 4, '=');
+      const expectedKey = Uint8Array.from(atob(paddedKey), character => character.charCodeAt(0));
+      const actualKey = new Uint8Array(currentKey);
+      return actualKey.length === expectedKey.length &&
+        actualKey.every((value, index) => value === expectedKey[index]);
+    } catch {
+      return false;
+    }
   }
 
   private loadPreferences(userId: string): void {
