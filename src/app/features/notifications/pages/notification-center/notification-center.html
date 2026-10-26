@@ -1,4 +1,4 @@
-<section class="page">
+
   <div class="notification-page">
 
   <div class="page-header">
@@ -64,6 +64,43 @@
     </div>
 
   </div>
+
+  @if (pushNotifications.isSupported()) {
+    <section class="push-preferences" aria-labelledby="push-preferences-title">
+      <div class="push-preferences-heading">
+        <div>
+          <h2 id="push-preferences-title">Device notification preferences</h2>
+          <p>Choose which updates can appear as push notifications. In-app notifications remain enabled.</p>
+        </div>
+        @if (pushNotifications.preferencesMessage()) {
+          <span class="preference-message" role="status">{{ pushNotifications.preferencesMessage() }}</span>
+        }
+      </div>
+
+      <div class="preference-grid">
+        <label class="preference-option">
+          <span><strong>Tasks</strong><small>Assignments, updates, deadlines, and comments</small></span>
+          <input type="checkbox" [checked]="pushNotifications.preferences().tasks" [disabled]="pushNotifications.isLoadingPreferences() || pushNotifications.isSavingPreferences()" (change)="setPreference('tasks', $event)" />
+        </label>
+        <label class="preference-option">
+          <span><strong>Reminders</strong><small>Changes, due alerts, and status updates</small></span>
+          <input type="checkbox" [checked]="pushNotifications.preferences().reminders" [disabled]="pushNotifications.isLoadingPreferences() || pushNotifications.isSavingPreferences()" (change)="setPreference('reminders', $event)" />
+        </label>
+        <label class="preference-option">
+          <span><strong>Requests</strong><small>Submissions, decisions, and comments</small></span>
+          <input type="checkbox" [checked]="pushNotifications.preferences().requests" [disabled]="pushNotifications.isLoadingPreferences() || pushNotifications.isSavingPreferences()" (change)="setPreference('requests', $event)" />
+        </label>
+        <label class="preference-option">
+          <span><strong>Meetings</strong><small>Invitations, changes, and scheduled alerts</small></span>
+          <input type="checkbox" [checked]="pushNotifications.preferences().meetings" [disabled]="pushNotifications.isLoadingPreferences() || pushNotifications.isSavingPreferences()" (change)="setPreference('meetings', $event)" />
+        </label>
+      </div>
+
+      @if (pushNotifications.preferencesError()) {
+        <p class="preference-error" role="alert">{{ pushNotifications.preferencesError() }}</p>
+      }
+    </section>
+  }
 
   <div class="notification-card">
 
@@ -264,4 +301,3 @@
   </div>
 
 </div>
-</section>

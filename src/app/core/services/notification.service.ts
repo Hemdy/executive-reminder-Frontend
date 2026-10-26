@@ -26,10 +26,11 @@ export class NotificationService {
     const referenceId = notification.referenceId ?? notification.sourceId;
     if (!referenceId) return notification.route;
     const resource = notification.resourceType
-      ?? (notification.type.startsWith('TASK') ? 'task' : notification.type === 'REMINDER' ? 'reminder' : notification.type === 'MEETING' ? 'meeting' : undefined);
+      ?? (notification.type.startsWith('TASK') ? 'task' : notification.type === 'REMINDER' ? 'reminder' : notification.type === 'MEETING' ? 'meeting' : notification.type === 'REQUEST' ? 'request' : undefined);
     if (resource === 'task') return `/tasks/${referenceId}`;
     if (resource === 'reminder') return `/reminders/${referenceId}`;
     if (resource === 'meeting') return `/meetings/${referenceId}`;
+    if (resource === 'request') return `/requests/${referenceId}`;
     return notification.route;
   }
   markAsRead(id: string): Observable<unknown> { return this.http.patch(`${this.apiUrl}/${id}/read`, {}).pipe(tap(() => this.setRead(id, true))); }

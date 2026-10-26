@@ -2,6 +2,8 @@ export type NotificationType =
   | 'TASK_ASSIGNED'
   | 'TASK_DUE'
   | 'TASK_OVERDUE'
+  | 'TASK_UPDATED'
+  | 'TASK_STATUS'
   | 'REMINDER'
   | 'REQUEST'
   | 'MEETING'

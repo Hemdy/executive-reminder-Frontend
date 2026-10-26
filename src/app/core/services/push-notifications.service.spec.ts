@@ -30,11 +30,13 @@ describe('PushNotificationsService', () => {
     requestSubscription: vi.fn(() => Promise.resolve(subscription)),
     unsubscribe: vi.fn(() => Promise.resolve(true)),
   };
-  const currentUser = vi.fn(() => null);
+  const currentUser = vi.fn<() => { id: string } | null>(() => null);
   let service: PushNotificationsService;
   let http: HttpTestingController;
 
   beforeEach(() => {
+    currentUser.mockReturnValue(null);
+    swPush.subscription = of(null) as Observable<PushSubscription | null>;
     TestBed.configureTestingModule({
       providers: [
         provideHttpClient(),
@@ -106,6 +108,26 @@ describe('PushNotificationsService', () => {
 
     expect(swPush.requestSubscription).not.toHaveBeenCalled();
     expect(service.statusError()).toBe('Push notifications are not configured on the server yet.');
+  });
+
+  it('saves the authenticated user device notification preferences', () => {
+    initializeService();
+    currentUser.mockReturnValue({ id: 'user-1' });
+
+    service.updatePreferences({ tasks: false, meetings: false });
+
+    const request = http.expectOne(`${API_BASE_URL}/notifications/push/preferences`);
+    expect(request.request.method).toBe('PATCH');
+    expect(request.request.body).toEqual({ tasks: false, meetings: false });
+    request.flush({ tasks: false, reminders: true, requests: true, meetings: false });
+
+    expect(service.preferences()).toEqual({
+      tasks: false,
+      reminders: true,
+      requests: true,
+      meetings: false,
+    });
+    expect(service.preferencesMessage()).toBe('Notification preferences saved.');
   });
 
   it('removes the backend subscription before unsubscribing this device', async () => {

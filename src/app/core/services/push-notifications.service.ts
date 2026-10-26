@@ -17,6 +17,13 @@ interface PushClickData {
   route?: unknown;
 }
 
+export interface PushPreferences {
+  tasks: boolean;
+  reminders: boolean;
+  requests: boolean;
+  meetings: boolean;
+}
+
 @Injectable({ providedIn: 'root' })
 export class PushNotificationsService {
   private readonly http = inject(HttpClient);
@@ -38,6 +45,16 @@ export class PushNotificationsService {
   readonly isBusy = signal(false);
   readonly statusMessage = signal('');
   readonly statusError = signal('');
+  readonly preferences = signal<PushPreferences>({
+    tasks: true,
+    reminders: true,
+    requests: true,
+    meetings: true,
+  });
+  readonly isLoadingPreferences = signal(false);
+  readonly isSavingPreferences = signal(false);
+  readonly preferencesError = signal('');
+  readonly preferencesMessage = signal('');
   private registeredUserId: string | null = null;
   readonly canEnable = computed(() =>
     this.isSupported() &&
@@ -96,8 +113,12 @@ export class PushNotificationsService {
       this.registeredUserId = userId;
       this.isRegistered.set(false);
       if (!userId) {
+        this.preferences.set({ tasks: true, reminders: true, requests: true, meetings: true });
+        this.preferencesError.set('');
+        this.preferencesMessage.set('');
         return;
       }
+      this.loadPreferences(userId);
       this.swPush.subscription.pipe(
         take(1),
         takeUntilDestroyed(this.destroyRef),
@@ -197,6 +218,27 @@ export class PushNotificationsService {
     });
   }
 
+  updatePreferences(updates: Partial<PushPreferences>): void {
+    if (!this.auth.currentUser() || this.isSavingPreferences()) {
+      return;
+    }
+    this.isSavingPreferences.set(true);
+    this.preferencesError.set('');
+    this.preferencesMessage.set('');
+    this.http.patch<PushPreferences>(`${this.apiUrl}/preferences`, updates).pipe(
+      catchError(error => {
+        console.error('Unable to update push notification preferences', error);
+        this.preferencesError.set('Unable to save notification preferences. Please try again.');
+        return EMPTY;
+      }),
+      finalize(() => this.isSavingPreferences.set(false)),
+      takeUntilDestroyed(this.destroyRef),
+    ).subscribe(preferences => {
+      this.preferences.set(preferences);
+      this.preferencesMessage.set('Notification preferences saved.');
+    });
+  }
+
   private saveSubscription(subscription: PushSubscription, userId: string): void {
     this.http.post<void>(`${this.apiUrl}/subscription`, subscription.toJSON()).pipe(
       catchError(error => {
@@ -234,6 +276,23 @@ export class PushNotificationsService {
             ? 'Notifications are blocked in browser settings. Allow them there to enable push notifications.'
             : '',
       );
+    });
+  }
+
+  private loadPreferences(userId: string): void {
+    this.isLoadingPreferences.set(true);
+    this.http.get<PushPreferences>(`${this.apiUrl}/preferences`).pipe(
+      catchError(error => {
+        console.error('Unable to load push notification preferences', error);
+        this.preferencesError.set('Unable to load notification preferences.');
+        return EMPTY;
+      }),
+      finalize(() => this.isLoadingPreferences.set(false)),
+      takeUntilDestroyed(this.destroyRef),
+    ).subscribe(preferences => {
+      if (this.auth.currentUser()?.id === userId) {
+        this.preferences.set(preferences);
+      }
     });
   }
 

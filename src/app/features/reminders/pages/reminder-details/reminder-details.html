@@ -259,8 +259,8 @@
             <div class="person-avatar">
               {{
                 getInitials(
-                  currentReminder.recipient?.firstName ?? 'U',
-                  currentReminder.recipient?.lastName ?? ''
+                  currentReminder.recipient.firstName ,
+                  currentReminder.recipient.lastName
                 )
               }}
             </div>
@@ -271,9 +271,9 @@
                 {{ getFullName(currentReminder.recipient) }}
               </strong>
 
-              @if (currentReminder.recipient?.department) {
+              @if (currentReminder.recipient.department) {
                 <span>
-                  {{ currentReminder.recipient?.department }}
+                  {{ currentReminder.recipient.department}}
                 </span>
               }
 

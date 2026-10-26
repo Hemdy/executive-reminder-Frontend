@@ -21,7 +21,10 @@ import {
 } from '../../../../core/models/notification.model';
 
 import { NotificationService } from '../../../../core/services/notification.service';
-import { PushNotificationsService } from '../../../../core/services/push-notifications.service';
+import {
+  PushNotificationsService,
+  PushPreferences,
+} from '../../../../core/services/push-notifications.service';
 
 type NotificationFilter =
   | 'ALL'
@@ -109,6 +112,11 @@ export class NotificationCenter {
     this.notificationService.clearReadNotifications().subscribe();
   }
 
+  setPreference(key: keyof PushPreferences, event: Event): void {
+    const input = event.target as HTMLInputElement;
+    this.pushNotifications.updatePreferences({ [key]: input.checked });
+  }
+
   openNotification(
     notification: Notification
   ): void {
@@ -125,6 +133,8 @@ export class NotificationCenter {
   getIcon(type: NotificationType): string {
     switch (type) {
       case 'TASK_ASSIGNED':
+      case 'TASK_UPDATED':
+      case 'TASK_STATUS':
         return '✓';
 
       case 'TASK_DUE':

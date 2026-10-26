@@ -1,4 +1,5 @@
 .details-page {
+  width: 100%;
   max-width: 1200px;
   margin: 0 auto;
 }
@@ -24,36 +25,50 @@
 
 .top-actions {
   display: flex;
+  flex-wrap: wrap;
   gap: 8px;
 }
 
 .secondary-button,
 .approve-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
   min-height: 38px;
   padding: 0 14px;
   border-radius: 7px;
   font-size: 12px;
   font-weight: 600;
+  transition: background 120ms ease, border-color 120ms ease;
 }
 
 .secondary-button {
   border: 1px solid var(--border);
   background: var(--surface);
   color: var(--text);
+
+  &:hover {
+    background: var(--surface-hover);
+  }
 }
 
 .approve-button {
   border: 0;
   background: var(--success);
   color: #fff;
+
+  &:hover {
+    background: #176d2c;
+  }
 }
 
 .request-header {
-  margin-bottom: 20px;
+  margin-bottom: 22px;
 }
 
 .header-meta {
   display: flex;
+  flex-wrap: wrap;
   gap: 7px;
   margin-bottom: 10px;
 }
@@ -100,8 +115,10 @@
 
 .header-main h1 {
   margin: 0;
-  font-size: 30px;
-  letter-spacing: -0.6px;
+  font-size: clamp(24px, 3vw, 30px);
+  line-height: 1.2;
+  letter-spacing: -0.5px;
+  overflow-wrap: anywhere;
 }
 
 .created-info {
@@ -112,19 +129,21 @@
 
 .content-grid {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) 330px;
-  gap: 18px;
+  grid-template-columns: minmax(0, 1fr) minmax(280px, 330px);
+  gap: 20px;
   align-items: start;
 }
 
 .main-column,
 .side-column {
+  min-width: 0;
   display: flex;
   flex-direction: column;
-  gap: 18px;
+  gap: 20px;
 }
 
 .content-card {
+  min-width: 0;
   overflow: hidden;
   border: 1px solid #d5e0f0;
   border-radius: 10px;
@@ -136,7 +155,8 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 16px 18px;
+  gap: 12px;
+  padding: 16px 20px;
   border-bottom: 1px solid var(--border);
 
   h2 {
@@ -151,7 +171,7 @@
 }
 
 .card-body {
-  padding: 18px;
+  padding: 20px;
 }
 
 .description {
@@ -192,15 +212,15 @@
 }
 
 .details-list {
-  padding: 8px 18px 12px;
+  padding: 6px 20px 10px;
 }
 
 .detail-row {
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   justify-content: space-between;
-  gap: 15px;
-  padding: 12px 0;
+  gap: 16px;
+  padding: 13px 0;
   border-bottom: 1px solid var(--border);
 
   &:last-child {
@@ -213,6 +233,8 @@
   }
 
   > strong {
+    max-width: 65%;
+    overflow-wrap: anywhere;
     font-size: 12px;
     text-align: right;
   }
@@ -257,10 +279,8 @@
   display: flex;
   align-items: center;
   gap: 12px;
-  padding: 18px;
-  border: 1px solid #d1e2d6;
-  border-radius: 9px;
-  background: #f4f8f5;
+  min-width: 0;
+  padding: 18px 20px;
 }
 
 .large-avatar {
@@ -279,6 +299,7 @@
 .person-card > div:last-child {
   display: flex;
   flex-direction: column;
+  min-width: 0;
   gap: 3px;
 
   strong {
@@ -288,6 +309,7 @@
   span {
     color: var(--text-muted);
     font-size: 11px;
+    overflow-wrap: anywhere;
   }
 }
 
@@ -295,20 +317,28 @@
   display: flex;
   flex-direction: column;
   gap: 8px;
-  padding: 16px;
+  padding: 16px 20px 20px;
 }
 
 .action-button {
   min-height: 38px;
+  padding: 7px 12px;
   border: 1px solid var(--border);
   border-radius: 7px;
   background: var(--surface);
   color: var(--text);
   font-size: 12px;
   font-weight: 600;
+  text-align: left;
+  transition: background 120ms ease, border-color 120ms ease;
 
   &:hover {
     background: var(--surface-hover);
+  }
+
+  &:disabled {
+    cursor: wait;
+    opacity: 0.65;
   }
 
   &.approve {
@@ -355,14 +385,25 @@
 .primary-button {
   display: inline-flex;
   align-items: center;
+  justify-content: center;
   min-height: 40px;
   padding: 0 15px;
+  border: 0;
   border-radius: 7px;
   background: var(--primary);
   color: #fff;
   font-size: 12px;
   font-weight: 600;
   text-decoration: none;
+
+  &:hover:not(:disabled) {
+    background: var(--primary-dark);
+  }
+
+  &:disabled {
+    cursor: wait;
+    opacity: 0.7;
+  }
 }
 
 @media (max-width: 850px) {
@@ -393,22 +434,15 @@
   }
 
   .header-main h1 {
-    font-size: 24px;
+    font-size: 25px;
   }
 
   .detail-row {
-    align-items: flex-start;
-    flex-direction: column;
-    gap: 6px;
+    gap: 12px;
   }
 
   .detail-row > strong {
-    text-align: left;
-  }
-
-  .person-card {
-    align-items: flex-start;
-    flex-direction: column;
+    max-width: 60%;
   }
 
   .workflow-actions button,
@@ -419,19 +453,39 @@
 }
 
 @media (max-width: 440px) {
-  .content-card,
   .card-header,
   .card-body,
-  .details-list,
-  .workflow-actions,
-  .person-card,
-  .main-column,
-  .side-column {
-    padding-left: 12px;
-    padding-right: 12px;
+  .person-card {
+    padding-right: 14px;
+    padding-left: 14px;
+  }
+
+  .details-list {
+    padding-right: 14px;
+    padding-left: 14px;
+  }
+
+  .workflow-actions {
+    padding-right: 14px;
+    padding-left: 14px;
+  }
+
+  .detail-row {
+    gap: 8px;
+
+    > span:first-child,
+    > strong {
+      font-size: 11px;
+    }
   }
 
   .side-column {
     grid-template-columns: 1fr;
+  }
+
+  .task-attachment-item {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 5px;
   }
 }
