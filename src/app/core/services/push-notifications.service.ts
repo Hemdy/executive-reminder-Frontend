@@ -10,7 +10,7 @@ import { AuthService } from './auth.service';
 
 interface PushConfig {
   enabled: boolean;
-  publicKey: 'BDZyeskJXSbf_DuFygXZmQnOaQ_6B3PJXaFcEVio_cchpaQPXHlmFgiNz21ZmJaZ_6EUtSr2u1449d3iKH6QzmY' | null;
+  publicKey: string | null;
 }
 
 interface PushClickData {
@@ -337,23 +337,41 @@ export class PushNotificationsService {
     });
   }
 
-  private subscriptionUsesKey(subscription: PushSubscription, publicKey: string): boolean {
-    const currentKey = subscription.options.applicationServerKey;
-    if (!currentKey) {
-      return true;
-    }
+  private subscriptionUsesKey(
+  subscription: PushSubscription,
+  publicKey: string,
+): boolean {
+  const currentKey = subscription.options.applicationServerKey;
 
-    try {
-      const normalizedKey = publicKey.replace(/-/g, '+').replace(/_/g, '/');
-      const paddedKey = normalizedKey.padEnd(Math.ceil(normalizedKey.length / 4) * 4, '=');
-      const expectedKey = Uint8Array.from(atob(paddedKey), character => character.charCodeAt(0));
-      const actualKey = new Uint8Array(currentKey);
-      return actualKey.length === expectedKey.length &&
-        actualKey.every((value, index) => value === expectedKey[index]);
-    } catch {
-      return false;
-    }
+  if (!currentKey) {
+    return false;
   }
+
+  try {
+    const normalizedKey = publicKey
+      .replace(/-/g, '+')
+      .replace(/_/g, '/');
+
+    const paddedKey = normalizedKey.padEnd(
+      Math.ceil(normalizedKey.length / 4) * 4,
+      '=',
+    );
+
+    const expectedKey = Uint8Array.from(
+      atob(paddedKey),
+      character => character.charCodeAt(0),
+    );
+
+    const actualKey = new Uint8Array(currentKey);
+
+    return (
+      actualKey.length === expectedKey.length &&
+      actualKey.every((value, index) => value === expectedKey[index])
+    );
+  } catch {
+    return false;
+  }
+}
 
   private loadPreferences(userId: string): void {
     this.isLoadingPreferences.set(true);
