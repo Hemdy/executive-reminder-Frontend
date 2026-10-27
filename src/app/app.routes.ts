@@ -37,6 +37,11 @@ loadComponent: () =>
               import('./features/tasks/pages/task-form/task-form').then((m) => m.TaskForm),
           },
           {
+            path: ':id/edit',
+            loadComponent: () =>
+              import('./features/tasks/pages/task-form/task-form').then((m) => m.TaskForm),
+          },
+          {
             path: ':id',
             loadComponent: () =>
               import('./features/tasks/pages/task-details/task-details').then((m) => m.TaskDetails),
