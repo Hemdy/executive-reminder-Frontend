@@ -1,0 +1,41 @@
+@if (showPrompt()) {
+  <aside class="install-card" aria-labelledby="install-title">
+    <div class="install-copy">
+      <p class="eyebrow">Exec Track Reminder</p>
+      <h2 id="install-title">Keep the app close at hand</h2>
+      @if (isIos) {
+        @if (isSafariOnIos) {
+          <p>Install this web app from Safari for quick Home Screen access.</p>
+        } @else {
+          <p>Open this page in Safari to add the app to your Home Screen.</p>
+        }
+        @if (showBrowserInstructions()) {
+          <ol>
+            <li>Tap Safari's Share button.</li>
+            <li>Choose <strong>Add to Home Screen</strong>, then tap <strong>Add</strong>.</li>
+          </ol>
+        }
+      } @else if (isAndroid) {
+        <p>Install the app for a convenient, app-like experience on this device.</p>
+        @if (showBrowserInstructions()) {
+          <p>In your browser menu, choose <strong>Install app</strong> or <strong>Add to Home screen</strong>.</p>
+        }
+      } @else {
+        <p>Add the app to your device from your browser's install option.</p>
+        @if (showBrowserInstructions()) {
+          <p>Open the browser menu and choose <strong>Install Exec Track Reminder</strong> or <strong>Install app</strong>.</p>
+        }
+      }
+    </div>
+    <div class="install-actions">
+      @if (!showBrowserInstructions()) {
+        <button type="button" class="install-button" (click)="install()">
+          {{ installButtonLabel() }}
+        </button>
+      }
+      <button type="button" class="dismiss-button" (click)="dismiss()" aria-label="Dismiss install suggestion">
+        Not now
+      </button>
+    </div>
+  </aside>
+}

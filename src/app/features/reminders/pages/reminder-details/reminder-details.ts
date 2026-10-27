@@ -2,11 +2,12 @@ import { ChangeDetectionStrategy, Component, computed, inject, OnInit, signal } 
 import { DatePipe, DOCUMENT } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
-import { catchError, forkJoin, map, of } from 'rxjs';
+import { catchError, forkJoin, from, map, of } from 'rxjs';
 import { ReminderAttachment, ReminderComment, ReminderPriority, ReminderStatus } from '../../../../core/models/reminder.model';
 import { ReminderService } from '../../../../core/services/reminder.service';
 import { LoadingService } from '../../../../core/services/loading.service';
 import { ToastService } from '../../../../core/services/toast.service';
+import { AttachmentTransferService } from '../../../../core/services/attachment-transfer.service';
 
 @Component({
   selector: 'app-reminder-details',
@@ -23,6 +24,7 @@ export class ReminderDetails implements OnInit {
   private readonly loading = inject(LoadingService);
   private readonly toast = inject(ToastService);
   private readonly document = inject(DOCUMENT);
+  private readonly attachmentTransfer = inject(AttachmentTransferService);
   readonly isDeleting = signal(false);
   readonly comments = signal<ReminderComment[]>([]);
   readonly attachments = signal<ReminderAttachment[]>([]);
@@ -135,7 +137,9 @@ export class ReminderDetails implements OnInit {
     this.uploadingAttachments.set(true);
     const uploads = validFiles.map(file => this.reminderService.uploadAttachment(reminder.id, file).pipe(
       map(attachment => ({ attachment })),
-      catchError(() => of({ failedFile: file.name }))
+      catchError(error => from(
+        this.attachmentTransfer.failureMessage(error, 'upload'),
+      ).pipe(map(message => ({ failedFile: `${file.name}: ${message}` }))))
     ));
     forkJoin(uploads).subscribe({
       next: results => {
@@ -162,23 +166,33 @@ export class ReminderDetails implements OnInit {
     if (!reminder || this.downloadingAttachmentId()) return;
     this.activityError.set('');
     this.activityMessage.set('');
+    const downloadContext = this.attachmentTransfer.prepareDownload();
     this.downloadingAttachmentId.set(attachment.id);
     this.reminderService.downloadAttachment(reminder.id, attachment.id).subscribe({
       next: blob => {
-        const url = URL.createObjectURL(blob);
-        const link = document.createElement('a');
-        link.href = url;
-        link.download = attachment.fileName;
-        link.click();
-        window.setTimeout(() => URL.revokeObjectURL(url), 0);
-        this.downloadingAttachmentId.set(null);
-        this.activityMessage.set('Attachment downloaded.');
+        void this.attachmentTransfer.save(blob, attachment.fileName, downloadContext).then(result => {
+          this.downloadingAttachmentId.set(null);
+          this.activityMessage.set(this.downloadSuccessMessage(result));
+        }).catch(error => {
+          this.attachmentTransfer.cancel(downloadContext);
+          this.downloadingAttachmentId.set(null);
+          void this.attachmentTransfer.failureMessage(error, 'download')
+            .then(message => this.activityError.set(message));
+        });
       },
-      error: () => {
+      error: error => {
+        this.attachmentTransfer.cancel(downloadContext);
         this.downloadingAttachmentId.set(null);
-        this.activityError.set('Unable to download this attachment.');
+        void this.attachmentTransfer.failureMessage(error, 'download')
+          .then(message => this.activityError.set(message));
       },
     });
+  }
+
+  private downloadSuccessMessage(result: 'downloaded' | 'shared' | 'opened' | 'cancelled'): string {
+    if (result === 'shared') return 'Attachment shared. Choose Save to Files to keep a copy.';
+    if (result === 'opened') return 'Attachment opened. Use the Share menu to save it to Files.';
+    return result === 'cancelled' ? '' : 'Attachment downloaded.';
   }
 
   deleteReminder(): void {

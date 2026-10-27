@@ -11,7 +11,7 @@ import {
 import { DatePipe, DOCUMENT } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
-import { catchError, forkJoin, map, of } from 'rxjs';
+import { catchError, forkJoin, from, map, of } from 'rxjs';
 import {
   TaskAttachment,
   TaskComment,
@@ -22,6 +22,7 @@ import { AuthService } from '../../../../core/services/auth.service';
 import { TaskService } from '../../../../core/services/task.service';
 import { LoadingService } from '../../../../core/services/loading.service';
 import { ToastService } from '../../../../core/services/toast.service';
+import { AttachmentTransferService } from '../../../../core/services/attachment-transfer.service';
 
 @Component({
   selector: 'app-task-details',
@@ -45,6 +46,7 @@ export class TaskDetails implements OnInit {
   private readonly document = inject(DOCUMENT);
   private readonly loading = inject(LoadingService);
   private readonly toast = inject(ToastService);
+  private readonly attachmentTransfer = inject(AttachmentTransferService);
   readonly comments = signal<TaskComment[]>([]);
   readonly highlightedCommentId = signal<string | null>(null);
   readonly attachments = signal<TaskAttachment[]>([]);
@@ -223,7 +225,9 @@ export class TaskDetails implements OnInit {
     const uploads = validFiles.map(file =>
       this.taskService.uploadAttachment(task.id, file).pipe(
         map(attachment => ({ attachment })),
-        catchError(() => of({ failedFile: file.name }))
+        catchError(error => from(
+          this.attachmentTransfer.failureMessage(error, 'upload'),
+        ).pipe(map(message => ({ failedFile: `${file.name}: ${message}` }))))
       )
     );
     forkJoin(uploads).subscribe({
@@ -263,23 +267,33 @@ export class TaskDetails implements OnInit {
 
     this.activityError.set('');
     this.activityMessage.set('');
+    const downloadContext = this.attachmentTransfer.prepareDownload();
     this.downloadingAttachmentId.set(attachment.id);
     this.taskService.downloadAttachment(task.id, attachment.id).subscribe({
       next: blob => {
-        const url = URL.createObjectURL(blob);
-        const link = document.createElement('a');
-        link.href = url;
-        link.download = attachment.fileName;
-        link.click();
-        window.setTimeout(() => URL.revokeObjectURL(url), 0);
-        this.downloadingAttachmentId.set(null);
-        this.activityMessage.set('Attachment downloaded.');
+        void this.attachmentTransfer.save(blob, attachment.fileName, downloadContext).then(result => {
+          this.downloadingAttachmentId.set(null);
+          this.activityMessage.set(this.downloadSuccessMessage(result));
+        }).catch(error => {
+          this.attachmentTransfer.cancel(downloadContext);
+          this.downloadingAttachmentId.set(null);
+          void this.attachmentTransfer.failureMessage(error, 'download')
+            .then(message => this.activityError.set(message));
+        });
       },
-      error: () => {
+      error: error => {
+        this.attachmentTransfer.cancel(downloadContext);
         this.downloadingAttachmentId.set(null);
-        this.activityError.set('Unable to download this attachment.');
+        void this.attachmentTransfer.failureMessage(error, 'download')
+          .then(message => this.activityError.set(message));
       }
     });
+  }
+
+  private downloadSuccessMessage(result: 'downloaded' | 'shared' | 'opened' | 'cancelled'): string {
+    if (result === 'shared') return 'Attachment shared. Choose Save to Files to keep a copy.';
+    if (result === 'opened') return 'Attachment opened. Use the Share menu to save it to Files.';
+    return result === 'cancelled' ? '' : 'Attachment downloaded.';
   }
 
   formatFileSize(size: number): string {

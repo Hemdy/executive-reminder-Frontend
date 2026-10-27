@@ -45,6 +45,35 @@ Vercel Cron job and requires `CRON_SECRET` and `REMINDER_TIMEZONE` to be set.
 Clicking a push notification should open the linked task, meeting, reminder,
 or comment.
 
+## Attachments and PWA lifecycle
+
+Task, reminder, request, and meeting attachments are sent to the authenticated
+NestJS API. The Angular service worker has no API data cache; API navigation
+URLs are excluded from the app-shell fallback, and attachment responses are
+marked `private, no-store`. A service-worker 503 indicates that its network
+request could not reach the API while offline or during an outage; it is not an
+attachment cache hit. Uploads and downloads require a working connection and
+show an error rather than succeeding offline. The backend requires Supabase
+Storage configuration in production (see its README); local-disk storage is
+for development only.
+
+On iOS, attachment downloads use the system share sheet when available. Choose
+**Save to Files** to keep a copy; otherwise the file is opened for Safari's
+available save/share actions. Desktop and Android use the browser's download
+behavior. Browsers may vary in where they save or open files.
+
+The production Angular service worker prefetches updated app assets and checks
+for updates on launch and every six hours. Ready updates activate and reload
+when no API requests are pending and no dirty or focused form controls are
+present; otherwise they wait for a safe route/idle opportunity. The production
+Vercel configuration sends no-cache headers for `ngsw.json` and
+`ngsw-worker.js`, so deployments can be detected without reinstalling.
+
+When the PWA is not installed, the app offers the browser installation prompt
+where supported. On iPhone and iPad it provides Safari **Share → Add to Home
+Screen** instructions. Dismissing the suggestion is remembered in that
+browser's local storage.
+
 ## Code scaffolding
 
 Angular CLI includes powerful code scaffolding tools. To generate a new component, run:

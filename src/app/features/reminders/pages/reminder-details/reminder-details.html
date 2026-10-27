@@ -69,7 +69,7 @@
 
       <main>
 
-        <section class="content-card">
+        <section class="content-card" [attr.aria-busy]="uploadingAttachments() || downloadingAttachmentId() !== null">
 
           <div class="card-heading">
             <h2>Description</h2>
@@ -121,7 +121,7 @@
             }
             <form class="meeting-comment-form" (ngSubmit)="submitComment()">
               <label for="reminder-comment">Add a comment</label>
-              <textarea id="reminder-comment" rows="3" maxlength="5000" placeholder="Write a comment..." [value]="commentText()" (input)="updateCommentText($event)"></textarea>
+              <textarea id="reminder-comment" rows="3" maxlength="5000" placeholder="Write a comment..." [attr.data-update-guard]="commentText().trim() ? 'pending' : null" [value]="commentText()" (input)="updateCommentText($event)"></textarea>
               <button class="primary-button" type="submit" [disabled]="submittingComment() || !commentText().trim()">
                 {{ submittingComment() ? 'Posting...' : 'Post Comment' }}
               </button>
@@ -144,8 +144,13 @@
               <div class="task-attachments">
                 @for (attachment of attachments(); track attachment.id) {
                   <div class="task-attachment-item">
-                    <button type="button" class="attachment-name" (click)="downloadAttachment(attachment)">
-                      {{ attachment.fileName }}
+                    <button
+                      type="button"
+                      class="attachment-name"
+                      [disabled]="downloadingAttachmentId() !== null"
+                      (click)="downloadAttachment(attachment)"
+                    >
+                      {{ downloadingAttachmentId() === attachment.id ? 'Preparing file...' : attachment.fileName }}
                     </button>
                     <small>{{ formatFileSize(attachment.size) }}</small>
                   </div>
@@ -155,7 +160,13 @@
               <p class="muted">No attachments yet.</p>
             }
             <label class="upload-control">
-              <input type="file" multiple accept=".pdf,.doc,.docx" (change)="uploadAttachments($event)" [disabled]="uploadingAttachments()" />
+              <input
+                type="file"
+                multiple
+                accept=".pdf,.doc,.docx,application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+                (change)="uploadAttachments($event)"
+                [disabled]="uploadingAttachments()"
+              />
               <span>{{ uploadingAttachments() ? 'Uploading...' : 'Upload attachment' }}</span>
             </label>
           </div>

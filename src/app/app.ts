@@ -12,10 +12,12 @@ import { LoadingOverlay } from './core/components/loading-overlay/loading-overla
 import { Toast } from './core/components/toast/toast';
 import { LoadingService } from './core/services/loading.service';
 import { PushNotificationsService } from './core/services/push-notifications.service';
+import { PwaUpdateService } from './core/services/pwa-update.service';
+import { PwaInstallPrompt } from './core/components/pwa-install-prompt/pwa-install-prompt';
 
 @Component({
   selector: 'app-root',
-  imports: [RouterOutlet, LoadingOverlay, Toast],
+  imports: [RouterOutlet, LoadingOverlay, Toast, PwaInstallPrompt],
   templateUrl: './app.html',
   styleUrl: './app.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -27,6 +29,7 @@ export class App {
   private readonly router = inject(Router);
   private readonly document = inject(DOCUMENT);
   private readonly pushNotifications = inject(PushNotificationsService);
+  private readonly pwaUpdates = inject(PwaUpdateService);
   private startupTask = this.loading.begin('Loading...');
   private startupPending = true;
 

@@ -139,6 +139,7 @@
                 rows="3"
                 maxlength="5000"
                 placeholder="Write a comment..."
+                [attr.data-update-guard]="commentText().trim() ? 'pending' : null"
                 [value]="commentText()"
                 (input)="updateCommentText($event)"
               ></textarea>
@@ -154,7 +155,7 @@
 
         </section>
 
-        <section class="content-card">
+        <section class="content-card" [attr.aria-busy]="uploadingAttachments() || downloadingAttachmentId() !== null">
 
           <div class="card-heading">
             <div>
