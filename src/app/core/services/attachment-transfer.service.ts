@@ -19,7 +19,12 @@ export class AttachmentTransferService {
       return { isIos: false, popup: null };
     }
     const isIos = this.isIos(view.navigator.userAgent);
-    return { isIos, popup: isIos ? view.open('about:blank', '_blank') : null };
+    const popup = isIos ? view.open('about:blank', '_blank') : null;
+    if (popup) {
+      popup.document.title = 'Preparing attachment';
+      popup.document.body.textContent = 'Preparing your attachment…';
+    }
+    return { isIos, popup };
   }
 
   cancel(context: AttachmentDownloadContext): void {
@@ -58,7 +63,7 @@ export class AttachmentTransferService {
 
     const url = view.URL.createObjectURL(blob);
     if (context.popup && !context.popup.closed) {
-      context.popup.location.href = url;
+      this.showOpenLink(context.popup, url, fileName);
       view.setTimeout(() => view.URL.revokeObjectURL(url), 120_000);
       return 'opened';
     }
@@ -85,15 +90,39 @@ export class AttachmentTransferService {
     if (error.status === 0) {
       return `Could not ${action} the attachment because the server is unreachable. Check your connection and retry.`;
     }
-    if (error.status === 503) {
-      return `The attachment service is unavailable (503). Check your connection and retry; the request was not completed.`;
-    }
 
     const detail = await this.responseMessage(error.error);
     if (detail) {
       return `Unable to ${action} the attachment: ${detail}`;
     }
+    if (error.status === 503) {
+      return `The attachment service is unavailable (503). Check your connection and retry; the request was not completed.`;
+    }
     return `Unable to ${action} the attachment (HTTP ${error.status}). Please try again.`;
+  }
+
+  private showOpenLink(popup: Window, url: string, fileName: string): void {
+    const popupDocument = popup.document;
+    popupDocument.open();
+    popupDocument.write('<!doctype html><html><head></head><body></body></html>');
+    popupDocument.title = 'Open attachment';
+
+    const heading = popupDocument.createElement('h1');
+    heading.textContent = 'Your attachment is ready';
+    const instructions = popupDocument.createElement('p');
+    instructions.textContent =
+      'Tap the button below to open the file. On iPhone or iPad, use the Share button to save it to Files.';
+    const link = popupDocument.createElement('a');
+    link.href = url;
+    link.download = fileName;
+    link.textContent = `Open ${fileName}`;
+    link.style.cssText =
+      'display:inline-block;padding:12px 18px;border-radius:8px;background:#2457c5;color:#fff;text-decoration:none;font:600 16px system-ui,sans-serif';
+
+    popupDocument.body.replaceChildren(heading, instructions, link);
+    popupDocument.body.style.cssText =
+      'max-width:640px;margin:12vh auto;padding:24px;color:#172033;font:16px/1.5 system-ui,sans-serif';
+    popupDocument.close();
   }
 
   private async responseMessage(body: unknown): Promise<string | undefined> {
@@ -105,7 +134,9 @@ export class AttachmentTransferService {
       return undefined;
     }
 
-    const text = await body.text();
+    const text = typeof body.text === 'function'
+      ? await body.text()
+      : await this.readBlobText(body);
     try {
       const parsed = JSON.parse(text) as { message?: unknown };
       return typeof parsed.message === 'string' ? parsed.message : undefined;
@@ -115,6 +146,20 @@ export class AttachmentTransferService {
       }
       throw error;
     }
+  }
+
+  private readBlobText(blob: Blob): Promise<string> {
+    const view = this.document.defaultView;
+    if (!view) {
+      return Promise.reject(new Error('Cannot read the server response outside a browser.'));
+    }
+
+    return new Promise((resolve, reject) => {
+      const reader = new view.FileReader();
+      reader.onload = () => resolve(typeof reader.result === 'string' ? reader.result : '');
+      reader.onerror = () => reject(reader.error ?? new Error('Unable to read the server response.'));
+      reader.readAsText(blob);
+    });
   }
 
   private isIos(userAgent: string): boolean {
