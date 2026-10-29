@@ -12,6 +12,7 @@ describe('PushNotificationsService', () => {
   const endpoint = 'https://fcm.googleapis.com/fcm/send/test-endpoint';
   const subscriptionData = {
     endpoint,
+    expirationTime: null,
     keys: { p256dh: 'public-key', auth: 'auth-key' },
   };
   const subscription = {
@@ -20,11 +21,15 @@ describe('PushNotificationsService', () => {
     options: { userVisibleOnly: true, applicationServerKey: null },
     getKey: () => null,
     unsubscribe: () => Promise.resolve(true),
-    toJSON: () => subscriptionData,
+    toJSON: () => ({
+      endpoint,
+      keys: { p256dh: 'public-key', auth: 'auth-key' },
+    }),
   } as PushSubscription;
   const swPush = {
     isEnabled: true,
     subscription: of(null) as Observable<PushSubscription | null>,
+    messages: new Subject(),
     pushSubscriptionChanges: new Subject(),
     notificationClicks: new Subject(),
     requestSubscription: vi.fn(() => Promise.resolve(subscription)),
@@ -60,57 +65,67 @@ describe('PushNotificationsService', () => {
   });
 
   function initializeService(
-    config: { enabled: boolean; publicKey: string | null } = {
+    config: { enabled: boolean; publicKey: string | null; reason?: string | null } = {
       enabled: true,
       publicKey: 'vapid-public-key',
     },
     permission: NotificationPermission = 'granted',
   ): void {
-    vi.stubGlobal('Notification', { permission });
+    vi.stubGlobal('Notification', {
+      permission,
+      requestPermission: vi.fn(() => Promise.resolve(permission)),
+    });
     service = TestBed.inject(PushNotificationsService);
     http.expectOne(`${API_BASE_URL}/notifications/push/config`).flush(config);
   }
 
-  it('requests permission synchronously from the user action and registers the subscription', async () => {
+  it('requests permission from the user action and registers a sanitized subscription', async () => {
     initializeService();
-    service.enable();
+    const enablePromise = service.enable();
 
+    await new Promise(resolve => setTimeout(resolve, 0));
     expect(swPush.requestSubscription).toHaveBeenCalledWith({
       serverPublicKey: 'vapid-public-key',
     });
 
-    await new Promise(resolve => setTimeout(resolve, 0));
     const request = http.expectOne(`${API_BASE_URL}/notifications/push/subscription`);
     expect(request.request.method).toBe('POST');
     expect(request.request.body).toEqual(subscriptionData);
     request.flush(null);
+    await enablePromise;
 
     expect(service.isSubscribed()).toBe(true);
     expect(service.isRegistered()).toBe(true);
   });
 
-  it('does not request permission when browser notifications are denied', () => {
+  it('does not request permission when browser notifications are denied', async () => {
     initializeService(undefined, 'denied');
 
     expect(service.permission()).toBe('denied');
     expect(service.canEnable()).toBe(false);
 
-    service.enable();
+    await service.enable();
 
     expect(swPush.requestSubscription).not.toHaveBeenCalled();
     expect(service.statusError()).toContain('blocked in browser settings');
   });
 
-  it('reports missing VAPID configuration without requesting a subscription', () => {
-    initializeService({ enabled: false, publicKey: null });
+  it('reports missing VAPID configuration and server reason without requesting a subscription', async () => {
+    initializeService({
+      enabled: false,
+      publicKey: null,
+      reason: 'Missing environment variables: VAPID_PUBLIC_KEY',
+    });
 
-    service.enable();
+    await service.enable();
 
     expect(swPush.requestSubscription).not.toHaveBeenCalled();
-    expect(service.statusError()).toBe('Push notifications are not configured on the server yet.');
+    expect(service.statusError()).toBe(
+      'Push notifications are not configured on the server yet (Missing environment variables: VAPID_PUBLIC_KEY).',
+    );
   });
 
-  it('replaces an existing subscription created with a different VAPID key', async () => {
+  it('cleanly unsubscribes an existing subscription created with a different VAPID key without prompting in background', async () => {
     const previousSubscription = {
       ...subscription,
       options: { userVisibleOnly: true, applicationServerKey: Uint8Array.from([3, 2, 1]).buffer },
@@ -133,11 +148,9 @@ describe('PushNotificationsService', () => {
     await new Promise(resolve => setTimeout(resolve, 0));
 
     expect(swPush.unsubscribe).toHaveBeenCalledOnce();
-    expect(swPush.requestSubscription).toHaveBeenCalledWith({ serverPublicKey: 'AQID' });
-    const saveRequest = http.expectOne(`${API_BASE_URL}/notifications/push/subscription`);
-    expect(saveRequest.request.method).toBe('POST');
-    saveRequest.flush(null);
-    expect(service.isRegistered()).toBe(true);
+    expect(swPush.requestSubscription).not.toHaveBeenCalled();
+    expect(service.isSubscribed()).toBe(false);
+    expect(service.isRegistered()).toBe(false);
   });
 
   it('saves the authenticated user device notification preferences', () => {
@@ -165,14 +178,15 @@ describe('PushNotificationsService', () => {
     initializeService();
 
     expect(service.isSubscribed()).toBe(true);
-    service.disable();
+    const disablePromise = service.disable();
 
+    await new Promise(resolve => setTimeout(resolve, 0));
     const request = http.expectOne(`${API_BASE_URL}/notifications/push/subscription`);
     expect(request.request.method).toBe('DELETE');
     expect(request.request.body).toEqual({ endpoint });
     request.flush(null);
 
-    await new Promise(resolve => setTimeout(resolve, 0));
+    await disablePromise;
 
     expect(swPush.unsubscribe).toHaveBeenCalledOnce();
     expect(service.isSubscribed()).toBe(false);

@@ -15,7 +15,7 @@ export const appConfig: ApplicationConfig = {
     provideClientHydration(withEventReplay()),
     provideServiceWorker('ngsw-worker.js', {
       enabled: !isDevMode(),
-      registrationStrategy: 'registerWhenStable:5000',
+      registrationStrategy: 'registerImmediately',
     }),
   ]
 };

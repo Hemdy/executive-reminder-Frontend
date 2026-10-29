@@ -10,22 +10,7 @@
         Stay up to date with tasks, reminders, meetings,
         requests, and system activity.
       </p>
-      @if (pushNotifications.isSupported()) {
-        <p class="push-status" role="status">
-          @if (pushNotifications.statusMessage()) {
-            {{ pushNotifications.statusMessage() }}
-        } @else if (pushNotifications.isSubscribed() && pushNotifications.isRegistered()) {
-            Push notifications are enabled on this device.
-        } @else if (pushNotifications.isSubscribed()) {
-          Registering push notifications for this device...
-        } @else {
-          Enable device notifications for important updates.
-        }
-        </p>
-        @if (pushNotifications.statusError()) {
-          <p class="push-error" role="alert">{{ pushNotifications.statusError() }}</p>
-        }
-      } @else if (pushNotifications.requiresIosInstall()) {
+      @if (pushNotifications.requiresIosInstall()) {
         <div class="ios-install-card" role="region" aria-label="iOS notification setup instructions">
           <div class="ios-install-header">
             <span class="ios-install-icon">📱</span>
@@ -40,6 +25,21 @@
             <li>Open the app from your Home Screen, then return here to enable notifications.</li>
           </ol>
         </div>
+      } @else if (pushNotifications.isSupported()) {
+        <p class="push-status" role="status">
+          @if (pushNotifications.statusMessage()) {
+            {{ pushNotifications.statusMessage() }}
+        } @else if (pushNotifications.isSubscribed() && pushNotifications.isRegistered()) {
+            Push notifications are enabled on this device.
+        } @else if (pushNotifications.isSubscribed()) {
+          Registering push notifications for this device...
+        } @else {
+          Enable device notifications for important updates.
+        }
+        </p>
+        @if (pushNotifications.statusError()) {
+          <p class="push-error" role="alert">{{ pushNotifications.statusError() }}</p>
+        }
       } @else {
         <p class="push-status">
           Device notifications are not supported in this browser.
@@ -58,10 +58,29 @@
           {{ pushNotifications.isConfigLoading() ? 'Checking availability...' : pushNotifications.isBusy() ? 'Enabling...' : pushNotifications.isSubscribed() ? 'Finish enabling notifications' : 'Enable device notifications' }}
         </button>
       } @else if (pushNotifications.isSubscribed()) {
+        @if (pushNotifications.isRegistered()) {
+          <button
+            type="button"
+            class="btn btn-secondary"
+            [disabled]="pushNotifications.isTesting() || pushNotifications.isBusy()"
+            (click)="pushNotifications.sendTestNotification(0)"
+          >
+            {{ pushNotifications.isTesting() ? 'Sending test...' : 'Send test alert' }}
+          </button>
+          <button
+            type="button"
+            class="btn btn-secondary"
+            [disabled]="pushNotifications.isTesting() || pushNotifications.isBusy()"
+            (click)="pushNotifications.sendTestNotification(4)"
+            title="Delivers in 4 seconds so you can lock your screen or background the app"
+          >
+            Test background (4s)
+          </button>
+        }
         <button
           type="button"
           class="btn btn-secondary"
-          [disabled]="pushNotifications.isBusy()"
+          [disabled]="pushNotifications.isBusy() || pushNotifications.isTesting()"
           (click)="pushNotifications.disable()"
         >
           {{ pushNotifications.isBusy() ? 'Updating...' : 'Disable device notifications' }}
