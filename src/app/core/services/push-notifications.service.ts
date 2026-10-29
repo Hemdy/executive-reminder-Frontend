@@ -39,6 +39,11 @@ export class PushNotificationsService {
   readonly isSupported = signal(
     this.browser && this.swPush.isEnabled && typeof Notification !== 'undefined',
   );
+  readonly isIosDevice = signal(false);
+  readonly isStandalone = signal(false);
+  readonly requiresIosInstall = computed(() =>
+    this.isIosDevice() && !this.isStandalone()
+  );
   readonly permission = signal<NotificationPermission>('default');
   readonly isSubscribed = signal(false);
   readonly isRegistered = signal(false);
@@ -67,6 +72,16 @@ export class PushNotificationsService {
     if (!this.browser) {
       return;
     }
+
+    const userAgent = typeof navigator !== 'undefined' ? navigator.userAgent : '';
+    const isIos = /iPad|iPhone|iPod/.test(userAgent) ||
+      (/Macintosh/.test(userAgent) && typeof navigator !== 'undefined' && navigator.maxTouchPoints > 1);
+    const isStandalone = typeof window !== 'undefined' && (
+      window.matchMedia('(display-mode: standalone)').matches ||
+      (window.navigator as Navigator & { standalone?: boolean }).standalone === true
+    );
+    this.isIosDevice.set(isIos);
+    this.isStandalone.set(isStandalone);
 
     if (typeof Notification !== 'undefined') {
       this.permission.set(Notification.permission);

@@ -21,6 +21,43 @@
   color: var(--danger);
 }
 
+.ios-install-card {
+  margin-top: 12px;
+  padding: 14px 16px;
+  border-radius: 8px;
+  background: #f0f7ff;
+  border: 1px solid #c2dbff;
+  color: #1e3a8a;
+  max-width: 600px;
+}
+
+.ios-install-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  font-weight: 600;
+  margin-bottom: 6px;
+}
+
+.ios-install-desc {
+  font-size: 12px;
+  margin: 0 0 8px 0;
+  color: #3b82f6;
+  line-height: 1.4;
+}
+
+.ios-install-steps {
+  margin: 0;
+  padding-left: 18px;
+  font-size: 12px;
+  line-height: 1.6;
+
+  li {
+    margin-bottom: 2px;
+  }
+}
+
 
 
 .header-actions {

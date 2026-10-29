@@ -25,6 +25,21 @@
         @if (pushNotifications.statusError()) {
           <p class="push-error" role="alert">{{ pushNotifications.statusError() }}</p>
         }
+      } @else if (pushNotifications.requiresIosInstall()) {
+        <div class="ios-install-card" role="region" aria-label="iOS notification setup instructions">
+          <div class="ios-install-header">
+            <span class="ios-install-icon">📱</span>
+            <strong>iOS Setup Required for Native Notifications</strong>
+          </div>
+          <p class="ios-install-desc">
+            Apple requires this web app to be added to your Home Screen before alerts can appear in your iOS notification tray.
+          </p>
+          <ol class="ios-install-steps">
+            <li>Tap the <strong>Share</strong> icon ( <span aria-hidden="true">⎋</span> ) at the bottom of Safari.</li>
+            <li>Scroll down and tap <strong>Add to Home Screen</strong>.</li>
+            <li>Open the app from your Home Screen, then return here to enable notifications.</li>
+          </ol>
+        </div>
       } @else {
         <p class="push-status">
           Device notifications are not supported in this browser.
