@@ -104,7 +104,9 @@ export class RoleManagement {
 
   openNewUser(): void {
     this.editingUserId.set(null);
-    this.userForm.reset({ email: '', password: '', firstName: '', lastName: '', role: 'EMPLOYEE' });
+    const defaultRole = this.roleService.activeRoles()[0]?.name ?? 'ADMIN';
+    this.userForm.reset({ email: '', password: '', firstName: '', lastName: '', role: defaultRole });
+    this.formError.set('');
     this.showUserForm.set(true);
   }
 
@@ -117,12 +119,14 @@ export class RoleManagement {
       lastName: user.lastName,
       role: user.role
     });
+    this.formError.set('');
     this.showUserForm.set(true);
   }
 
   saveUser(): void {
     if (this.userForm.invalid || (!this.editingUserId() && !this.userForm.controls.password.value)) {
       this.userForm.markAllAsTouched();
+      this.formError.set('Please fill in all required fields. Passwords must be at least 8 characters.');
       return;
     }
     const value = this.userForm.getRawValue();

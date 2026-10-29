@@ -34,6 +34,9 @@
           <label>First name<input type="text" formControlName="firstName"></label>
           <label>Last name<input type="text" formControlName="lastName"></label>
           <label>Role<select formControlName="role">@for (role of roleService.activeRoles(); track role.id) { <option [value]="role.name">{{ role.name }}</option> }</select></label>
+          @if (formError()) {
+            <p class="form-error" role="alert">{{ formError() }}</p>
+          }
           <div class="editor-actions"><button type="button" class="secondary-button" (click)="cancelForms()">Cancel</button><button type="submit" class="primary-button">Save user</button></div>
         </form>
       }
