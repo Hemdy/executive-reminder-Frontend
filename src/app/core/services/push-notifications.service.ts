@@ -4,7 +4,7 @@ import { computed, DestroyRef, effect, inject, Injectable, PLATFORM_ID, signal }
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { SwPush } from '@angular/service-worker';
 import { Router } from '@angular/router';
-import { catchError, EMPTY, finalize, from, of, switchMap, take } from 'rxjs';
+import { catchError, EMPTY, finalize, firstValueFrom, from, of, switchMap, take } from 'rxjs';
 import { API_BASE_URL } from '../config/api.config';
 import { AuthService } from './auth.service';
 
@@ -61,7 +61,6 @@ export class PushNotificationsService {
   readonly preferencesError = signal('');
   readonly preferencesMessage = signal('');
   private registeredUserId: string | null = null;
-  private reconcilingSubscriptionUserId: string | null = null;
   readonly canEnable = computed(() =>
     this.isSupported() &&
     this.permission() !== 'denied' &&
@@ -74,12 +73,13 @@ export class PushNotificationsService {
     }
 
     const userAgent = typeof navigator !== 'undefined' ? navigator.userAgent : '';
-    const isIos = /iPad|iPhone|iPod/.test(userAgent) ||
+    const isIos =
+      /iPad|iPhone|iPod/.test(userAgent) ||
       (/Macintosh/.test(userAgent) && typeof navigator !== 'undefined' && navigator.maxTouchPoints > 1);
-    const isStandalone = typeof window !== 'undefined' && (
-      window.matchMedia('(display-mode: standalone)').matches ||
-      (window.navigator as Navigator & { standalone?: boolean }).standalone === true
-    );
+    const isStandalone =
+      typeof window !== 'undefined' &&
+      (window.matchMedia('(display-mode: standalone)').matches ||
+        (window.navigator as Navigator & { standalone?: boolean }).standalone === true);
     this.isIosDevice.set(isIos);
     this.isStandalone.set(isStandalone);
 
@@ -93,7 +93,7 @@ export class PushNotificationsService {
 
     if (this.permission() === 'denied') {
       this.statusError.set(
-        'Notifications are blocked in browser settings. Allow them there to enable push notifications.',
+        'Notifications are blocked in your browser settings. To enable them, click the lock or settings icon in your browser address bar and change Notifications to "Allow".',
       );
     }
 
@@ -139,7 +139,7 @@ export class PushNotificationsService {
     });
   }
 
-  enable(): void {
+  async enable(): Promise<void> {
     if (!this.canEnable() || this.isBusy()) {
       return;
     }
@@ -147,69 +147,131 @@ export class PushNotificationsService {
     this.isBusy.set(true);
     this.statusMessage.set('');
     this.statusError.set('');
-    const config = this.config();
-    if (!config) {
-      this.isBusy.set(false);
-      this.statusError.set('Unable to check push notification availability. Please try again.');
-      this.loadConfig();
-      return;
+
+    // 1. Explicitly request permission if default (crucial for iOS and desktop user-gesture requirements)
+    if (this.browser && typeof Notification !== 'undefined') {
+      if (Notification.permission === 'default') {
+        try {
+          const perm = await Notification.requestPermission();
+          this.permission.set(perm);
+          if (perm !== 'granted') {
+            this.isBusy.set(false);
+            this.statusError.set(
+              perm === 'denied'
+                ? 'Notifications were denied. Allow them in your browser site settings to enable alerts.'
+                : 'Notification permission was dismissed.',
+            );
+            return;
+          }
+        } catch (error) {
+          console.warn('Notification.requestPermission error', error);
+        }
+      } else if (Notification.permission === 'denied') {
+        this.refreshPermission();
+        this.isBusy.set(false);
+        this.statusError.set(
+          'Notifications are blocked in browser settings. Please click the site settings icon in your address bar and allow notifications.',
+        );
+        return;
+      }
     }
-    if (!config.enabled || !config.publicKey) {
+
+    // 2. Ensure config & VAPID key are loaded
+    let config = this.config();
+    if (!config || !config.publicKey) {
+      try {
+        config = await firstValueFrom(this.http.get<PushConfig>(`${this.apiUrl}/config`));
+        this.config.set(config);
+      } catch (err) {
+        this.isBusy.set(false);
+        this.statusError.set('Unable to retrieve push notification server configuration. Please try again.');
+        return;
+      }
+    }
+
+    if (!config?.enabled || !config.publicKey) {
       this.isBusy.set(false);
       this.statusError.set('Push notifications are not configured on the server yet.');
       return;
     }
-    const publicKey = config.publicKey;
-    const subscription$ = this.isSubscribed()
-      ? this.swPush.subscription.pipe(
-        take(1),
-        switchMap(subscription => subscription
-          ? of(subscription)
-          : from(this.swPush.requestSubscription({ serverPublicKey: publicKey }))
-        ),
-      )
-      : from(this.swPush.requestSubscription({ serverPublicKey: publicKey }));
 
-    subscription$.pipe(
-      switchMap(subscription => this.http.post<void>(
-        `${this.apiUrl}/subscription`,
-        subscription.toJSON(),
-      )),
-      catchError(error => {
-        console.error('Unable to enable push notifications', error);
-        this.refreshPermission();
-        this.statusError.set(
-          this.permission() === 'denied'
-            ? 'Notifications are blocked in browser settings. Allow them there and try again.'
-            : 'Unable to enable push notifications. Please try again.',
-        );
-        return EMPTY;
-      }),
-      finalize(() => this.isBusy.set(false)),
-    ).subscribe(() => {
+    const publicKey = config.publicKey;
+
+    // 3. Obtain push subscription
+    try {
+      let currentSub: PushSubscription | null = null;
+      try {
+        currentSub = await firstValueFrom(this.swPush.subscription.pipe(take(1)));
+      } catch {
+        // ignore
+      }
+
+      // If current subscription has mismatched key, unsubscribe first
+      if (currentSub && !this.subscriptionUsesKey(currentSub, publicKey)) {
+        try {
+          await this.swPush.unsubscribe();
+        } catch {
+          // ignore
+        }
+        currentSub = null;
+      }
+
+      // Request fresh subscription if none
+      const subscription = currentSub || (await this.swPush.requestSubscription({ serverPublicKey: publicKey }));
+
+      // 4. Send sanitized payload to backend (stripping unknown browser options)
+      const json = subscription.toJSON();
+      const payload = {
+        endpoint: subscription.endpoint,
+        expirationTime: subscription.expirationTime ?? null,
+        keys: {
+          p256dh: json.keys?.['p256dh'] || '',
+          auth: json.keys?.['auth'] || '',
+        },
+      };
+
+      await firstValueFrom(this.http.post<void>(`${this.apiUrl}/subscription`, payload));
+
       this.refreshPermission();
       this.isSubscribed.set(true);
       this.isRegistered.set(true);
       this.statusMessage.set('Push notifications are enabled on this device.');
-    });
+    } catch (error) {
+      console.error('Unable to enable push notifications', error);
+      this.refreshPermission();
+      this.statusError.set(
+        this.permission() === 'denied'
+          ? 'Notifications are blocked in browser settings. Allow them there and try again.'
+          : 'Unable to enable push notifications. Please check your browser permissions and try again.',
+      );
+    } finally {
+      this.isBusy.set(false);
+    }
   }
 
   disable(): void {
-    if (!this.isSubscribed() || this.isBusy()) {
+    if (this.isBusy()) {
       return;
     }
     this.isBusy.set(true);
     this.statusMessage.set('');
     this.statusError.set('');
+
     this.swPush.subscription.pipe(
       take(1),
       switchMap(subscription => {
         if (!subscription) {
-          return EMPTY;
+          this.isSubscribed.set(false);
+          this.isRegistered.set(false);
+          return of(null);
         }
         return this.http.delete<void>(`${this.apiUrl}/subscription`, {
           body: { endpoint: subscription.endpoint },
         }).pipe(
+          catchError(err => {
+            console.warn('Backend delete subscription error (proceeding with browser unsubscribe)', err);
+            return of(null);
+          }),
           switchMap(() => from(this.swPush.unsubscribe())),
         );
       }),
@@ -223,7 +285,7 @@ export class PushNotificationsService {
     ).subscribe(() => {
       this.isSubscribed.set(false);
       this.isRegistered.set(false);
-      this.statusMessage.set('Push notifications are disabled on this device.');
+      this.statusMessage.set('Push notifications have been disabled on this device.');
     });
   }
 
@@ -249,7 +311,17 @@ export class PushNotificationsService {
   }
 
   private saveSubscription(subscription: PushSubscription, userId: string): void {
-    this.http.post<void>(`${this.apiUrl}/subscription`, subscription.toJSON()).pipe(
+    const json = subscription.toJSON();
+    const payload = {
+      endpoint: subscription.endpoint,
+      expirationTime: subscription.expirationTime ?? null,
+      keys: {
+        p256dh: json.keys?.['p256dh'] || '',
+        auth: json.keys?.['auth'] || '',
+      },
+    };
+
+    this.http.post<void>(`${this.apiUrl}/subscription`, payload).pipe(
       catchError(error => {
         console.error('Unable to refresh push subscription', error);
         this.statusError.set('Unable to register this device for push notifications. Please try again.');
@@ -310,83 +382,47 @@ export class PushNotificationsService {
         this.saveSubscription(subscription, userId);
         return;
       }
-      if (this.reconcilingSubscriptionUserId === userId) {
-        return;
-      }
 
-      this.reconcilingSubscriptionUserId = userId;
-      this.isBusy.set(true);
-      this.statusError.set('');
-      this.http.delete<void>(`${this.apiUrl}/subscription`, {
-        body: { endpoint: subscription.endpoint },
-      }).pipe(
-        switchMap(() => from(this.swPush.unsubscribe())),
-        switchMap(() => from(this.swPush.requestSubscription({
-          serverPublicKey: publicKey,
-        }))),
-        switchMap(newSubscription => this.http.post<void>(
-          `${this.apiUrl}/subscription`,
-          newSubscription.toJSON(),
-        )),
-        catchError(error => {
-          console.error('Unable to refresh push subscription for the current VAPID key', error);
-          this.statusError.set(
-            'This device needs to be re-registered for push notifications. Please disable and enable push notifications again.',
-          );
-          return EMPTY;
-        }),
-        finalize(() => {
-          this.isBusy.set(false);
-          if (this.reconcilingSubscriptionUserId === userId) {
-            this.reconcilingSubscriptionUserId = null;
-          }
-        }),
+      // If subscription uses an older VAPID key, cleanly unsubscribe without prompting in background
+      from(this.swPush.unsubscribe()).pipe(
         takeUntilDestroyed(this.destroyRef),
-      ).subscribe(() => {
-        if (this.auth.currentUser()?.id === userId) {
-          this.isSubscribed.set(true);
-          this.isRegistered.set(true);
-          this.statusMessage.set('Push notifications are enabled on this device.');
-        }
+      ).subscribe({
+        next: () => {
+          this.isSubscribed.set(false);
+          this.isRegistered.set(false);
+          this.statusMessage.set(
+            'A new notification key was configured. Click "Enable device notifications" to activate.',
+          );
+        },
+        error: () => {
+          this.isSubscribed.set(false);
+          this.isRegistered.set(false);
+        },
       });
     });
   }
 
-  private subscriptionUsesKey(
-  subscription: PushSubscription,
-  publicKey: string,
-): boolean {
-  const currentKey = subscription.options.applicationServerKey;
+  private subscriptionUsesKey(subscription: PushSubscription, publicKey: string): boolean {
+    const currentKey = subscription.options.applicationServerKey;
 
-  if (!currentKey) {
-    return false;
+    if (!currentKey) {
+      return false;
+    }
+
+    try {
+      const normalizedKey = publicKey.replace(/-/g, '+').replace(/_/g, '/');
+      const paddedKey = normalizedKey.padEnd(Math.ceil(normalizedKey.length / 4) * 4, '=');
+      const expectedKey = Uint8Array.from(atob(paddedKey), character => character.charCodeAt(0));
+      const actualKey = new Uint8Array(currentKey);
+
+      return (
+        actualKey.length === expectedKey.length &&
+        actualKey.every((value, index) => value === expectedKey[index])
+      );
+    } catch {
+      return false;
+    }
   }
-
-  try {
-    const normalizedKey = publicKey
-      .replace(/-/g, '+')
-      .replace(/_/g, '/');
-
-    const paddedKey = normalizedKey.padEnd(
-      Math.ceil(normalizedKey.length / 4) * 4,
-      '=',
-    );
-
-    const expectedKey = Uint8Array.from(
-      atob(paddedKey),
-      character => character.charCodeAt(0),
-    );
-
-    const actualKey = new Uint8Array(currentKey);
-
-    return (
-      actualKey.length === expectedKey.length &&
-      actualKey.every((value, index) => value === expectedKey[index])
-    );
-  } catch {
-    return false;
-  }
-}
 
   private loadPreferences(userId: string): void {
     this.isLoadingPreferences.set(true);
@@ -410,11 +446,4 @@ export class PushNotificationsService {
       this.permission.set(Notification.permission);
     }
   }
-
-
-  
-
-
 }
-
-
