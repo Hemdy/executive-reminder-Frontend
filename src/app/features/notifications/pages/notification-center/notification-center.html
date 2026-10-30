@@ -86,7 +86,7 @@
           {{ pushNotifications.isBusy() ? 'Updating...' : 'Disable device notifications' }}
         </button>
       }
-      @if (unreadCount() > 0) {
+      <!-- @if (unreadCount() > 0) {
         <button
           type="button"
           class="btn btn-secondary"
@@ -94,7 +94,7 @@
         >
           Mark all as read
         </button>
-      }
+      } -->
     </div>
 
   </div>
@@ -178,6 +178,20 @@
 
       </div>
 
+
+      <div>
+                    @if (unreadCount() > 0) {
+        <button
+          type="button"
+          
+        class="clear-button"
+          
+          (click)="markAllAsRead()"
+        >
+          Mark all as read
+        </button>
+      }
+
       <button
         type="button"
         class="clear-button"
@@ -185,6 +199,9 @@
       >
         Clear read
       </button>
+      </div>
+
+
 
     </div>
 
