@@ -6,6 +6,7 @@ export type AttachmentSaveResult = 'downloaded' | 'shared' | 'opened' | 'cancell
 
 export interface AttachmentDownloadContext {
   isIos: boolean;
+  isMobile: boolean;
   popup: Window | null;
 }
 
@@ -16,11 +17,12 @@ export class AttachmentTransferService {
   prepareDownload(): AttachmentDownloadContext {
     const view = this.document.defaultView;
     if (!view) {
-      return { isIos: false, popup: null };
+      return { isIos: false, isMobile: false, popup: null };
     }
     const isIos = this.isIos(view.navigator.userAgent);
+    const isMobile = this.isMobile(view.navigator.userAgent);
     let popup: Window | null = null;
-    if (isIos) {
+    if (isMobile) {
       try {
         popup = view.open('about:blank', '_blank');
         if (popup?.document) {
@@ -33,7 +35,7 @@ export class AttachmentTransferService {
         popup = null;
       }
     }
-    return { isIos, popup };
+    return { isIos, isMobile, popup };
   }
 
   cancel(context: AttachmentDownloadContext): void {
@@ -61,7 +63,7 @@ export class AttachmentTransferService {
     const shareData: ShareData = { files: [file], title: fileName };
     const navigator = view.navigator;
 
-    if (context.isIos && navigator.share && navigator.canShare?.(shareData)) {
+    if (context.isMobile && navigator.share && navigator.canShare?.(shareData)) {
       try {
         await navigator.share(shareData);
         this.cancel(context);
@@ -183,5 +185,10 @@ export class AttachmentTransferService {
     const view = this.document.defaultView;
     return /iPad|iPhone|iPod/.test(userAgent) ||
       Boolean(view && /Macintosh/.test(userAgent) && view.navigator.maxTouchPoints > 1);
+  }
+
+  private isMobile(userAgent: string): boolean {
+    return /Android|iPad|iPhone|iPod|Mobile/i.test(userAgent) ||
+      this.isIos(userAgent);
   }
 }

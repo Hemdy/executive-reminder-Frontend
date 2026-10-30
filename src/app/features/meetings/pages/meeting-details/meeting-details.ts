@@ -287,7 +287,7 @@ export class MeetingDetails implements OnInit {
 
   private downloadSuccessMessage(result: 'downloaded' | 'shared' | 'opened' | 'cancelled'): string {
     if (result === 'shared') return 'Attachment shared. Choose Save to Files to keep a copy.';
-    if (result === 'opened') return 'Attachment opened. Use the Share menu to save it to Files.';
+    if (result === 'opened') return 'Attachment opened. Use your device share or download options to save it.';
     return result === 'cancelled' ? '' : 'Attachment downloaded.';
   }
 

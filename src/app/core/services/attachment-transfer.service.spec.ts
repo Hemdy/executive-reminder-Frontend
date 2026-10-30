@@ -58,7 +58,7 @@ describe('AttachmentTransferService', () => {
     const result = await service.save(
       new Blob(['attachment']),
       'report.pdf',
-      { isIos: true, popup: null },
+      { isIos: true, isMobile: true, popup: null },
     );
 
     expect(result).toBe('shared');
@@ -81,6 +81,7 @@ describe('AttachmentTransferService', () => {
     try {
       const result = await service.save(new Blob(['attachment']), 'report.pdf', {
         isIos: false,
+        isMobile: false,
         popup: null,
       });
 
@@ -111,12 +112,51 @@ describe('AttachmentTransferService', () => {
     const result = await service.save(
       new Blob(['attachment'], { type: 'application/pdf' }),
       'report.pdf',
-      { isIos: true, popup },
+      { isIos: true, isMobile: true, popup },
     );
 
     expect(result).toBe('opened');
     expect(popupDocument.body.textContent).toContain('Tap the button below');
     expect(popupDocument.querySelector('a')?.textContent).toBe('Open report.pdf');
     expect(popupDocument.querySelector('a')?.download).toBe('report.pdf');
+  });
+
+  it('uses a user-activated file link for Android downloads', async () => {
+    const popupDocument = document.implementation.createHTMLDocument();
+    const popup = {
+      document: popupDocument,
+      closed: false,
+    } as Window;
+    const originalUserAgent = Object.getOwnPropertyDescriptor(navigator, 'userAgent');
+    const open = vi.spyOn(window, 'open').mockReturnValue(popup as WindowProxy);
+
+    try {
+      Object.defineProperty(navigator, 'userAgent', {
+        configurable: true,
+        value: 'Mozilla/5.0 (Linux; Android 14; Pixel 8) Mobile Safari/537.36',
+      });
+      const context = service.prepareDownload();
+
+      expect(context.isMobile).toBe(true);
+      expect(context.popup).toBe(popup);
+      expect(open).toHaveBeenCalledWith('about:blank', '_blank');
+
+      const result = await service.save(
+        new Blob(['attachment'], { type: 'application/pdf' }),
+        'report.pdf',
+        context,
+      );
+
+      expect(result).toBe('opened');
+      expect(popupDocument.querySelector('a')?.textContent).toBe('Open report.pdf');
+      expect(popupDocument.querySelector('a')?.download).toBe('report.pdf');
+    } finally {
+      open.mockRestore();
+      if (originalUserAgent) {
+        Object.defineProperty(navigator, 'userAgent', originalUserAgent);
+      } else {
+        Reflect.deleteProperty(navigator, 'userAgent');
+      }
+    }
   });
 });
