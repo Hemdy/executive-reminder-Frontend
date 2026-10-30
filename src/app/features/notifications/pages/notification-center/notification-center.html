@@ -58,7 +58,7 @@
           {{ pushNotifications.isConfigLoading() ? 'Checking availability...' : pushNotifications.isBusy() ? 'Enabling...' : pushNotifications.isSubscribed() ? 'Finish enabling notifications' : 'Enable device notifications' }}
         </button>
       } @else if (pushNotifications.isSubscribed()) {
-        @if (pushNotifications.isRegistered()) {
+        <!-- @if (pushNotifications.isRegistered()) {
           <button
             type="button"
             class="btn btn-secondary"
@@ -76,7 +76,7 @@
           >
             Test background (4s)
           </button>
-        }
+        } -->
         <button
           type="button"
           class="btn btn-secondary"
