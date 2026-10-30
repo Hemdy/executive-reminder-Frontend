@@ -19,16 +19,29 @@ export class AttachmentTransferService {
       return { isIos: false, popup: null };
     }
     const isIos = this.isIos(view.navigator.userAgent);
-    const popup = isIos ? view.open('about:blank', '_blank') : null;
-    if (popup) {
-      popup.document.title = 'Preparing attachment';
-      popup.document.body.textContent = 'Preparing your attachment…';
+    let popup: Window | null = null;
+    if (isIos) {
+      try {
+        popup = view.open('about:blank', '_blank');
+        if (popup?.document) {
+          popup.document.title = 'Preparing attachment';
+          if (popup.document.body) {
+            popup.document.body.textContent = 'Preparing your attachment…';
+          }
+        }
+      } catch {
+        popup = null;
+      }
     }
     return { isIos, popup };
   }
 
   cancel(context: AttachmentDownloadContext): void {
-    context.popup?.close();
+    try {
+      context.popup?.close();
+    } catch {
+      // Ignore popup close failures in restricted webviews
+    }
   }
 
   async save(
@@ -63,9 +76,13 @@ export class AttachmentTransferService {
 
     const url = view.URL.createObjectURL(blob);
     if (context.popup && !context.popup.closed) {
-      this.showOpenLink(context.popup, url, fileName);
-      view.setTimeout(() => view.URL.revokeObjectURL(url), 120_000);
-      return 'opened';
+      try {
+        this.showOpenLink(context.popup, url, fileName);
+        view.setTimeout(() => view.URL.revokeObjectURL(url), 120_000);
+        return 'opened';
+      } catch {
+        this.cancel(context);
+      }
     }
 
     const link = this.document.createElement('a');

@@ -140,6 +140,9 @@
             </div>
           </div>
           <div class="card-body meeting-comments">
+            @if (activityError()) {
+              <p class="meeting-comment-error" role="alert">{{ activityError() }}</p>
+            }
             @if (activityMessage()) {
               <p class="success-message">{{ activityMessage() }}</p>
             }
