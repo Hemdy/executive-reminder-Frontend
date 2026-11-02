@@ -49,6 +49,12 @@ export class RequestService {
   addComment(requestId: string, body: string): Observable<RequestComment> {
     return this.http.post<RequestComment>(`${this.apiUrl}/${requestId}/comments`, { body });
   }
+  updateComment(requestId: string, commentId: string, body: string): Observable<RequestComment> {
+    return this.http.patch<RequestComment>(
+      `${this.apiUrl}/${requestId}/comments/${commentId}`,
+      { body }
+    );
+  }
   getAttachments(requestId: string): Observable<RequestAttachment[]> {
     return this.http.get<RequestAttachment[]>(`${this.apiUrl}/${requestId}/attachments`);
   }
@@ -61,6 +67,11 @@ export class RequestService {
     return this.http.get(`${this.apiUrl}/${requestId}/attachments/${attachmentId}`, {
       responseType: 'blob'
     });
+  }
+  deleteAttachment(requestId: string, attachmentId: string): Observable<{ id: string; deleted: boolean }> {
+    return this.http.delete<{ id: string; deleted: boolean }>(
+      `${this.apiUrl}/${requestId}/attachments/${attachmentId}`
+    );
   }
   deleteRequest(id: string): Observable<void> {
     return this.http.delete<void>(`${this.apiUrl}/${id}`).pipe(tap(() => this.requestsSignal.update(requests => requests.filter(request => request.id !== id))));

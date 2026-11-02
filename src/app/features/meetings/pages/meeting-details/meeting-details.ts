@@ -26,6 +26,7 @@ import {
 } from '../../../../core/models/meeting.model';
 
 import { MeetingService } from '../../../../core/services/meeting.service';
+import { AuthService } from '../../../../core/services/auth.service';
 import { LoadingService } from '../../../../core/services/loading.service';
 import { ToastService } from '../../../../core/services/toast.service';
 import { AttachmentTransferService } from '../../../../core/services/attachment-transfer.service';
@@ -43,6 +44,7 @@ export class MeetingDetails implements OnInit {
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
   private readonly meetingService = inject(MeetingService);
+  private readonly authService = inject(AuthService);
   private readonly document = inject(DOCUMENT);
   private readonly loading = inject(LoadingService);
   private readonly toast = inject(ToastService);
@@ -51,6 +53,10 @@ export class MeetingDetails implements OnInit {
   readonly comments = signal<MeetingComment[]>([]);
   readonly attachments = signal<MeetingAttachment[]>([]);
   readonly commentText = signal('');
+  readonly editingCommentId = signal<string | null>(null);
+  readonly editCommentText = signal('');
+  readonly savingCommentId = signal<string | null>(null);
+  readonly deletingAttachmentId = signal<string | null>(null);
   readonly commentsLoading = signal(false);
   readonly commentSubmitting = signal(false);
   readonly commentsError = signal('');
@@ -173,6 +179,10 @@ export class MeetingDetails implements OnInit {
     this.commentText.set((event.target as HTMLTextAreaElement).value);
   }
 
+  updateEditCommentText(event: Event): void {
+    this.editCommentText.set((event.target as HTMLTextAreaElement).value);
+  }
+
   submitComment(): void {
     const meeting = this.meeting();
     const body = this.commentText().trim();
@@ -195,6 +205,60 @@ export class MeetingDetails implements OnInit {
       error: () => {
         this.commentsError.set('Unable to post the comment. Please try again.');
         this.commentSubmitting.set(false);
+      },
+    });
+  }
+
+  canManageComment(comment: MeetingComment): boolean {
+    return comment.author.id === this.authService.currentUser()?.id ||
+      this.authService.hasPermission('meetings:write');
+  }
+
+  canDeleteAttachment(attachment: MeetingAttachment): boolean {
+    return attachment.uploader.id === this.authService.currentUser()?.id ||
+      this.authService.hasPermission('meetings:write');
+  }
+
+  editComment(comment: MeetingComment): void {
+    if (!this.canManageComment(comment) || this.savingCommentId()) return;
+    this.editingCommentId.set(comment.id);
+    this.editCommentText.set(comment.body);
+    this.activityError.set('');
+    this.activityMessage.set('');
+  }
+
+  cancelCommentEdit(): void {
+    if (this.savingCommentId()) return;
+    this.editingCommentId.set(null);
+    this.editCommentText.set('');
+  }
+
+  saveCommentEdit(comment: MeetingComment): void {
+    const meeting = this.meeting();
+    const body = this.editCommentText().trim();
+    if (
+      !meeting ||
+      !body ||
+      this.editingCommentId() !== comment.id ||
+      this.savingCommentId() ||
+      !this.canManageComment(comment)
+    ) return;
+    this.activityError.set('');
+    this.activityMessage.set('');
+    this.savingCommentId.set(comment.id);
+    this.meetingService.updateComment(meeting.id, comment.id, body).subscribe({
+      next: updated => {
+        this.comments.update(comments =>
+          comments.map(existing => existing.id === updated.id ? updated : existing)
+        );
+        this.editingCommentId.set(null);
+        this.editCommentText.set('');
+        this.savingCommentId.set(null);
+        this.activityMessage.set('Comment updated.');
+      },
+      error: error => {
+        this.savingCommentId.set(null);
+        this.activityError.set(error.error?.message ?? 'Unable to update the comment. Please try again.');
       },
     });
   }
@@ -281,6 +345,33 @@ export class MeetingDetails implements OnInit {
         this.downloadingAttachmentId.set(null);
         void this.attachmentTransfer.failureMessage(error, 'download')
           .then(message => this.activityError.set(message));
+      },
+    });
+  }
+
+  deleteAttachment(attachment: MeetingAttachment): void {
+    const meeting = this.meeting();
+    if (
+      !meeting ||
+      this.deletingAttachmentId() ||
+      !this.canDeleteAttachment(attachment) ||
+      !window.confirm(`Permanently delete "${attachment.fileName}"? This action cannot be undone.`)
+    ) return;
+    this.activityError.set('');
+    this.activityMessage.set('');
+    this.deletingAttachmentId.set(attachment.id);
+    this.meetingService.deleteAttachment(meeting.id, attachment.id).subscribe({
+      next: () => {
+        this.attachments.update(attachments =>
+          attachments.filter(existing => existing.id !== attachment.id)
+        );
+        this.deletingAttachmentId.set(null);
+        this.activityMessage.set('Attachment deleted.');
+        this.refreshMeetingCounts(meeting.id);
+      },
+      error: error => {
+        this.deletingAttachmentId.set(null);
+        this.activityError.set(error.error?.message ?? 'Unable to delete the attachment. Please try again.');
       },
     });
   }

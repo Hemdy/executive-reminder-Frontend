@@ -48,6 +48,12 @@ export class MeetingService {
   addComment(meetingId: string, body: string): Observable<MeetingComment> {
     return this.http.post<MeetingComment>(`${this.apiUrl}/${meetingId}/comments`, { body });
   }
+  updateComment(meetingId: string, commentId: string, body: string): Observable<MeetingComment> {
+    return this.http.patch<MeetingComment>(
+      `${this.apiUrl}/${meetingId}/comments/${commentId}`,
+      { body }
+    );
+  }
   getAttachments(meetingId: string): Observable<MeetingAttachment[]> {
     return this.http.get<MeetingAttachment[]>(`${this.apiUrl}/${meetingId}/attachments`);
   }
@@ -60,6 +66,11 @@ export class MeetingService {
     return this.http.get(`${this.apiUrl}/${meetingId}/attachments/${attachmentId}`, {
       responseType: 'blob'
     });
+  }
+  deleteAttachment(meetingId: string, attachmentId: string): Observable<{ id: string; deleted: boolean }> {
+    return this.http.delete<{ id: string; deleted: boolean }>(
+      `${this.apiUrl}/${meetingId}/attachments/${attachmentId}`
+    );
   }
   deleteMeeting(id: string): Observable<void> {
     return this.http.delete<void>(`${this.apiUrl}/${id}`).pipe(tap(() => this.meetingsSignal.update(meetings => meetings.filter(meeting => meeting.id !== id))));

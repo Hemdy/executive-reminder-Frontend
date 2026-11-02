@@ -45,6 +45,10 @@ export class RequestDetails implements OnInit {
   readonly comments = signal<RequestComment[]>([]);
   readonly attachments = signal<RequestAttachment[]>([]);
   readonly commentText = signal('');
+  readonly editingCommentId = signal<string | null>(null);
+  readonly editCommentText = signal('');
+  readonly savingCommentId = signal<string | null>(null);
+  readonly deletingAttachmentId = signal<string | null>(null);
   readonly activityError = signal('');
   readonly activityMessage = signal('');
   readonly submittingComment = signal(false);
@@ -120,6 +124,10 @@ export class RequestDetails implements OnInit {
     this.commentText.set((event.target as HTMLTextAreaElement).value);
   }
 
+  updateEditCommentText(event: Event): void {
+    this.editCommentText.set((event.target as HTMLTextAreaElement).value);
+  }
+
   submitComment(): void {
     const request = this.request();
     const body = this.commentText().trim();
@@ -138,6 +146,60 @@ export class RequestDetails implements OnInit {
       error: () => {
         this.activityError.set('Unable to post the comment. Please try again.');
         this.submittingComment.set(false);
+      },
+    });
+  }
+
+  canManageComment(comment: RequestComment): boolean {
+    return comment.author.id === this.authService.currentUser()?.id ||
+      this.authService.hasPermission('requests:write');
+  }
+
+  canDeleteAttachment(attachment: RequestAttachment): boolean {
+    return attachment.uploader.id === this.authService.currentUser()?.id ||
+      this.authService.hasPermission('requests:write');
+  }
+
+  editComment(comment: RequestComment): void {
+    if (!this.canManageComment(comment) || this.savingCommentId()) return;
+    this.editingCommentId.set(comment.id);
+    this.editCommentText.set(comment.body);
+    this.activityError.set('');
+    this.activityMessage.set('');
+  }
+
+  cancelCommentEdit(): void {
+    if (this.savingCommentId()) return;
+    this.editingCommentId.set(null);
+    this.editCommentText.set('');
+  }
+
+  saveCommentEdit(comment: RequestComment): void {
+    const request = this.request();
+    const body = this.editCommentText().trim();
+    if (
+      !request ||
+      !body ||
+      this.editingCommentId() !== comment.id ||
+      this.savingCommentId() ||
+      !this.canManageComment(comment)
+    ) return;
+    this.activityError.set('');
+    this.activityMessage.set('');
+    this.savingCommentId.set(comment.id);
+    this.requestService.updateComment(request.id, comment.id, body).subscribe({
+      next: updated => {
+        this.comments.update(comments =>
+          comments.map(existing => existing.id === updated.id ? updated : existing)
+        );
+        this.editingCommentId.set(null);
+        this.editCommentText.set('');
+        this.savingCommentId.set(null);
+        this.activityMessage.set('Comment updated.');
+      },
+      error: error => {
+        this.savingCommentId.set(null);
+        this.activityError.set(error.error?.message ?? 'Unable to update the comment. Please try again.');
       },
     });
   }
@@ -213,6 +275,33 @@ export class RequestDetails implements OnInit {
         this.downloadingAttachmentId.set(null);
         void this.attachmentTransfer.failureMessage(error, 'download')
           .then(message => this.activityError.set(message));
+      },
+    });
+  }
+
+  deleteAttachment(attachment: RequestAttachment): void {
+    const request = this.request();
+    if (
+      !request ||
+      this.deletingAttachmentId() ||
+      !this.canDeleteAttachment(attachment) ||
+      !window.confirm(`Permanently delete "${attachment.fileName}"? This action cannot be undone.`)
+    ) return;
+    this.activityError.set('');
+    this.activityMessage.set('');
+    this.deletingAttachmentId.set(attachment.id);
+    this.requestService.deleteAttachment(request.id, attachment.id).subscribe({
+      next: () => {
+        this.attachments.update(attachments =>
+          attachments.filter(existing => existing.id !== attachment.id)
+        );
+        this.deletingAttachmentId.set(null);
+        this.activityMessage.set('Attachment deleted.');
+        this.refreshRequestCounts(request.id);
+      },
+      error: error => {
+        this.deletingAttachmentId.set(null);
+        this.activityError.set(error.error?.message ?? 'Unable to delete the attachment. Please try again.');
       },
     });
   }

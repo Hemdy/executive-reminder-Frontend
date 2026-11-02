@@ -52,6 +52,12 @@ export class ReminderService {
   addComment(reminderId: string, body: string): Observable<ReminderComment> {
     return this.http.post<ReminderComment>(`${this.apiUrl}/${reminderId}/comments`, { body });
   }
+  updateComment(reminderId: string, commentId: string, body: string): Observable<ReminderComment> {
+    return this.http.patch<ReminderComment>(
+      `${this.apiUrl}/${reminderId}/comments/${commentId}`,
+      { body }
+    );
+  }
 
   getAttachments(reminderId: string): Observable<ReminderAttachment[]> {
     return this.http.get<ReminderAttachment[]>(`${this.apiUrl}/${reminderId}/attachments`);
@@ -67,6 +73,11 @@ export class ReminderService {
     return this.http.get(`${this.apiUrl}/${reminderId}/attachments/${attachmentId}`, {
       responseType: 'blob'
     });
+  }
+  deleteAttachment(reminderId: string, attachmentId: string): Observable<{ id: string; deleted: boolean }> {
+    return this.http.delete<{ id: string; deleted: boolean }>(
+      `${this.apiUrl}/${reminderId}/attachments/${attachmentId}`
+    );
   }
 
   deleteReminder(id: string): Observable<void> {

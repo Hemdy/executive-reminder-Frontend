@@ -123,7 +123,36 @@
                     </strong>
                     <time>{{ comment.createdAt | date:'MMM d, yyyy · h:mm a' }}</time>
                   </div>
-                  <p>{{ comment.body }}</p>
+                  @if (editingCommentId() === comment.id) {
+                    <textarea
+                      class="comment-edit-input"
+                      rows="3"
+                      maxlength="5000"
+                      [value]="editCommentText()"
+                      (input)="updateEditCommentText($event)"
+                    ></textarea>
+                    <div class="comment-actions">
+                      <button
+                        class="text-button"
+                        type="button"
+                        [disabled]="savingCommentId() === comment.id"
+                        (click)="cancelCommentEdit()"
+                      >Cancel</button>
+                      <button
+                        class="text-button"
+                        type="button"
+                        [disabled]="savingCommentId() === comment.id || !editCommentText().trim()"
+                        (click)="saveCommentEdit(comment)"
+                      >{{ savingCommentId() === comment.id ? 'Saving...' : 'Save' }}</button>
+                    </div>
+                  } @else {
+                    <p>{{ comment.body }}</p>
+                    @if (canManageComment(comment)) {
+                      <div class="comment-actions">
+                        <button class="text-button" type="button" (click)="editComment(comment)">Edit</button>
+                      </div>
+                    }
+                  }
                 </article>
               }
             </div>
@@ -183,6 +212,16 @@
                   >
                     {{ downloadingAttachmentId() === attachment.id ? 'Downloading...' : 'Download' }}
                   </button>
+                  @if (canDeleteAttachment(attachment)) {
+                    <button
+                      class="text-button danger-button"
+                      type="button"
+                      [disabled]="deletingAttachmentId() !== null"
+                      (click)="deleteAttachment(attachment)"
+                    >
+                      {{ deletingAttachmentId() === attachment.id ? 'Deleting...' : 'Delete' }}
+                    </button>
+                  }
                 </div>
               }
             </div>

@@ -4,6 +4,7 @@ import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { catchError, forkJoin, from, map, of } from 'rxjs';
 import { ReminderAttachment, ReminderComment, ReminderPriority, ReminderStatus } from '../../../../core/models/reminder.model';
+import { AuthService } from '../../../../core/services/auth.service';
 import { ReminderService } from '../../../../core/services/reminder.service';
 import { LoadingService } from '../../../../core/services/loading.service';
 import { ToastService } from '../../../../core/services/toast.service';
@@ -21,6 +22,7 @@ export class ReminderDetails implements OnInit {
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
   private readonly reminderService = inject(ReminderService);
+  private readonly authService = inject(AuthService);
   private readonly loading = inject(LoadingService);
   private readonly toast = inject(ToastService);
   private readonly document = inject(DOCUMENT);
@@ -29,6 +31,10 @@ export class ReminderDetails implements OnInit {
   readonly comments = signal<ReminderComment[]>([]);
   readonly attachments = signal<ReminderAttachment[]>([]);
   readonly commentText = signal('');
+  readonly editingCommentId = signal<string | null>(null);
+  readonly editCommentText = signal('');
+  readonly savingCommentId = signal<string | null>(null);
+  readonly deletingAttachmentId = signal<string | null>(null);
   readonly activityError = signal('');
   readonly activityMessage = signal('');
   readonly submittingComment = signal(false);
@@ -92,6 +98,10 @@ export class ReminderDetails implements OnInit {
     this.commentText.set((event.target as HTMLTextAreaElement).value);
   }
 
+  updateEditCommentText(event: Event): void {
+    this.editCommentText.set((event.target as HTMLTextAreaElement).value);
+  }
+
   submitComment(): void {
     const reminder = this.reminder();
     const body = this.commentText().trim();
@@ -110,6 +120,60 @@ export class ReminderDetails implements OnInit {
       error: () => {
         this.activityError.set('Unable to post the comment. Please try again.');
         this.submittingComment.set(false);
+      },
+    });
+  }
+
+  canManageComment(comment: ReminderComment): boolean {
+    return comment.author.id === this.authService.currentUser()?.id ||
+      this.authService.hasPermission('reminders:write');
+  }
+
+  canDeleteAttachment(attachment: ReminderAttachment): boolean {
+    return attachment.uploader.id === this.authService.currentUser()?.id ||
+      this.authService.hasPermission('reminders:write');
+  }
+
+  editComment(comment: ReminderComment): void {
+    if (!this.canManageComment(comment) || this.savingCommentId()) return;
+    this.editingCommentId.set(comment.id);
+    this.editCommentText.set(comment.body);
+    this.activityError.set('');
+    this.activityMessage.set('');
+  }
+
+  cancelCommentEdit(): void {
+    if (this.savingCommentId()) return;
+    this.editingCommentId.set(null);
+    this.editCommentText.set('');
+  }
+
+  saveCommentEdit(comment: ReminderComment): void {
+    const reminder = this.reminder();
+    const body = this.editCommentText().trim();
+    if (
+      !reminder ||
+      !body ||
+      this.editingCommentId() !== comment.id ||
+      this.savingCommentId() ||
+      !this.canManageComment(comment)
+    ) return;
+    this.activityError.set('');
+    this.activityMessage.set('');
+    this.savingCommentId.set(comment.id);
+    this.reminderService.updateComment(reminder.id, comment.id, body).subscribe({
+      next: updated => {
+        this.comments.update(comments =>
+          comments.map(existing => existing.id === updated.id ? updated : existing)
+        );
+        this.editingCommentId.set(null);
+        this.editCommentText.set('');
+        this.savingCommentId.set(null);
+        this.activityMessage.set('Comment updated.');
+      },
+      error: error => {
+        this.savingCommentId.set(null);
+        this.activityError.set(error.error?.message ?? 'Unable to update the comment. Please try again.');
       },
     });
   }
@@ -185,6 +249,33 @@ export class ReminderDetails implements OnInit {
         this.downloadingAttachmentId.set(null);
         void this.attachmentTransfer.failureMessage(error, 'download')
           .then(message => this.activityError.set(message));
+      },
+    });
+  }
+
+  deleteAttachment(attachment: ReminderAttachment): void {
+    const reminder = this.reminder();
+    if (
+      !reminder ||
+      this.deletingAttachmentId() ||
+      !this.canDeleteAttachment(attachment) ||
+      !window.confirm(`Permanently delete "${attachment.fileName}"? This action cannot be undone.`)
+    ) return;
+    this.activityError.set('');
+    this.activityMessage.set('');
+    this.deletingAttachmentId.set(attachment.id);
+    this.reminderService.deleteAttachment(reminder.id, attachment.id).subscribe({
+      next: () => {
+        this.attachments.update(attachments =>
+          attachments.filter(existing => existing.id !== attachment.id)
+        );
+        this.deletingAttachmentId.set(null);
+        this.activityMessage.set('Attachment deleted.');
+        this.refreshReminderCounts(reminder.id);
+      },
+      error: error => {
+        this.deletingAttachmentId.set(null);
+        this.activityError.set(error.error?.message ?? 'Unable to delete the attachment. Please try again.');
       },
     });
   }

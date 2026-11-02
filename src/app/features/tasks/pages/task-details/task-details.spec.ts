@@ -32,6 +32,17 @@ describe('TaskDetails', () => {
         lastName: currentUser.lastName
       }
     })),
+    updateComment: vi.fn((_taskId: string, commentId: string, body: string) => of({
+      id: commentId,
+      body,
+      createdAt: '2026-09-30T12:00:00.000Z',
+      updatedAt: '2026-09-30T12:30:00.000Z',
+      author: {
+        id: currentUser.id,
+        firstName: currentUser.firstName,
+        lastName: currentUser.lastName
+      }
+    })),
     uploadAttachment: vi.fn(() => of({
       id: 'attachment-1',
       fileName: 'brief.pdf',
@@ -44,7 +55,8 @@ describe('TaskDetails', () => {
         lastName: currentUser.lastName
       }
     })),
-    downloadAttachment: () => of(new Blob())
+    downloadAttachment: () => of(new Blob()),
+    deleteAttachment: vi.fn(() => of({ id: 'attachment-1', deleted: true }))
   };
 
   beforeEach(async () => {
@@ -80,6 +92,8 @@ describe('TaskDetails', () => {
     taskServiceMock.updateStatus.mockClear();
     taskServiceMock.uploadAttachment.mockClear();
     taskServiceMock.addComment.mockClear();
+    taskServiceMock.updateComment.mockClear();
+    taskServiceMock.deleteAttachment.mockClear();
 
     await TestBed.configureTestingModule({
       imports: [TaskDetails],
@@ -195,5 +209,128 @@ describe('TaskDetails', () => {
 
     expect(taskServiceMock.uploadAttachment).not.toHaveBeenCalled();
     expect(component.activityError()).toContain('Only PDF and Word documents are allowed');
+  });
+
+  it('updates an authored comment in place and reports success', () => {
+    const comment = {
+      id: 'comment-1',
+      body: 'Original text',
+      createdAt: '2026-09-30T12:00:00.000Z',
+      author: {
+        id: currentUser.id,
+        firstName: currentUser.firstName,
+        lastName: currentUser.lastName
+      }
+    };
+    component.comments.set([comment]);
+    component.editComment(comment);
+    component.editCommentText.set('Updated text');
+
+    component.saveCommentEdit(comment);
+
+    expect(taskServiceMock.updateComment).toHaveBeenCalledWith(
+      'task-1',
+      'comment-1',
+      'Updated text'
+    );
+    expect(component.comments()[0].body).toBe('Updated text');
+    expect(component.activityMessage()).toBe('Comment updated.');
+    expect(component.editingCommentId()).toBeNull();
+  });
+
+  it('does not expose comment editing to another author without task write permission', () => {
+    const comment = {
+      id: 'comment-2',
+      body: 'Someone else wrote this',
+      createdAt: '2026-09-30T12:00:00.000Z',
+      author: {
+        id: 'other-user',
+        firstName: 'Other',
+        lastName: 'User'
+      }
+    };
+    component.comments.set([comment]);
+    fixture.detectChanges();
+
+    expect(component.canManageComment(comment)).toBe(false);
+    expect(fixture.nativeElement.querySelector('.task-comment .comment-actions')).toBeNull();
+    component.editComment(comment);
+    component.editCommentText.set('Changed');
+    component.saveCommentEdit(comment);
+    expect(taskServiceMock.updateComment).not.toHaveBeenCalled();
+  });
+
+  it('confirms attachment removal and removes it from the view after success', () => {
+    const attachment = {
+      id: 'attachment-1',
+      fileName: 'brief.pdf',
+      mimeType: 'application/pdf',
+      size: 1024,
+      createdAt: '2026-09-30T12:00:00.000Z',
+      uploader: {
+        id: currentUser.id,
+        firstName: currentUser.firstName,
+        lastName: currentUser.lastName
+      }
+    };
+    const confirm = vi.spyOn(window, 'confirm').mockReturnValue(true);
+    component.attachments.set([attachment]);
+
+    component.deleteAttachment(attachment);
+
+    expect(confirm).toHaveBeenCalledWith(
+      'Permanently delete "brief.pdf"? This action cannot be undone.'
+    );
+    expect(taskServiceMock.deleteAttachment).toHaveBeenCalledWith('task-1', 'attachment-1');
+    expect(component.attachments()).toEqual([]);
+    expect(component.activityMessage()).toBe('Attachment deleted.');
+    confirm.mockRestore();
+  });
+
+  it('does not delete an attachment when confirmation is cancelled', () => {
+    const attachment = {
+      id: 'attachment-1',
+      fileName: 'brief.pdf',
+      mimeType: 'application/pdf',
+      size: 1024,
+      createdAt: '2026-09-30T12:00:00.000Z',
+      uploader: {
+        id: currentUser.id,
+        firstName: currentUser.firstName,
+        lastName: currentUser.lastName
+      }
+    };
+    const confirm = vi.spyOn(window, 'confirm').mockReturnValue(false);
+    component.attachments.set([attachment]);
+
+    component.deleteAttachment(attachment);
+
+    expect(taskServiceMock.deleteAttachment).not.toHaveBeenCalled();
+    expect(component.attachments()).toHaveLength(1);
+    expect(confirm).toHaveBeenCalledOnce();
+    confirm.mockRestore();
+  });
+
+  it('does not allow a non-uploader to delete another attachment without write permission', () => {
+    const attachment = {
+      id: 'attachment-1',
+      fileName: 'brief.pdf',
+      mimeType: 'application/pdf',
+      size: 1024,
+      createdAt: '2026-09-30T12:00:00.000Z',
+      uploader: {
+        id: 'other-user',
+        firstName: 'Other',
+        lastName: 'User'
+      }
+    };
+    const confirm = vi.spyOn(window, 'confirm');
+
+    component.deleteAttachment(attachment);
+
+    expect(component.canDeleteAttachment(attachment)).toBe(false);
+    expect(confirm).not.toHaveBeenCalled();
+    expect(taskServiceMock.deleteAttachment).not.toHaveBeenCalled();
+    confirm.mockRestore();
   });
 });

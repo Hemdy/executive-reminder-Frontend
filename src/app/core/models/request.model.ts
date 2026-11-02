@@ -56,6 +56,7 @@ export interface RequestComment {
   id: string;
   body: string;
   createdAt: string;
+  updatedAt?: string;
   author: Pick<User, 'id' | 'title' | 'firstName' | 'lastName'>;
 }
 

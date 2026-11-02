@@ -61,6 +61,10 @@ export class TaskService {
     return this.http.post<TaskComment>(`${this.apiUrl}/${taskId}/comments`, { body });
   }
 
+  updateComment(taskId: string, commentId: string, body: string): Observable<TaskComment> {
+    return this.http.patch<TaskComment>(`${this.apiUrl}/${taskId}/comments/${commentId}`, { body });
+  }
+
   getAttachments(taskId: string): Observable<TaskAttachment[]> {
     return this.http.get<TaskAttachment[]>(`${this.apiUrl}/${taskId}/attachments`);
   }
@@ -75,6 +79,12 @@ export class TaskService {
     return this.http.get(`${this.apiUrl}/${taskId}/attachments/${attachmentId}`, {
       responseType: 'blob'
     });
+  }
+
+  deleteAttachment(taskId: string, attachmentId: string): Observable<{ id: string; deleted: boolean }> {
+    return this.http.delete<{ id: string; deleted: boolean }>(
+      `${this.apiUrl}/${taskId}/attachments/${attachmentId}`
+    );
   }
 
   deleteTask(id: string): Observable<void> {
