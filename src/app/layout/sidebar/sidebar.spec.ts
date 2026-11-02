@@ -8,9 +8,11 @@ describe('Sidebar', () => {
   let component: Sidebar;
   let fixture: ComponentFixture<Sidebar>;
   let roles: string[];
+  let permissions: string[];
 
   beforeEach(async () => {
     roles = [];
+    permissions = [];
     await TestBed.configureTestingModule({
       imports: [Sidebar],
       providers: [
@@ -19,7 +21,7 @@ describe('Sidebar', () => {
           provide: AuthService,
           useValue: {
             hasRole: (...requiredRoles: string[]) => requiredRoles.some(role => roles.includes(role)),
-            hasPermission: () => false,
+            hasPermission: (permission: string) => permissions.includes(permission),
             currentUser: () => null,
             getInitials: () => '',
             logout: () => undefined
@@ -45,8 +47,9 @@ describe('Sidebar', () => {
     expect(fixture.nativeElement.textContent).not.toContain('Roles');
   });
 
-  it('shows the Roles navigation item to Admin users', () => {
+  it('shows privileged navigation for Admin users with the configured permissions', () => {
     roles.push('ADMIN');
+    permissions.push('roles:view', 'settings:view');
     fixture.destroy();
     fixture = TestBed.createComponent(Sidebar);
     component = fixture.componentInstance;
@@ -55,18 +58,39 @@ describe('Sidebar', () => {
     const text = fixture.nativeElement.textContent as string;
     expect(text).toContain('Administration');
     expect(text).toContain('Roles');
+    expect(text).toContain('Settings');
   });
 
-  it('does not show Roles to users with roles:view but without the Admin role', () => {
+  it('shows Roles to a role that was explicitly granted roles:view', () => {
+    permissions.push('roles:view');
     fixture.destroy();
     fixture = TestBed.createComponent(Sidebar);
     component = fixture.componentInstance;
     fixture.detectChanges();
 
-    const authService = TestBed.inject(AuthService);
-    vi.spyOn(authService, 'hasPermission').mockReturnValue(true);
+    expect(fixture.nativeElement.textContent).toContain('Roles');
+  });
+
+  it('shows Roles and Settings to a Director with those grants', () => {
+    roles.push('DIRECTOR');
+    permissions.push('roles:view', 'settings:view');
+    fixture.destroy();
+    fixture = TestBed.createComponent(Sidebar);
+    component = fixture.componentInstance;
+    fixture.detectChanges();
+
+    expect(fixture.nativeElement.textContent).toContain('Roles');
+    expect(fixture.nativeElement.textContent).toContain('Settings');
+  });
+
+  it('does not show Roles or Settings without their explicit permissions', () => {
+    roles.push('COMPLIANCE OFFICER');
+    fixture.destroy();
+    fixture = TestBed.createComponent(Sidebar);
+    component = fixture.componentInstance;
     fixture.detectChanges();
 
     expect(fixture.nativeElement.textContent).not.toContain('Roles');
+    expect(fixture.nativeElement.textContent).not.toContain('Settings');
   });
 });

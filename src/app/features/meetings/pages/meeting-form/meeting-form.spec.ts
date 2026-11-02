@@ -5,7 +5,7 @@ import { LoadingService } from '../../../../core/services/loading.service';
 import { MeetingService } from '../../../../core/services/meeting.service';
 import { RoleService } from '../../../../core/services/role.service';
 import { ToastService } from '../../../../core/services/toast.service';
-import { Subject } from 'rxjs';
+import { of, Subject } from 'rxjs';
 
 import { MeetingForm } from './meeting-form';
 
@@ -28,7 +28,13 @@ describe('MeetingForm', () => {
       providers: [
         provideRouter([]),
         { provide: MeetingService, useValue: meetingService },
-        { provide: RoleService, useValue: { users: signal([]) } }
+        {
+          provide: RoleService,
+          useValue: {
+            assignableUsers: signal([]),
+            loadAssignableUsers: () => of([])
+          }
+        }
       ]
     })
     .compileComponents();

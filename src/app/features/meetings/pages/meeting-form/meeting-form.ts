@@ -19,7 +19,6 @@ import {
   RouterModule
 } from '@angular/router';
 
-import { User } from '../../../../core/models/user.model';
 
 import {
   CreateMeetingRequest,
@@ -67,7 +66,7 @@ export class MeetingForm {
     () => this.meetingId() !== null
   );
 
-  readonly users = this.roleService.users;
+  readonly users = this.roleService.assignableUsers;
 
   readonly meetingTypes: MeetingType[] = [
     'IN_PERSON',
@@ -133,6 +132,12 @@ export class MeetingForm {
   });
 
   ngOnInit(): void {
+    this.roleService.loadAssignableUsers().subscribe({
+      error: error => this.form.setErrors({
+        directory: error.error?.message ?? 'Unable to load meeting participants.'
+      })
+    });
+
     if (!this.isEditMode()) {
       this.form.patchValue({
         meetingDate: this.todayValue()
@@ -178,10 +183,6 @@ export class MeetingForm {
 
     const values = this.form.getRawValue();
 
-    const participants = this.users().filter(user =>
-      values.participantIds.includes(user.id)
-    );
-
     if (this.isEditMode()) {
       const updateRequest: UpdateMeetingRequest = {
         title: values.title,
@@ -198,8 +199,7 @@ export class MeetingForm {
 
       this.meetingService.updateMeeting(
         this.meetingId()!,
-        updateRequest,
-        participants
+        updateRequest
       ).subscribe({
         next: () => this.router.navigate(['/meetings', this.meetingId()!]),
         error: error => this.form.setErrors({ api: error.error?.message ?? 'Unable to update the meeting.' })
@@ -223,9 +223,7 @@ export class MeetingForm {
     this.isSaving.set(true);
     const loadingTask = this.loading.begin('Scheduling meeting…');
     this.meetingService.createMeeting(
-      createRequest,
-      undefined,
-      participants
+      createRequest
     ).subscribe({
       next: meeting => {
         this.isSaving.set(false);

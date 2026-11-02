@@ -8,26 +8,29 @@
     <span class="summary">{{ pageSummary() }}</span>
   </header>
 
-  @if (statusMessage()) {
-    <p class="status-message" role="status">{{ statusMessage() }}</p>
-  }
   @if (roleService.errorMessage()) {
     <p class="form-error" role="alert">{{ roleService.errorMessage() }}</p>
   }
 
   <div class="tabs" role="tablist" aria-label="Role administration">
-    <button type="button" role="tab" [attr.aria-selected]="selectedTab() === 'users'" [class.active]="selectedTab() === 'users'" (click)="selectedTab.set('users')">Users</button>
-    <button type="button" role="tab" [attr.aria-selected]="selectedTab() === 'roles'" [class.active]="selectedTab() === 'roles'" (click)="selectedTab.set('roles')">Roles</button>
+    @if (authService.hasPermission('users:view')) {
+      <button type="button" role="tab" [attr.aria-selected]="selectedTab() === 'users'" [class.active]="selectedTab() === 'users'" (click)="selectedTab.set('users')">Users</button>
+    }
+    @if (authService.hasPermission('roles:view')) {
+      <button type="button" role="tab" [attr.aria-selected]="selectedTab() === 'roles'" [class.active]="selectedTab() === 'roles'" (click)="selectedTab.set('roles')">Roles</button>
+    }
   </div>
 
   @if (selectedTab() === 'users') {
     <section class="panel" aria-labelledby="users-heading">
       <div class="panel-header">
         <div><h2 id="users-heading">Users</h2><p>Invite users and control their account status.</p></div>
-        <button class="primary-button" type="button" (click)="openNewUser()">Add user</button>
+        @if (authService.hasPermission('users:create')) {
+          <button class="primary-button" type="button" (click)="openNewUser()">Add user</button>
+        }
       </div>
       @if (showUserForm()) {
-        <form class="editor" [formGroup]="userForm" (ngSubmit)="saveUser()">
+        <form #userEditor class="editor" [formGroup]="userForm" (ngSubmit)="saveUser()">
           <h3>{{ editingUserId() ? 'Edit user' : 'Create user' }}</h3>
           <label>Email<input type="email" formControlName="email"></label>
           <label>Password<input type="password" formControlName="password" [placeholder]="editingUserId() ? 'Leave blank to keep current password' : 'At least 8 characters'"></label>
@@ -37,7 +40,7 @@
           @if (formError()) {
             <p class="form-error" role="alert">{{ formError() }}</p>
           }
-          <div class="editor-actions"><button type="button" class="secondary-button" (click)="cancelForms()">Cancel</button><button type="submit" class="primary-button">Save user</button></div>
+          <div class="editor-actions"><button type="button" class="secondary-button" (click)="cancelForms()" [disabled]="isSavingUser()">Cancel</button><button type="submit" class="primary-button" [disabled]="isSavingUser()">{{ isSavingUser() ? 'Saving User...' : 'Save user' }}</button></div>
         </form>
       }
       <div class="table-wrap">
@@ -48,7 +51,14 @@
               <td data-label="Email">{{ user.email }}</td>
               <td data-label="Role"><span class="role-pill">{{ user.role }}</span></td>
               <td data-label="Status"><span [class]="user.isActive ? 'state active-state' : 'state inactive-state'">{{ user.isActive ? 'Active' : 'Inactive' }}</span></td>
-              <td class="actions" data-label="Actions"><button type="button" (click)="editUser(user)">Edit</button><button type="button" (click)="toggleUser(user)">{{ user.isActive ? 'Deactivate' : 'Activate' }}</button><button type="button" class="danger" (click)="removeUser(user)">Delete</button></td>
+              <td class="actions" data-label="Actions">
+                @if (authService.hasPermission('users:edit')) {
+                  <button type="button" (click)="editUser(user)">Edit</button><button type="button" (click)="toggleUser(user)">{{ user.isActive ? 'Deactivate' : 'Activate' }}</button>
+                }
+                @if (authService.hasPermission('users:delete')) {
+                  <button type="button" class="danger" (click)="removeUser(user)">Delete</button>
+                }
+              </td>
             </tr>
           } @empty { <tr><td colspan="5" class="empty">No users found.</td></tr> }</tbody>
         </table>
@@ -58,10 +68,12 @@
     <section class="panel" aria-labelledby="roles-heading">
       <div class="panel-header">
         <div><h2 id="roles-heading">Roles</h2><p>Create custom access profiles and manage permissions.</p></div>
-        <button class="primary-button" type="button" (click)="openNewRole()">Create role</button>
+        @if (canManageRoles() && authService.hasPermission('roles:create')) {
+          <button class="primary-button" type="button" (click)="openNewRole()">Create role</button>
+        }
       </div>
       @if (showRoleForm()) {
-        <form class="editor" [formGroup]="roleForm" (ngSubmit)="saveRole()">
+        <form #roleEditor class="editor" [formGroup]="roleForm" (ngSubmit)="saveRole()">
           <h3>{{ editingRoleId() ? 'Edit role' : 'Create role' }}</h3>
           <label>Role name<input type="text" formControlName="name" placeholder="Manager"></label>
           <label>Description<textarea formControlName="description" rows="2"></textarea></label>
@@ -71,6 +83,7 @@
             <label>Email address<input type="email" formControlName="email"></label>
             <label>Password<input type="password" formControlName="password"></label>
           }
+          @if (canManageRoles()) {
           <fieldset class="permission-grid">
             <legend>Permissions</legend>
             <button
@@ -88,10 +101,11 @@
               </label>
             }
           </fieldset>
+          }
           @if (formError()) {
             <p class="form-error" role="alert">{{ formError() }}</p>
           }
-          <div class="editor-actions"><button type="button" class="secondary-button" (click)="cancelForms()">Cancel</button><button type="submit" class="primary-button">Save role</button></div>
+          <div class="editor-actions"><button type="button" class="secondary-button" (click)="cancelForms()" [disabled]="isSavingRole()">Cancel</button><button type="submit" class="primary-button" [disabled]="isSavingRole()">{{ isSavingRole() ? 'Saving Role...' : 'Save role' }}</button></div>
         </form>
       }
       <div class="table-wrap">
@@ -107,9 +121,15 @@
               <td data-label="Permissions">{{ role.permissions.length }} assigned</td>
               <td data-label="Status"><span [class]="role.isActive ? 'state active-state' : 'state inactive-state'">{{ role.isActive ? 'Active' : 'Inactive' }}</span></td>
               <td class="actions" data-label="Actions">
-                <button type="button" (click)="editRole(role)">Edit</button>
-                <button type="button" (click)="toggleRole(role)">{{ role.isActive ? 'Deactivate' : 'Activate' }}</button>
-                <button type="button" class="danger" (click)="removeRole(role)">Delete</button>
+                @if (canManageRoles()) {
+                  @if (authService.hasPermission('roles:edit')) {
+                    <button type="button" (click)="editRole(role)">Edit</button>
+                    <button type="button" (click)="toggleRole(role)">{{ role.isActive ? 'Deactivate' : 'Activate' }}</button>
+                  }
+                  @if (authService.hasPermission('roles:delete')) {
+                    <button type="button" class="danger" (click)="removeRole(role)">Delete</button>
+                  }
+                }
               </td>
             </tr>
           } @empty { <tr><td colspan="5" class="empty">No roles found.</td></tr> }</tbody>

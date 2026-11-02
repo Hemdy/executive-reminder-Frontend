@@ -6,7 +6,7 @@ import { LoadingService } from '../../../../core/services/loading.service';
 import { RequestService } from '../../../../core/services/request.service';
 import { RoleService } from '../../../../core/services/role.service';
 import { ToastService } from '../../../../core/services/toast.service';
-import { Subject } from 'rxjs';
+import { of, Subject } from 'rxjs';
 
 import { RequestForm } from './request-form';
 
@@ -37,7 +37,13 @@ describe('RequestForm', () => {
         provideRouter([]),
         { provide: AuthService, useValue: { currentUser } },
         { provide: RequestService, useValue: requestService },
-        { provide: RoleService, useValue: { users } }
+        {
+          provide: RoleService,
+          useValue: {
+            assignableUsers: users,
+            loadAssignableUsers: () => of(users())
+          }
+        }
       ]
     })
     .compileComponents();

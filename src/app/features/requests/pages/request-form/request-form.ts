@@ -14,7 +14,6 @@ import {
 import { ActivatedRoute, Router, RouterModule } from '@angular/router';
 
 import { AuthService } from '../../../../core/services/auth.service';
-import { User } from '../../../../core/models/user.model';
 import {
   CreateRequestRequest,
   RequestPriority,
@@ -68,7 +67,7 @@ export class RequestForm {
 
   readonly isEditMode = computed(() => this.requestId() !== null);
 
-  readonly users = this.roleService.users;
+  readonly users = this.roleService.assignableUsers;
 
   readonly types: RequestType[] = [
     'GENERAL',
@@ -109,6 +108,12 @@ export class RequestForm {
   });
 
   ngOnInit(): void {
+    this.roleService.loadAssignableUsers().subscribe({
+      error: error => this.form.setErrors({
+        directory: error.error?.message ?? 'Unable to load request recipients.'
+      })
+    });
+
     const currentUser = this.authService.currentUser();
 
     if (!this.isEditMode()) {
@@ -184,8 +189,7 @@ export class RequestForm {
 
       this.requestService.updateRequest(
         this.requestId()!,
-        updateRequest,
-        assignedTo
+        updateRequest
       ).subscribe({
         next: () => this.router.navigate(['/requests', this.requestId()!]),
         error: error => this.form.setErrors({ api: error.error?.message ?? 'Unable to update the request.' })
@@ -208,8 +212,7 @@ export class RequestForm {
     const loadingTask = this.loading.begin('Creating request…');
     this.requestService.createRequest(
       createRequest,
-      requester,
-      assignedTo
+      requester
     ).subscribe({
       next: createdRequest => {
         this.isSaving.set(false);

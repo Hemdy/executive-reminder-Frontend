@@ -41,3 +41,8 @@ export interface UpdateManagedRoleRequest {
 export interface ManagedUser extends User {
   isActive: boolean;
 }
+
+export type AssignableUser = Pick<
+  User,
+  'id' | 'title' | 'firstName' | 'lastName' | 'role' | 'department' | 'avatarUrl'
+>;

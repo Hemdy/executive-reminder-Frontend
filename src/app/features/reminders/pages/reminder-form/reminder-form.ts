@@ -30,13 +30,6 @@ import { RoleService } from '../../../../core/services/role.service';
 import { LoadingService } from '../../../../core/services/loading.service';
 import { ToastService } from '../../../../core/services/toast.service';
 
-interface ReminderUser {
-  id: string;
-  firstName: string;
-  lastName: string;
-  department?: string;
-}
-
 @Component({
   selector: 'app-reminder-form',
   standalone: true,
@@ -68,8 +61,8 @@ export class ReminderForm {
   readonly errorMessage = signal('');
   readonly isSaving = signal(false);
 
-  readonly recipients = this.roleService.users;
-  readonly recipientsLoading = this.roleService.usersLoading;
+  readonly recipients = this.roleService.assignableUsers;
+  readonly recipientsLoading = this.roleService.assignableUsersLoading;
 
   readonly categories = [
     'General',
@@ -128,6 +121,9 @@ export class ReminderForm {
 
   constructor() {
     this.loadExistingReminder();
+    this.roleService.loadAssignableUsers().subscribe({
+      error: error => this.errorMessage.set(error.error?.message ?? 'Unable to load reminder recipients.')
+    });
   }
 
   private loadExistingReminder(): void {
@@ -212,12 +208,6 @@ export class ReminderForm {
       return;
     }
 
-    const recipient = this.roleService.users().find(user => user.id === selectedRecipient.id);
-    if (!recipient) {
-      this.errorMessage.set('The selected recipient is no longer available.');
-      return;
-    }
-
     this.isSaving.set(true);
 
     if (this.isEditMode() && this.reminderId()) {
@@ -235,8 +225,7 @@ export class ReminderForm {
           reminderTime: formValue.reminderTime,
           recurrence: formValue.recurrence,
           status: formValue.status
-        },
-        recipient
+        }
       ).subscribe({
         next: () => {
           this.isSaving.set(false);
@@ -261,9 +250,7 @@ export class ReminderForm {
             reminderDate: formValue.reminderDate,
             reminderTime: formValue.reminderTime,
             recurrence: formValue.recurrence
-          },
-          recipient,
-          currentUser
+          }
         ).subscribe({
           next: reminder => {
             this.isSaving.set(false);

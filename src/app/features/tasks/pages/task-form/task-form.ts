@@ -66,8 +66,8 @@ export class TaskForm {
 
   readonly isSaving = signal(false);
 
-  readonly employees = this.roleService.users;
-  readonly employeesLoading = this.roleService.usersLoading;
+  readonly employees = this.roleService.assignableUsers;
+  readonly employeesLoading = this.roleService.assignableUsersLoading;
 
   readonly categories = [
     'General',
@@ -112,6 +112,9 @@ export class TaskForm {
 
   constructor() {
     this.loadExistingTask();
+    this.roleService.loadAssignableUsers().subscribe({
+      error: error => this.errorMessage.set(error.error?.message ?? 'Unable to load task assignees.')
+    });
   }
 
   private loadExistingTask(): void {
@@ -183,12 +186,6 @@ export class TaskForm {
       return;
     }
 
-    const assignedUser = this.roleService.users().find(user => user.id === assignedTo.id);
-    if (!assignedUser) {
-      this.errorMessage.set('The selected assignee is no longer available.');
-      return;
-    }
-
     this.isSaving.set(true);
 
     if (this.isEditMode() && this.taskId()) {
@@ -204,8 +201,7 @@ export class TaskForm {
           dueDate: formValue.dueDate,
           dueTime: formValue.dueTime || undefined,
           status: formValue.status
-        },
-        assignedUser
+        }
       ).subscribe({
         next: () => {
           this.isSaving.set(false);
@@ -228,9 +224,7 @@ export class TaskForm {
           category: formValue.category,
           dueDate: formValue.dueDate,
           dueTime: formValue.dueTime || undefined
-        },
-        assignedUser,
-        currentUser
+        }
       ).subscribe({
         next: task => {
           this.isSaving.set(false);

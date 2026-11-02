@@ -320,10 +320,6 @@ th {
   padding-top: 18px;
   border-top: 1px solid var(--border);
 }
-.status-message {
-  color: #1d7a45;
-  margin: 16px 0 0;
-}
 .form-error {
   grid-column: 1 / -1;
   color: #b42318;
@@ -365,6 +361,7 @@ th {
     grid-template-columns: 1fr;
     min-width: 0;
     padding: 16px;
+    scroll-margin-top: 1rem;
   }
   .permission-grid,
   .role-permission-groups {

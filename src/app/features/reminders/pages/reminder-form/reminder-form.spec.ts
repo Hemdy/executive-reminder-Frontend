@@ -6,7 +6,7 @@ import { LoadingService } from '../../../../core/services/loading.service';
 import { ReminderService } from '../../../../core/services/reminder.service';
 import { RoleService } from '../../../../core/services/role.service';
 import { ToastService } from '../../../../core/services/toast.service';
-import { Subject } from 'rxjs';
+import { of, Subject } from 'rxjs';
 
 import { ReminderForm } from './reminder-form';
 
@@ -38,7 +38,14 @@ describe('ReminderForm', () => {
         provideRouter([]),
         { provide: AuthService, useValue: { currentUser } },
         { provide: ReminderService, useValue: reminderService },
-        { provide: RoleService, useValue: { users, usersLoading } }
+        {
+          provide: RoleService,
+          useValue: {
+            assignableUsers: users,
+            assignableUsersLoading: usersLoading,
+            loadAssignableUsers: () => of(users())
+          }
+        }
       ]
     })
     .compileComponents();

@@ -1,7 +1,21 @@
-import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
+import {
+  afterNextRender,
+  ChangeDetectionStrategy,
+  Component,
+  ElementRef,
+  Injector,
+  OnInit,
+  computed,
+  inject,
+  signal,
+  viewChild
+} from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
+import { AuthService } from '../../../../core/services/auth.service';
 import { RoleService } from '../../../../core/services/role.service';
+import { ToastService } from '../../../../core/services/toast.service';
 import { ManagedRole, ManagedUser } from '../../../../core/models/role.model';
+import { finalize, switchMap } from 'rxjs';
 
 @Component({
   selector: 'app-role-management',
@@ -10,17 +24,27 @@ import { ManagedRole, ManagedUser } from '../../../../core/models/role.model';
   styleUrl: './role-management.scss',
   changeDetection: ChangeDetectionStrategy.OnPush
 })
-export class RoleManagement {
+export class RoleManagement implements OnInit {
   private readonly fb = inject(FormBuilder);
+  private readonly injector = inject(Injector);
+  private readonly toast = inject(ToastService);
+  readonly authService = inject(AuthService);
   readonly roleService = inject(RoleService);
-  readonly selectedTab = signal<'users' | 'roles'>('users');
+  readonly selectedTab = signal<'users' | 'roles'>('roles');
   readonly editingUserId = signal<string | null>(null);
   readonly editingRoleId = signal<string | null>(null);
   readonly showUserForm = signal(false);
   readonly showRoleForm = signal(false);
+  readonly isSavingUser = signal(false);
+  readonly isSavingRole = signal(false);
   readonly selectedRole = signal<ManagedRole | null>(null);
-  readonly statusMessage = signal('');
   readonly formError = signal('');
+  private readonly userEditor = viewChild<ElementRef<HTMLFormElement>>('userEditor');
+  private readonly roleEditor = viewChild<ElementRef<HTMLFormElement>>('roleEditor');
+  readonly canManageRoles = computed(() =>
+    this.authService.hasRole('ADMIN', 'DIRECTOR') &&
+    this.authService.hasPermission('roles:edit')
+  );
 readonly permissionOptions = [
   ['dashboard:view', 'Dashboard — View'],
 
@@ -42,6 +66,7 @@ readonly permissionOptions = [
 
   // Users
   ['users:view', 'Users — View'],
+  ['users:assign', 'Users — Assign to operational records'],
   ['users:create', 'Users — Create'],
   ['users:edit', 'Users — Edit'],
   ['users:delete', 'Users — Delete'],
@@ -119,8 +144,21 @@ readonly permissionOptions = [
   });
 
   readonly pageSummary = computed(
-    () => `${this.roleService.users().length} users · ${this.roleService.roles().length} roles`
+    () => `${this.authService.hasPermission('users:view') ? `${this.roleService.users().length} users · ` : ''}${this.roleService.roles().length} roles`
   );
+
+  ngOnInit(): void {
+    if (this.authService.hasPermission('users:view')) {
+      this.selectedTab.set('users');
+      this.roleService.loadUsers().subscribe({
+        error: error => this.roleService.errorMessage.set(error.error?.message ?? 'Unable to load users.')
+      });
+    }
+
+    this.roleService.loadRoles().subscribe({
+      error: error => this.roleService.errorMessage.set(error.error?.message ?? 'Unable to load roles.')
+    });
+  }
 
   openNewUser(): void {
     this.editingUserId.set(null);
@@ -141,9 +179,13 @@ readonly permissionOptions = [
     });
     this.formError.set('');
     this.showUserForm.set(true);
+    this.scrollToEditor(() => this.userEditor());
   }
 
   saveUser(): void {
+    if (this.isSavingUser()) {
+      return;
+    }
     if (this.userForm.invalid || (!this.editingUserId() && !this.userForm.controls.password.value)) {
       this.userForm.markAllAsTouched();
       this.formError.set('Please fill in all required fields. Passwords must be at least 8 characters.');
@@ -157,15 +199,26 @@ readonly permissionOptions = [
       role: value.role as ManagedUser['role'],
       ...(value.password ? { password: value.password } : {})
     };
+    this.isSavingUser.set(true);
     if (this.editingUserId()) {
-      this.roleService.updateUser(this.editingUserId()!, request).subscribe({
-        next: () => this.finishSave('User changes saved.'),
-        error: error => this.showRequestError(error)
+      this.roleService.updateUser(this.editingUserId()!, request).pipe(
+        finalize(() => this.isSavingUser.set(false))
+      ).subscribe({
+        next: () => {
+          this.finishSave();
+          this.toast.success('User details updated successfully.');
+        },
+        error: error => this.showRequestError(error, 'Unable to save user details.')
       });
     } else {
-      this.roleService.createUser({ ...request, password: value.password }).subscribe({
-        next: () => this.finishSave('User changes saved.'),
-        error: error => this.showRequestError(error)
+      this.roleService.createUser({ ...request, password: value.password }).pipe(
+        finalize(() => this.isSavingUser.set(false))
+      ).subscribe({
+        next: () => {
+          this.finishSave();
+          this.toast.success('User details saved successfully.');
+        },
+        error: error => this.showRequestError(error, 'Unable to save user details.')
       });
     }
   }
@@ -203,7 +256,9 @@ readonly permissionOptions = [
       password: ''
     });
     this.selectedPermissions.set([...new Set(role.permissions)]);
+    this.formError.set('');
     this.showRoleForm.set(true);
+    this.scrollToEditor(() => this.roleEditor());
   }
 
   viewRole(role: ManagedRole): void {
@@ -215,6 +270,9 @@ readonly permissionOptions = [
   }
 
   saveRole(): void {
+    if (this.isSavingRole()) {
+      return;
+    }
     this.formError.set('');
     const value = this.roleForm.getRawValue();
     const creatingUser = !this.editingRoleId();
@@ -230,32 +288,40 @@ readonly permissionOptions = [
       description: value.description || undefined,
       permissions: [...new Set(this.selectedPermissions())]
     };
+    if (!this.editingRoleId() &&
+      this.roleService.roles().some(role => role.name.toLowerCase() === request.name.toLowerCase())) {
+      this.formError.set('A role with this name already exists.');
+      return;
+    }
+
+    this.isSavingRole.set(true);
     if (this.editingRoleId()) {
-      this.roleService.updateRole(this.editingRoleId()!, request).subscribe({
-        next: () => this.finishSave('Role changes saved.'),
-        error: error => this.showRequestError(error)
+      this.roleService.updateRole(this.editingRoleId()!, request).pipe(
+        finalize(() => this.isSavingRole.set(false))
+      ).subscribe({
+        next: () => {
+          this.finishSave();
+          this.toast.success('Role updated successfully.');
+        },
+        error: error => this.showRequestError(error, 'Unable to update the role.')
       });
     } else {
-      if (this.roleService.roles().some(role => role.name.toLowerCase() === request.name.toLowerCase())) {
-        this.formError.set('A role with this name already exists.');
-        return;
-      }
-      this.roleService.createRole(request).subscribe({
-        next: role => {
-          this.roleService.createUser({
+      this.roleService.createRole(request).pipe(
+        switchMap(role => this.roleService.createUser({
             firstName: value.firstName,
             lastName: value.lastName,
             email: value.email,
             password: value.password,
             role: role.name,
             roleId: role.id
-          }).subscribe({
-            next: () => this.finishSave('Role and user created.')
-            ,
-            error: error => this.showRequestError(error)
-          });
+          })),
+        finalize(() => this.isSavingRole.set(false))
+      ).subscribe({
+        next: () => {
+          this.finishSave();
+          this.toast.success('Role added successfully.');
         },
-        error: error => this.showRequestError(error)
+        error: error => this.showRequestError(error, 'Unable to create the role and its initial user.')
       });
     }
   }
@@ -275,6 +341,9 @@ readonly permissionOptions = [
   }
 
   cancelForms(): void {
+    if (this.isSavingUser() || this.isSavingRole()) {
+      return;
+    }
     this.showUserForm.set(false);
     this.showRoleForm.set(false);
   }
@@ -327,14 +396,32 @@ readonly permissionOptions = [
       .join(' ');
   }
 
-  private finishSave(message: string): void {
+  private finishSave(): void {
     this.showUserForm.set(false);
     this.showRoleForm.set(false);
-    this.statusMessage.set(message);
+    this.formError.set('');
   }
 
-  private showRequestError(error: unknown): void {
+  private showRequestError(
+    error: unknown,
+    fallback = 'The request could not be completed.'
+  ): void {
     const response = error as { error?: { message?: string }; message?: string };
-    this.formError.set(response.error?.message ?? response.message ?? 'The request could not be completed.');
+    this.toast.error(response.error?.message ?? response.message ?? fallback);
+  }
+
+  private scrollToEditor(editor: () => ElementRef<HTMLFormElement> | undefined): void {
+    afterNextRender(
+      () => {
+        if (
+          typeof window !== 'undefined' &&
+          typeof window.matchMedia === 'function' &&
+          window.matchMedia('(max-width: 700px)').matches
+        ) {
+          editor()?.nativeElement.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
+      },
+      { injector: this.injector }
+    );
   }
 }

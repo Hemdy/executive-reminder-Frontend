@@ -7,6 +7,7 @@ import { RoleService } from '../../../../core/services/role.service';
 import { TaskService } from '../../../../core/services/task.service';
 import { ToastService } from '../../../../core/services/toast.service';
 import { Subject } from 'rxjs';
+import { of } from 'rxjs';
 
 import { TaskForm } from './task-form';
 
@@ -45,7 +46,11 @@ describe('TaskForm', () => {
         { provide: TaskService, useValue: taskService },
         {
           provide: RoleService,
-          useValue: { users: employees, usersLoading: employeesLoading }
+          useValue: {
+            assignableUsers: employees,
+            assignableUsersLoading: employeesLoading,
+            loadAssignableUsers: () => of(employees())
+          }
         }
       ]
     })

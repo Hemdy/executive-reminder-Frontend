@@ -4,6 +4,7 @@ import { Observable, finalize, map, tap } from 'rxjs';
 import {
   CreateManagedRoleRequest,
   CreateManagedUserRequest,
+  AssignableUser,
   ManagedRole,
   ManagedUser,
   UpdateManagedRoleRequest,
@@ -31,23 +32,17 @@ export class RoleService {
   private readonly apiUrl = API_BASE_URL;
 
   private readonly usersSignal = signal<ManagedUser[]>([]);
+  private readonly assignableUsersSignal = signal<AssignableUser[]>([]);
   private readonly rolesSignal = signal<ManagedRole[]>([]);
   readonly errorMessage = signal('');
   readonly usersLoading = signal(true);
+  readonly assignableUsersLoading = signal(true);
 
   readonly users = this.usersSignal.asReadonly();
+  readonly assignableUsers = this.assignableUsersSignal.asReadonly();
   readonly roles = this.rolesSignal.asReadonly();
   readonly activeUsers = computed(() => this.usersSignal().filter(user => user.isActive));
   readonly activeRoles = computed(() => this.rolesSignal().filter(role => role.isActive));
-
-  constructor() {
-    this.loadRoles().subscribe({
-      error: error => this.setError(error)
-    });
-    this.loadUsers().subscribe({
-      error: error => this.setError(error)
-    });
-  }
 
   loadRoles(): Observable<ManagedRole[]> {
     return this.http.get<ApiRole[]>(`${this.apiUrl}/roles`).pipe(
@@ -61,6 +56,14 @@ export class RoleService {
     return this.http.get<ManagedUser[]>(`${this.apiUrl}/users`).pipe(
       tap(users => this.usersSignal.set(users)),
       finalize(() => this.usersLoading.set(false))
+    );
+  }
+
+  loadAssignableUsers(): Observable<AssignableUser[]> {
+    this.assignableUsersLoading.set(true);
+    return this.http.get<AssignableUser[]>(`${this.apiUrl}/users/directory`).pipe(
+      tap(users => this.assignableUsersSignal.set(users)),
+      finalize(() => this.assignableUsersLoading.set(false))
     );
   }
 

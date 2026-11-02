@@ -75,7 +75,7 @@ export class Sidebar {
       label: 'Roles',
       icon: '♢',
       route: '/roles',
-      roles: ['ADMIN']
+      permission: 'roles:view'
     },
     // {
     //   label: 'Users',
@@ -87,9 +87,7 @@ export class Sidebar {
       label: 'Settings',
       icon: '⚙',
       route: '/settings',
-      permission: 'settings:view',
-      
-      roles: ['ADMIN']
+      permission: 'settings:view'
     }
   ];
 
