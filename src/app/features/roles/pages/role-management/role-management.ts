@@ -21,21 +21,41 @@ export class RoleManagement {
   readonly selectedRole = signal<ManagedRole | null>(null);
   readonly statusMessage = signal('');
   readonly formError = signal('');
-  readonly permissionOptions = [
-    ['dashboard:view', 'Dashboard — View'],
-    ['reminders:read', 'Reminders — View'],
-    ['reminders:write', 'Reminders — Create/Edit/Delete'],
-    ['users:view', 'Users — View'],
-    ['users:create', 'Users — Create'],
-    ['users:edit', 'Users — Edit'],
-    ['users:delete', 'Users — Delete'],
-    ['roles:view', 'Roles — View'],
-    ['roles:create', 'Roles — Create'],
-    ['roles:edit', 'Roles — Edit'],
-    ['roles:delete', 'Roles — Delete'],
-    ['settings:view', 'Settings — View'],
-    ['settings:edit', 'Settings — Edit']
-  ] as const;
+readonly permissionOptions = [
+  ['dashboard:view', 'Dashboard — View'],
+
+  // Tasks
+  ['tasks:read', 'Tasks — View'],
+  ['tasks:write', 'Tasks — Create/Edit/Delete'],
+
+  // Reminders
+  ['reminders:read', 'Reminders — View'],
+  ['reminders:write', 'Reminders — Create/Edit/Delete'],
+
+  // Requests
+  ['requests:read', 'Requests — View'],
+  ['requests:write', 'Requests — Create/Edit/Delete'],
+
+  // Meetings
+  ['meetings:read', 'Meetings — View'],
+  ['meetings:write', 'Meetings — Create/Edit/Delete'],
+
+  // Users
+  ['users:view', 'Users — View'],
+  ['users:create', 'Users — Create'],
+  ['users:edit', 'Users — Edit'],
+  ['users:delete', 'Users — Delete'],
+
+  // Roles
+  ['roles:view', 'Roles — View'],
+  ['roles:create', 'Roles — Create'],
+  ['roles:edit', 'Roles — Edit'],
+  ['roles:delete', 'Roles — Delete'],
+
+  // Settings
+  ['settings:view', 'Settings — View'],
+  ['settings:edit', 'Settings — Edit']
+]  as const;
   readonly selectedPermissions = signal<string[]>([]);
   readonly allPermissionsSelected = computed(() =>
     this.permissionOptions.every(([permission]) => this.selectedPermissions().includes(permission))
