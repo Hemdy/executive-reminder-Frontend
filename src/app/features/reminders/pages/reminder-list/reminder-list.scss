@@ -451,7 +451,11 @@ tbody tr:last-child td {
     width: 100%;
   }
 
-  .reminder-summary {
-    grid-template-columns: 1fr;
+  .reminder-toolbar select {
+    flex: 1;
   }
+
+  // .reminder-summary {
+  //   grid-template-columns: 1fr;
+  // }
 }
