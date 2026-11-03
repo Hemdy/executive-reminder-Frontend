@@ -1,0 +1,76 @@
+<div class="content-skeleton" [attr.data-kind]="kind" role="status" aria-label="Loading content">
+  @if (kind === 'dashboard') {
+    <div class="skeleton-dashboard-header" aria-hidden="true">
+      <div class="skeleton-lines">
+        <span class="skeleton-block skeleton-dashboard-title"></span>
+        <span class="skeleton-block skeleton-dashboard-subtitle"></span>
+      </div>
+      <span class="skeleton-block skeleton-dashboard-button"></span>
+    </div>
+    <div class="skeleton-summary-grid" aria-hidden="true">
+      @for (card of summaryCards; track card) {
+        <div class="skeleton-summary-card">
+          <span class="skeleton-block skeleton-summary-label"></span>
+          <span class="skeleton-block skeleton-summary-value"></span>
+          <span class="skeleton-block skeleton-summary-description"></span>
+        </div>
+      }
+    </div>
+    <div class="skeleton-dashboard-grid" aria-hidden="true">
+      @for (card of dashboardCards; track card) {
+        <div class="skeleton-dashboard-card">
+          <div class="skeleton-dashboard-card-header">
+            <span class="skeleton-block skeleton-card-title"></span>
+            <span class="skeleton-block skeleton-card-action"></span>
+          </div>
+          @for (row of rows.slice(0, 3); track row) {
+            <div class="skeleton-dashboard-row">
+              <span class="skeleton-block skeleton-dashboard-time"></span>
+              <span class="skeleton-block skeleton-dashboard-marker"></span>
+              <span class="skeleton-dashboard-row-lines">
+                <span class="skeleton-block skeleton-dashboard-primary"></span>
+                <span class="skeleton-block skeleton-dashboard-secondary"></span>
+              </span>
+            </div>
+          }
+        </div>
+      }
+    </div>
+  } @else if (kind === 'form') {
+    <div class="skeleton-form-card" aria-hidden="true">
+      @for (section of formSections; track section) {
+        <section class="skeleton-form-section">
+          <div class="skeleton-form-heading">
+            <span class="skeleton-block skeleton-form-title"></span>
+            <span class="skeleton-block skeleton-form-description"></span>
+          </div>
+          <div class="skeleton-form-grid">
+            @for (field of formFields; track field) {
+              @if (section === 0 || field < 2) {
+                <div class="skeleton-form-field" [class.skeleton-form-field-wide]="field === 0">
+                  <span class="skeleton-block skeleton-form-label"></span>
+                  <span class="skeleton-block skeleton-form-control"></span>
+                </div>
+              }
+            }
+          </div>
+        </section>
+      }
+      <footer class="skeleton-form-footer">
+        <span class="skeleton-block skeleton-form-button"></span>
+        <span class="skeleton-block skeleton-form-button skeleton-form-primary-button"></span>
+      </footer>
+    </div>
+  } @else {
+    @for (row of rows; track row) {
+      <div class="skeleton-row" aria-hidden="true">
+        <span class="skeleton-block skeleton-avatar"></span>
+        <span class="skeleton-lines">
+          <span class="skeleton-block skeleton-primary"></span>
+          <span class="skeleton-block skeleton-secondary"></span>
+        </span>
+        <span class="skeleton-block skeleton-action"></span>
+      </div>
+    }
+  }
+</div>

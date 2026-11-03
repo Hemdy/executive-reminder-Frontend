@@ -1,5 +1,11 @@
 <section class="'page">
   <div class="calendar-page">
+  @if (meetings.listLoading() || reminders.listLoading()) {
+    <app-content-skeleton kind="table" />
+  } @else if (meetings.listError() || reminders.listError()) {
+    <p role="alert">{{ meetings.listError() || reminders.listError() }}</p>
+    <button type="button" class="secondary-button" (click)="retryLoad()">Retry</button>
+  } @else {
 
   <div class="page-header">
     <div>
@@ -410,5 +416,6 @@
 
   </div>
 
+  }
 </div>
 </section>

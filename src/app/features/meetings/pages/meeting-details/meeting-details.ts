@@ -26,6 +26,7 @@ import {
 } from '../../../../core/models/meeting.model';
 
 import { MeetingService } from '../../../../core/services/meeting.service';
+import { ContentSkeleton } from '../../../../core/components/content-skeleton/content-skeleton';
 import { AuthService } from '../../../../core/services/auth.service';
 import { LoadingService } from '../../../../core/services/loading.service';
 import { ToastService } from '../../../../core/services/toast.service';
@@ -34,7 +35,7 @@ import { AttachmentTransferService } from '../../../../core/services/attachment-
 @Component({
   selector: 'app-meeting-details',
   standalone: true,
-  imports: [RouterModule, DatePipe, FormsModule],
+  imports: [RouterModule, DatePipe, FormsModule, ContentSkeleton],
   templateUrl: './meeting-details.html',
   styleUrl: './meeting-details.scss',
   changeDetection: ChangeDetectionStrategy.OnPush
@@ -61,6 +62,8 @@ export class MeetingDetails implements OnInit {
   readonly commentSubmitting = signal(false);
   readonly commentsError = signal('');
   readonly activityError = signal('');
+  readonly recordLoading = signal(true);
+  readonly recordError = signal('');
   readonly activityMessage = signal('');
   readonly uploadingAttachments = signal(false);
   readonly downloadingAttachmentId = signal<string | null>(null);
@@ -85,11 +88,32 @@ export class MeetingDetails implements OnInit {
   ngOnInit(): void {
     const id = this.route.snapshot.paramMap.get('id');
     if (id) {
-      this.meetingService.loadMeeting(id).subscribe({
-        next: () => this.loadMeetingActivity(id),
-        error: () => this.activityError.set('Unable to load this meeting.')
-      });
+      this.loadMeetingRecord(id);
+    } else {
+      this.recordLoading.set(false);
     }
+  }
+
+  retryLoadRecord(): void {
+    const id = this.route.snapshot.paramMap.get('id');
+    if (id) this.loadMeetingRecord(id);
+  }
+
+  private loadMeetingRecord(id: string): void {
+    this.recordLoading.set(true);
+    this.recordError.set('');
+    this.meetingService.loadMeeting(id).subscribe({
+      next: () => {
+        this.recordLoading.set(false);
+        this.loadMeetingActivity(id);
+      },
+      error: () => {
+        const message = 'Unable to load this meeting.';
+        this.recordError.set(message);
+        this.activityError.set(message);
+        this.recordLoading.set(false);
+      }
+    });
   }
 
   editMeeting(): void {

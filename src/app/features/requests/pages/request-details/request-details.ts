@@ -20,6 +20,7 @@ import {
   RequestType,
 } from '../../../../core/models/request.model';
 import { RequestService } from '../../../../core/services/request.service';
+import { ContentSkeleton } from '../../../../core/components/content-skeleton/content-skeleton';
 import { LoadingService } from '../../../../core/services/loading.service';
 import { ToastService } from '../../../../core/services/toast.service';
 import { AttachmentTransferService } from '../../../../core/services/attachment-transfer.service';
@@ -27,7 +28,7 @@ import { AttachmentTransferService } from '../../../../core/services/attachment-
 @Component({
   selector: 'app-request-details',
   standalone: true,
-  imports: [RouterModule, DatePipe, FormsModule],
+  imports: [RouterModule, DatePipe, FormsModule, ContentSkeleton],
   templateUrl: './request-details.html',
   styleUrl: './request-details.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -50,6 +51,8 @@ export class RequestDetails implements OnInit {
   readonly savingCommentId = signal<string | null>(null);
   readonly deletingAttachmentId = signal<string | null>(null);
   readonly activityError = signal('');
+  readonly recordLoading = signal(true);
+  readonly recordError = signal('');
   readonly activityMessage = signal('');
   readonly submittingComment = signal(false);
   readonly uploadingAttachments = signal(false);
@@ -101,11 +104,32 @@ export class RequestDetails implements OnInit {
   ngOnInit(): void {
     const id = this.route.snapshot.paramMap.get('id');
     if (id) {
-      this.requestService.loadRequest(id).subscribe({
-        next: () => this.loadRequestActivity(id),
-        error: () => this.activityError.set('Unable to load this request.'),
-      });
+      this.loadRequestRecord(id);
+    } else {
+      this.recordLoading.set(false);
     }
+  }
+
+  retryLoadRecord(): void {
+    const id = this.route.snapshot.paramMap.get('id');
+    if (id) this.loadRequestRecord(id);
+  }
+
+  private loadRequestRecord(id: string): void {
+    this.recordLoading.set(true);
+    this.recordError.set('');
+    this.requestService.loadRequest(id).subscribe({
+      next: () => {
+        this.recordLoading.set(false);
+        this.loadRequestActivity(id);
+      },
+      error: () => {
+        const message = 'Unable to load this request.';
+        this.recordError.set(message);
+        this.activityError.set(message);
+        this.recordLoading.set(false);
+      }
+    });
   }
 
   editRequest(): void {

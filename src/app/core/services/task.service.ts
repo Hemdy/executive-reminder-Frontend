@@ -1,6 +1,6 @@
 import { HttpClient } from '@angular/common/http';
 import { Injectable, computed, inject, signal } from '@angular/core';
-import { Observable, tap } from 'rxjs';
+import { Observable, catchError, finalize, tap, throwError } from 'rxjs';
 import { User } from '../models/user.model';
 import {
   CreateTaskRequest,
@@ -18,6 +18,8 @@ export class TaskService {
   private readonly apiUrl = `${API_BASE_URL}/tasks`;
   private readonly tasksSignal = signal<Task[]>([]);
   readonly tasks = this.tasksSignal.asReadonly();
+  readonly listLoading = signal(true);
+  readonly listError = signal('');
   readonly pendingTasks = computed(() => this.tasksSignal().filter(task => task.status === 'PENDING'));
   readonly inProgressTasks = computed(() => this.tasksSignal().filter(task => task.status === 'IN_PROGRESS'));
   readonly completedTasks = computed(() => this.tasksSignal().filter(task => task.status === 'COMPLETED'));
@@ -38,7 +40,16 @@ export class TaskService {
   }
 
   loadTasks(): Observable<Task[]> {
-    return this.http.get<Task[]>(this.apiUrl).pipe(tap(tasks => this.tasksSignal.set(tasks.map(task => this.normalize(task)))));
+    this.listLoading.set(true);
+    this.listError.set('');
+    return this.http.get<Task[]>(this.apiUrl).pipe(
+      tap(tasks => this.tasksSignal.set(tasks.map(task => this.normalize(task)))),
+      catchError(error => {
+        this.listError.set('Unable to load tasks. Please try again.');
+        return throwError(() => error);
+      }),
+      finalize(() => this.listLoading.set(false))
+    );
   }
 
   createTask(request: CreateTaskRequest, _assignedTo?: User, _createdBy?: User): Observable<Task> {

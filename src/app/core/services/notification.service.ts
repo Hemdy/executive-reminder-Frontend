@@ -1,6 +1,6 @@
 import { HttpClient } from '@angular/common/http';
 import { Injectable, computed, inject, signal } from '@angular/core';
-import { Observable, map, tap } from 'rxjs';
+import { Observable, catchError, finalize, map, tap, throwError } from 'rxjs';
 import { Notification, NotificationPriority, NotificationType } from '../models/notification.model';
 import { API_BASE_URL } from '../config/api.config';
 
@@ -10,6 +10,8 @@ export class NotificationService {
   private readonly apiUrl = `${API_BASE_URL}/notifications`;
   private readonly notificationsSignal = signal<Notification[]>([]);
   readonly notifications = this.notificationsSignal.asReadonly();
+  readonly listLoading = signal(true);
+  readonly listError = signal('');
   readonly unreadNotifications = computed(() => this.notificationsSignal().filter(notification => !notification.isRead));
   readonly unreadCount = computed(() => this.unreadNotifications().length);
   readonly readNotifications = computed(() => this.notificationsSignal().filter(notification => notification.isRead));
@@ -20,7 +22,18 @@ export class NotificationService {
 
   getNotifications(): Notification[] { return this.notificationsSignal(); }
   getNotification(id: string): Notification | undefined { return this.notificationsSignal().find(notification => notification.id === id); }
-  loadNotifications(): Observable<Notification[]> { return this.http.get<Notification[]>(this.apiUrl).pipe(tap(notifications => this.notificationsSignal.set(notifications))); }
+  loadNotifications(): Observable<Notification[]> {
+    this.listLoading.set(true);
+    this.listError.set('');
+    return this.http.get<Notification[]>(this.apiUrl).pipe(
+      tap(notifications => this.notificationsSignal.set(notifications)),
+      catchError(error => {
+        this.listError.set('Unable to load notifications. Please try again.');
+        return throwError(() => error);
+      }),
+      finalize(() => this.listLoading.set(false))
+    );
+  }
   resourceRoute(notification: Notification): string | undefined {
     if (notification.route?.startsWith('/')) return notification.route;
     const referenceId = notification.referenceId ?? notification.sourceId;

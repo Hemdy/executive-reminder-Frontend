@@ -20,6 +20,7 @@ import {
 } from '../../../../core/models/task.model';
 import { AuthService } from '../../../../core/services/auth.service';
 import { TaskService } from '../../../../core/services/task.service';
+import { ContentSkeleton } from '../../../../core/components/content-skeleton/content-skeleton';
 import { LoadingService } from '../../../../core/services/loading.service';
 import { ToastService } from '../../../../core/services/toast.service';
 import { AttachmentTransferService } from '../../../../core/services/attachment-transfer.service';
@@ -27,7 +28,7 @@ import { AttachmentTransferService } from '../../../../core/services/attachment-
 @Component({
   selector: 'app-task-details',
   standalone: true,
-  imports: [RouterLink, DatePipe, FormsModule],
+  imports: [RouterLink, DatePipe, FormsModule, ContentSkeleton],
   templateUrl: './task-details.html',
   styleUrl: './task-details.scss',
   changeDetection: ChangeDetectionStrategy.OnPush
@@ -58,6 +59,8 @@ export class TaskDetails implements OnInit {
   readonly activityError = signal('');
   readonly activityMessage = signal('');
   readonly taskActionError = signal('');
+  readonly recordLoading = signal(true);
+  readonly recordError = signal('');
   readonly isDeleting = signal(false);
   readonly submittingComment = signal(false);
   readonly uploadingAttachments = signal(false);
@@ -103,11 +106,32 @@ export class TaskDetails implements OnInit {
   ngOnInit(): void {
     const id = this.route.snapshot.paramMap.get('id');
     if (id) {
-      this.taskService.loadTask(id).subscribe({
-        next: () => this.loadTaskActivity(id),
-        error: () => this.taskActionError.set('Unable to load this task.')
-      });
+      this.loadTaskRecord(id);
+    } else {
+      this.recordLoading.set(false);
     }
+  }
+
+  retryLoadRecord(): void {
+    const id = this.route.snapshot.paramMap.get('id');
+    if (id) this.loadTaskRecord(id);
+  }
+
+  private loadTaskRecord(id: string): void {
+    this.recordLoading.set(true);
+    this.recordError.set('');
+    this.taskService.loadTask(id).subscribe({
+      next: () => {
+        this.recordLoading.set(false);
+        this.loadTaskActivity(id);
+      },
+      error: () => {
+        const message = 'Unable to load this task.';
+        this.recordError.set(message);
+        this.taskActionError.set(message);
+        this.recordLoading.set(false);
+      }
+    });
   }
 
   editTask(): void {

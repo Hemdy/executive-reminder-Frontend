@@ -95,6 +95,7 @@ describe('TaskForm', () => {
     component.taskForm.patchValue({
       title: 'Prepare report',
       assignedToId: 'user-1',
+      participantIds: ['user-1'],
       dueDate: '2026-11-01'
     });
     component.save();
@@ -119,6 +120,7 @@ describe('TaskForm', () => {
     component.taskForm.patchValue({
       title: 'Prepare report',
       assignedToId: 'user-1',
+      participantIds: ['user-1'],
       dueDate: '2026-11-01'
     });
 

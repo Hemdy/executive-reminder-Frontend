@@ -1,6 +1,6 @@
 import { HttpClient } from '@angular/common/http';
 import { Injectable, computed, inject, signal } from '@angular/core';
-import { Observable, tap } from 'rxjs';
+import { Observable, catchError, finalize, tap, throwError } from 'rxjs';
 import { User } from '../models/user.model';
 import { CreateRequestRequest, Request, RequestAttachment, RequestComment, RequestStatus, UpdateRequestRequest } from '../models/request.model';
 import { API_BASE_URL } from '../config/api.config';
@@ -11,6 +11,8 @@ export class RequestService {
   private readonly apiUrl = `${API_BASE_URL}/requests`;
   private readonly requestsSignal = signal<Request[]>([]);
   readonly requests = this.requestsSignal.asReadonly();
+  readonly listLoading = signal(true);
+  readonly listError = signal('');
   readonly pendingRequests = computed(() => this.requestsSignal().filter(request => request.status === 'PENDING'));
   readonly inReviewRequests = computed(() => this.requestsSignal().filter(request => request.status === 'IN_REVIEW'));
   readonly approvedRequests = computed(() => this.requestsSignal().filter(request => request.status === 'APPROVED'));
@@ -32,7 +34,16 @@ export class RequestService {
     }));
   }
   loadRequests(): Observable<Request[]> {
-    return this.http.get<Request[]>(this.apiUrl).pipe(tap(requests => this.requestsSignal.set(requests.map(request => this.normalize(request)))));
+    this.listLoading.set(true);
+    this.listError.set('');
+    return this.http.get<Request[]>(this.apiUrl).pipe(
+      tap(requests => this.requestsSignal.set(requests.map(request => this.normalize(request)))),
+      catchError(error => {
+        this.listError.set('Unable to load requests. Please try again.');
+        return throwError(() => error);
+      }),
+      finalize(() => this.listLoading.set(false))
+    );
   }
   createRequest(request: CreateRequestRequest, _requester?: User, _assignedTo?: User): Observable<Request> {
     return this.http.post<Request>(this.apiUrl, request).pipe(tap(created => this.requestsSignal.update(requests => [this.normalize(created), ...requests])));

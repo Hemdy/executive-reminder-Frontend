@@ -1,4 +1,30 @@
 <div class="dashboard">
+  @if (
+    tasks.listLoading() ||
+    reminders.listLoading() ||
+    requests.listLoading() ||
+    meetings.listLoading() ||
+    notifications.listLoading()
+  ) {
+    <app-content-skeleton kind="dashboard" />
+  } @else if (
+    tasks.listError() ||
+    reminders.listError() ||
+    requests.listError() ||
+    meetings.listError() ||
+    notifications.listError()
+  ) {
+    <p role="alert">
+      {{
+        tasks.listError() ||
+        reminders.listError() ||
+        requests.listError() ||
+        meetings.listError() ||
+        notifications.listError()
+      }}
+    </p>
+    <button type="button" class="secondary-button" (click)="retryLoad()">Retry</button>
+  } @else {
 
   <div class="page-header">
 
@@ -11,7 +37,7 @@
       </h1>
 
       <p>
-        Here's what's happening across your organization.
+        Here's your personal overview.
       </p>
     </div>
 
@@ -226,7 +252,7 @@
       <div class="card-header">
         <div>
           <h2>Recent Activity</h2>
-          <span>Latest organization activity</span>
+          <span>Your notification activity</span>
         </div>
       </div>
 
@@ -242,5 +268,7 @@
     </article>
 
   </section>
+
+  }
 
 </div>

@@ -29,6 +29,9 @@
 
   </div>
 
+  @if (isEditMode() && usersLoading()) {
+    <app-content-skeleton kind="form" />
+  } @else {
   <form
     class="form-card"
     [formGroup]="form"
@@ -213,6 +216,9 @@
 
       <div class="participant-list">
 
+        @if (usersLoading()) {
+          <app-content-skeleton kind="list" />
+        } @else {
         @for (user of users(); track user.id) {
 
           <label class="participant-option">
@@ -248,6 +254,7 @@
 
           </label>
 
+        }
         }
 
       </div>
@@ -319,5 +326,6 @@
     </div>
 
   </form>
+  }
 
 </section>

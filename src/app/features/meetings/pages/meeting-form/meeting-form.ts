@@ -28,6 +28,7 @@ import {
 } from '../../../../core/models/meeting.model';
 
 import { MeetingService } from '../../../../core/services/meeting.service';
+import { ContentSkeleton } from '../../../../core/components/content-skeleton/content-skeleton';
 import { RoleService } from '../../../../core/services/role.service';
 import { LoadingService } from '../../../../core/services/loading.service';
 import { ToastService } from '../../../../core/services/toast.service';
@@ -35,7 +36,7 @@ import { ToastService } from '../../../../core/services/toast.service';
 @Component({
   selector: 'app-meeting-form',
   standalone: true,
-  imports: [ReactiveFormsModule, RouterModule],
+  imports: [ReactiveFormsModule, RouterModule, ContentSkeleton],
     templateUrl: './meeting-form.html',
   styleUrl: './meeting-form.scss',
   changeDetection: ChangeDetectionStrategy.OnPush
@@ -67,6 +68,7 @@ export class MeetingForm {
   );
 
   readonly users = this.roleService.assignableUsers;
+  readonly usersLoading = this.roleService.assignableUsersLoading ?? signal(false);
 
   readonly meetingTypes: MeetingType[] = [
     'IN_PERSON',
@@ -159,9 +161,7 @@ export class MeetingForm {
       title: meeting.title,
       description: meeting.description ?? '',
       agenda: meeting.agenda ?? '',
-      participantIds: meeting.participants.map(
-        participant => participant.id
-      ),
+      participantIds: [],
       meetingDate: meeting.meetingDate,
       startTime: meeting.startTime,
       endTime: meeting.endTime,

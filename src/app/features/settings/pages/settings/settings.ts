@@ -1,4 +1,5 @@
 import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/core';
+import { ContentSkeleton } from '../../../../core/components/content-skeleton/content-skeleton';
 import {
   PushNotificationsService,
   PushPreferences,
@@ -9,6 +10,7 @@ type SettingsPanel = 'enable' | 'preferences';
 @Component({
   selector: 'app-settings',
   standalone: true,
+  imports: [ContentSkeleton],
   templateUrl: './settings.html',
   styleUrl: './settings.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,

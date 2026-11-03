@@ -1,6 +1,11 @@
 <section class="reminder-details-page">
 
-  @if (reminder(); as currentReminder) {
+  @if (recordLoading()) {
+    <app-content-skeleton kind="table" />
+  } @else if (recordError()) {
+    <p role="alert">{{ recordError() }}</p>
+    <button type="button" class="secondary-button" (click)="retryLoadRecord()">Retry</button>
+  } @else if (reminder(); as currentReminder) {
 
     <header class="page-header">
 

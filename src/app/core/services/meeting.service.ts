@@ -1,6 +1,6 @@
 import { HttpClient } from '@angular/common/http';
 import { Injectable, computed, inject, signal } from '@angular/core';
-import { Observable, tap } from 'rxjs';
+import { Observable, catchError, finalize, tap, throwError } from 'rxjs';
 import { User } from '../models/user.model';
 import { CreateMeetingRequest, Meeting, MeetingAttachment, MeetingComment, MeetingStatus, MeetingType, UpdateMeetingRequest } from '../models/meeting.model';
 import { API_BASE_URL } from '../config/api.config';
@@ -11,6 +11,8 @@ export class MeetingService {
   private readonly apiUrl = `${API_BASE_URL}/meetings`;
   private readonly meetingsSignal = signal<Meeting[]>([]);
   readonly meetings = this.meetingsSignal.asReadonly();
+  readonly listLoading = signal(true);
+  readonly listError = signal('');
   readonly scheduledMeetings = computed(() => this.meetingsSignal().filter(meeting => meeting.status === 'SCHEDULED' || meeting.status === 'RESCHEDULED'));
   readonly completedMeetings = computed(() => this.meetingsSignal().filter(meeting => meeting.status === 'COMPLETED'));
   readonly cancelledMeetings = computed(() => this.meetingsSignal().filter(meeting => meeting.status === 'CANCELLED'));
@@ -31,7 +33,16 @@ export class MeetingService {
     }));
   }
   loadMeetings(): Observable<Meeting[]> {
-    return this.http.get<Meeting[]>(this.apiUrl).pipe(tap(meetings => this.meetingsSignal.set(meetings.map(meeting => this.normalize(meeting)))));
+    this.listLoading.set(true);
+    this.listError.set('');
+    return this.http.get<Meeting[]>(this.apiUrl).pipe(
+      tap(meetings => this.meetingsSignal.set(meetings.map(meeting => this.normalize(meeting)))),
+      catchError(error => {
+        this.listError.set('Unable to load meetings. Please try again.');
+        return throwError(() => error);
+      }),
+      finalize(() => this.listLoading.set(false))
+    );
   }
   createMeeting(request: CreateMeetingRequest, _organizer?: User, _participants?: User[]): Observable<Meeting> {
     return this.http.post<Meeting>(this.apiUrl, request).pipe(tap(meeting => this.meetingsSignal.update(meetings => [this.normalize(meeting), ...meetings])));

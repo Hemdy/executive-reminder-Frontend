@@ -9,6 +9,9 @@ import {
 import { DatePipe } from '@angular/common';
 import { Router } from '@angular/router';
 import { CalendarService } from '../../../../core/services/calendar.service';
+import { MeetingService } from '../../../../core/services/meeting.service';
+import { ReminderService } from '../../../../core/services/reminder.service';
+import { ContentSkeleton } from '../../../../core/components/content-skeleton/content-skeleton';
 import {
   CalendarEvent,
   CalendarEventType
@@ -25,16 +28,16 @@ interface CalendarDay {
 @Component({
   selector: 'app-calendar',
   standalone: true,
-  imports: [DatePipe],
+  imports: [DatePipe, ContentSkeleton],
   templateUrl: './calendar.html',
   styleUrl: './calendar.scss',
   changeDetection: ChangeDetectionStrategy.OnPush
 })
 
 export class Calendar {
-
-
   readonly calendarService = inject(CalendarService);
+  readonly meetings = inject(MeetingService);
+  readonly reminders = inject(ReminderService);
   private readonly router = inject(Router);
 
   readonly currentDate = signal(new Date());
@@ -44,6 +47,15 @@ export class Calendar {
   readonly selectedDate = signal(new Date());
 
   readonly events = this.calendarService.events;
+
+  retryLoad(): void {
+    this.meetings.loadMeetings().subscribe({
+      error: error => console.error('Unable to reload calendar meetings', error),
+    });
+    this.reminders.loadReminders().subscribe({
+      error: error => console.error('Unable to reload calendar reminders', error),
+    });
+  }
 
   readonly currentMonthLabel = computed(() => {
     return this.currentDate().toLocaleDateString('en-US', {

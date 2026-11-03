@@ -120,7 +120,29 @@
 
   <div class="table-card">
 
-    @if (requests().length > 0) {
+    @if (selectedCount() > 0) {
+      <div class="bulk-actions">
+        <span>{{ selectedCount() }} selected</span>
+        <button
+          type="button"
+          class="bulk-delete-button"
+          [disabled]="deletingSelected()"
+          (click)="deleteSelected()"
+        >
+          {{ deletingSelected() ? 'Deleting…' : 'Delete selected' }}
+        </button>
+      </div>
+    }
+    @if (deleteError()) {
+      <p class="bulk-delete-error" role="alert">{{ deleteError() }}</p>
+    }
+
+    @if (listLoading()) {
+      <app-content-skeleton kind="table" />
+    } @else if (listError()) {
+      <p role="alert">{{ listError() }}</p>
+      <button type="button" class="secondary-button" (click)="retryLoad()">Retry</button>
+    } @else if (requests().length > 0) {
 
       <div class="table-wrapper">
 
@@ -128,6 +150,20 @@
 
           <thead>
             <tr>
+              <th class="selection-column">
+                <label class="select-all-label">
+                  <input
+                    type="checkbox"
+                    class="selection-checkbox"
+                    aria-label="Select all visible requests"
+                    [checked]="allVisibleSelected()"
+                    [indeterminate]="someVisibleSelected()"
+                    [disabled]="deletingSelected()"
+                    (change)="toggleAllSelection($any($event.target).checked)"
+                  />
+                  <!-- <span>Select all</span> -->
+                </label>
+              </th>
               <th>Request</th>
               <th>Type</th>
               <th>Requester</th>
@@ -148,6 +184,18 @@
                 [class.overdue]="isOverdue(request)"
                 (click)="viewRequest(request.id)"
               >
+
+                <td class="selection-column">
+                  <input
+                    type="checkbox"
+                    class="selection-checkbox"
+                    [attr.aria-label]="'Select request ' + request.title"
+                    [checked]="isSelected(request.id)"
+                    [disabled]="deletingSelected()"
+                    (click)="$event.stopPropagation()"
+                    (change)="toggleSelection(request.id, $any($event.target).checked)"
+                  />
+                </td>
 
                 <td>
                   <div class="request-cell">

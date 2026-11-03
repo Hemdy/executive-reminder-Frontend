@@ -11,6 +11,7 @@ import {
   viewChild
 } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
+import { ContentSkeleton } from '../../../../core/components/content-skeleton/content-skeleton';
 import { AuthService } from '../../../../core/services/auth.service';
 import { RoleService } from '../../../../core/services/role.service';
 import { ToastService } from '../../../../core/services/toast.service';
@@ -19,7 +20,7 @@ import { finalize, switchMap } from 'rxjs';
 
 @Component({
   selector: 'app-role-management',
-  imports: [ReactiveFormsModule],
+  imports: [ReactiveFormsModule, ContentSkeleton],
   templateUrl: './role-management.html',
   styleUrl: './role-management.scss',
   changeDetection: ChangeDetectionStrategy.OnPush
@@ -30,6 +31,22 @@ export class RoleManagement implements OnInit {
   private readonly toast = inject(ToastService);
   readonly authService = inject(AuthService);
   readonly roleService = inject(RoleService);
+  readonly usersLoading = this.roleService.usersLoading ?? signal(false);
+  readonly usersError = this.roleService.usersError ?? signal('');
+  readonly rolesLoading = this.roleService.rolesLoading ?? signal(false);
+  readonly rolesError = this.roleService.rolesError ?? signal('');
+
+  retryLoadUsers(): void {
+    this.roleService.loadUsers().subscribe({
+      error: error => console.error('Unable to reload users', error),
+    });
+  }
+
+  retryLoadRoles(): void {
+    this.roleService.loadRoles().subscribe({
+      error: error => console.error('Unable to reload roles', error),
+    });
+  }
   readonly selectedTab = signal<'users' | 'roles'>('roles');
   readonly editingUserId = signal<string | null>(null);
   readonly editingRoleId = signal<string | null>(null);

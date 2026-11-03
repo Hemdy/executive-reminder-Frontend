@@ -29,11 +29,12 @@ import { ReminderService } from '../../../../core/services/reminder.service';
 import { RoleService } from '../../../../core/services/role.service';
 import { LoadingService } from '../../../../core/services/loading.service';
 import { ToastService } from '../../../../core/services/toast.service';
+import { ContentSkeleton } from '../../../../core/components/content-skeleton/content-skeleton';
 
 @Component({
   selector: 'app-reminder-form',
   standalone: true,
-  imports: [ReactiveFormsModule, RouterModule],
+  imports: [ReactiveFormsModule, RouterModule, ContentSkeleton],
   templateUrl: './reminder-form.html',
   styleUrl: './reminder-form.scss',
   changeDetection: ChangeDetectionStrategy.OnPush
@@ -104,7 +105,7 @@ export class ReminderForm {
     title: ['', [Validators.required, Validators.maxLength(200)]],
     description: ['', Validators.maxLength(2000)],
     recipientId: ['', Validators.required],
-    participantIds: this.fb.nonNullable.control<string[]>([]),
+    participantIds: this.fb.nonNullable.control<string[]>([], Validators.required),
     priority: ['MEDIUM' as ReminderPriority, Validators.required],
     category: ['General', Validators.required],
     reminderDate: ['', Validators.required],
@@ -131,8 +132,8 @@ export class ReminderForm {
 
     if (!id) {
       this.reminderForm.patchValue({
-        recipientId: this.currentUser()?.id ?? '',
-        participantIds: this.currentUser()?.id ? [this.currentUser()!.id] : [],
+        recipientId: '',
+        participantIds: [],
         reminderTime: '09:00'
       });
 
@@ -154,8 +155,8 @@ export class ReminderForm {
     this.reminderForm.patchValue({
       title: reminder.title,
       description: reminder.description ?? '',
-      recipientId: reminder.recipient.id,
-      participantIds: reminder.participants?.map(user => user.id) ?? [reminder.recipient.id],
+      recipientId: '',
+      participantIds: [],
       priority: reminder.priority,
       category: reminder.category,
       reminderDate: reminder.reminderDate,
@@ -193,7 +194,7 @@ export class ReminderForm {
     }
 
     const formValue = this.reminderForm.getRawValue();
-    const participantIds = formValue.participantIds.length ? formValue.participantIds : [formValue.recipientId];
+    const participantIds = formValue.participantIds;
 
     const selectedRecipient = this.recipients().find(
       recipient =>
@@ -302,6 +303,6 @@ export class ReminderForm {
     const current = this.reminderForm.controls.participantIds.value;
     const next = checked ? [...new Set([...current, userId])] : current.filter(id => id !== userId);
     this.reminderForm.controls.participantIds.setValue(next);
-    if (next.length) this.reminderForm.controls.recipientId.setValue(next[0]);
+    this.reminderForm.controls.recipientId.setValue(next[0] ?? '');
   }
 }

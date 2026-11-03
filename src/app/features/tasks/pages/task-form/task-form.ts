@@ -21,6 +21,7 @@ import { TaskService } from '../../../../core/services/task.service';
 import { RoleService } from '../../../../core/services/role.service';
 import { LoadingService } from '../../../../core/services/loading.service';
 import { ToastService } from '../../../../core/services/toast.service';
+import { ContentSkeleton } from '../../../../core/components/content-skeleton/content-skeleton';
 
 interface FormUser {
   id: string;
@@ -33,7 +34,7 @@ interface FormUser {
 @Component({
   selector: 'app-task-form',
   standalone: true,
-  imports: [ReactiveFormsModule, RouterLink],
+  imports: [ReactiveFormsModule, RouterLink, ContentSkeleton],
   templateUrl: './task-form.html',
   styleUrl: './task-form.scss',
   changeDetection: ChangeDetectionStrategy.OnPush
@@ -98,7 +99,7 @@ export class TaskForm {
     title: ['', [Validators.required, Validators.maxLength(200)]],
     description: ['', [Validators.maxLength(2000)]],
     assignedToId: ['', Validators.required],
-    participantIds: this.fb.nonNullable.control<string[]>([]),
+    participantIds: this.fb.nonNullable.control<string[]>([], Validators.required),
     priority: ['MEDIUM' as TaskPriority, Validators.required],
     category: ['General', Validators.required],
     dueDate: ['', Validators.required],
@@ -122,8 +123,8 @@ export class TaskForm {
 
     if (!id) {
       this.taskForm.patchValue({
-        assignedToId: this.currentUser()?.id ?? ''
-        , participantIds: this.currentUser()?.id ? [this.currentUser()!.id] : []
+        assignedToId: '',
+        participantIds: []
       });
 
       return;
@@ -142,8 +143,8 @@ export class TaskForm {
     this.taskForm.patchValue({
       title: task.title,
       description: task.description ?? '',
-      assignedToId: task.assignedTo.id,
-      participantIds: task.participants?.map(participant => participant.user.id) ?? [task.assignedTo.id],
+      assignedToId: '',
+      participantIds: [],
       priority: task.priority,
       category: task.category,
       dueDate: task.dueDate,
@@ -175,7 +176,7 @@ export class TaskForm {
     }
 
     const formValue = this.taskForm.getRawValue();
-    const participantIds = formValue.participantIds.length ? formValue.participantIds : [formValue.assignedToId];
+    const participantIds = formValue.participantIds;
 
     const assignedTo = this.employees().find(
       user => user.id === formValue.assignedToId
@@ -268,7 +269,7 @@ export class TaskForm {
     const current = this.taskForm.controls.participantIds.value;
     const next = checked ? [...new Set([...current, userId])] : current.filter(id => id !== userId);
     this.taskForm.controls.participantIds.setValue(next);
-    if (next.length) this.taskForm.controls.assignedToId.setValue(next[0]);
+    this.taskForm.controls.assignedToId.setValue(next[0] ?? '');
   }
 
   get dueDateControl() {

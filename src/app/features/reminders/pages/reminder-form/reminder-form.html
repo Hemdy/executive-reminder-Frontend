@@ -31,6 +31,9 @@
     </div>
   }
 
+  @if (isEditMode() && recipientsLoading()) {
+    <app-content-skeleton kind="form" />
+  } @else {
   <form
     class="form-card"
     [formGroup]="reminderForm"
@@ -195,7 +198,7 @@
 
         </div>
 
-        @if (isEditMode()) {
+        <!-- @if (isEditMode()) {
 
           <div class="form-field">
 
@@ -219,7 +222,7 @@
 
           </div>
 
-        }
+        } -->
 
       </div>
 
@@ -334,5 +337,6 @@
     </footer>
 
   </form>
+  }
 
 </section>

@@ -6,6 +6,7 @@ import { catchError, forkJoin, from, map, of } from 'rxjs';
 import { ReminderAttachment, ReminderComment, ReminderPriority, ReminderStatus } from '../../../../core/models/reminder.model';
 import { AuthService } from '../../../../core/services/auth.service';
 import { ReminderService } from '../../../../core/services/reminder.service';
+import { ContentSkeleton } from '../../../../core/components/content-skeleton/content-skeleton';
 import { LoadingService } from '../../../../core/services/loading.service';
 import { ToastService } from '../../../../core/services/toast.service';
 import { AttachmentTransferService } from '../../../../core/services/attachment-transfer.service';
@@ -13,7 +14,7 @@ import { AttachmentTransferService } from '../../../../core/services/attachment-
 @Component({
   selector: 'app-reminder-details',
   standalone: true,
-  imports: [RouterLink, DatePipe, FormsModule],
+  imports: [RouterLink, DatePipe, FormsModule, ContentSkeleton],
   templateUrl: './reminder-details.html',
   styleUrl: './reminder-details.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -36,6 +37,8 @@ export class ReminderDetails implements OnInit {
   readonly savingCommentId = signal<string | null>(null);
   readonly deletingAttachmentId = signal<string | null>(null);
   readonly activityError = signal('');
+  readonly recordLoading = signal(true);
+  readonly recordError = signal('');
   readonly activityMessage = signal('');
   readonly submittingComment = signal(false);
   readonly uploadingAttachments = signal(false);
@@ -56,11 +59,32 @@ export class ReminderDetails implements OnInit {
   ngOnInit(): void {
     const id = this.route.snapshot.paramMap.get('id');
     if (id) {
-      this.reminderService.loadReminder(id).subscribe({
-        next: () => this.loadReminderActivity(id),
-        error: () => this.activityError.set('Unable to load this reminder.'),
-      });
+      this.loadReminderRecord(id);
+    } else {
+      this.recordLoading.set(false);
     }
+  }
+
+  retryLoadRecord(): void {
+    const id = this.route.snapshot.paramMap.get('id');
+    if (id) this.loadReminderRecord(id);
+  }
+
+  private loadReminderRecord(id: string): void {
+    this.recordLoading.set(true);
+    this.recordError.set('');
+    this.reminderService.loadReminder(id).subscribe({
+      next: () => {
+        this.recordLoading.set(false);
+        this.loadReminderActivity(id);
+      },
+      error: () => {
+        const message = 'Unable to load this reminder.';
+        this.recordError.set(message);
+        this.activityError.set(message);
+        this.recordLoading.set(false);
+      }
+    });
   }
 
   editReminder(): void {

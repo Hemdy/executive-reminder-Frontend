@@ -241,6 +241,7 @@ h1 {
   display: flex;
   flex-direction: column;
   gap: 7px;
+  min-width: 0;
 }
 
 .form-field label {
@@ -287,6 +288,13 @@ h1 {
 .form-field select.ng-invalid.ng-touched,
 .form-field textarea.ng-invalid.ng-touched {
   border-color: var(--danger);
+}
+
+.participant-option input[type='checkbox'] {
+  width: 16px;
+  height: 16px;
+  flex: 0 0 16px;
+  padding: 0;
 }
 
 .field-error {

@@ -1,6 +1,6 @@
 import { HttpClient } from '@angular/common/http';
 import { Injectable, computed, inject, signal } from '@angular/core';
-import { Observable, finalize, map, tap } from 'rxjs';
+import { Observable, catchError, finalize, map, tap, throwError } from 'rxjs';
 import {
   CreateManagedRoleRequest,
   CreateManagedUserRequest,
@@ -36,6 +36,9 @@ export class RoleService {
   private readonly rolesSignal = signal<ManagedRole[]>([]);
   readonly errorMessage = signal('');
   readonly usersLoading = signal(true);
+  readonly usersError = signal('');
+  readonly rolesLoading = signal(true);
+  readonly rolesError = signal('');
   readonly assignableUsersLoading = signal(true);
 
   readonly users = this.usersSignal.asReadonly();
@@ -45,16 +48,28 @@ export class RoleService {
   readonly activeRoles = computed(() => this.rolesSignal().filter(role => role.isActive));
 
   loadRoles(): Observable<ManagedRole[]> {
+    this.rolesLoading.set(true);
+    this.rolesError.set('');
     return this.http.get<ApiRole[]>(`${this.apiUrl}/roles`).pipe(
       map(roles => roles.map(role => this.toManagedRole(role))),
-      tap(roles => this.rolesSignal.set(roles))
+      tap(roles => this.rolesSignal.set(roles)),
+      catchError(error => {
+        this.rolesError.set('Unable to load roles. Please try again.');
+        return throwError(() => error);
+      }),
+      finalize(() => this.rolesLoading.set(false))
     );
   }
 
   loadUsers(): Observable<ManagedUser[]> {
     this.usersLoading.set(true);
+    this.usersError.set('');
     return this.http.get<ManagedUser[]>(`${this.apiUrl}/users`).pipe(
       tap(users => this.usersSignal.set(users)),
+      catchError(error => {
+        this.usersError.set('Unable to load users. Please try again.');
+        return throwError(() => error);
+      }),
       finalize(() => this.usersLoading.set(false))
     );
   }

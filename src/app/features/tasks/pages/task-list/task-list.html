@@ -108,6 +108,29 @@
 
   <section class="task-table-card">
 
+    @if (selectedCount() > 0) {
+      <div class="bulk-actions">
+        <span>{{ selectedCount() }} selected</span>
+        <button
+          type="button"
+          class="bulk-delete-button"
+          [disabled]="deletingSelected()"
+          (click)="deleteSelected()"
+        >
+          {{ deletingSelected() ? 'Deleting…' : 'Delete selected' }}
+        </button>
+      </div>
+    }
+    @if (deleteError()) {
+      <p class="bulk-delete-error" role="alert">{{ deleteError() }}</p>
+    }
+
+    @if (listLoading()) {
+      <app-content-skeleton kind="table" />
+    } @else if (listError()) {
+      <p role="alert">{{ listError() }}</p>
+      <button type="button" class="secondary-button" (click)="retryLoad()">Retry</button>
+    } @else {
     @if (tasks().length === 0) {
 
       <div class="empty-state">
@@ -136,6 +159,20 @@
 
           <thead>
             <tr>
+              <th class="selection-column">
+                <label class="select-all-label">
+                  <input
+                    type="checkbox"
+                    class="selection-checkbox"
+                    aria-label="Select all visible tasks"
+                    [checked]="allVisibleSelected()"
+                    [indeterminate]="someVisibleSelected()"
+                    [disabled]="deletingSelected()"
+                    (change)="toggleAllSelection($any($event.target).checked)"
+                  />
+                  <!-- <span>Select all</span> -->
+                </label>
+              </th>
               <th>Task</th>
               <th>Assignee</th>
               <th>Priority</th>
@@ -158,6 +195,18 @@
                 [class.overdue-row]="isOverdue(task)"
                 (click)="viewTask(task)"
               >
+
+                <td class="selection-column">
+                  <input
+                    type="checkbox"
+                    class="selection-checkbox"
+                    [attr.aria-label]="'Select task ' + task.title"
+                    [checked]="isSelected(task.id)"
+                    [disabled]="deletingSelected()"
+                    (click)="$event.stopPropagation()"
+                    (change)="toggleSelection(task.id, $any($event.target).checked)"
+                  />
+                </td>
 
                 <td>
                   <div class="task-title">
@@ -277,6 +326,7 @@
 
       </div>
 
+    }
     }
 
   </section>

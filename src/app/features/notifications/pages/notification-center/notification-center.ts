@@ -14,6 +14,7 @@ import {
 
 import { DatePipe } from '@angular/common';
 import { Router, RouterModule } from '@angular/router';
+import { ContentSkeleton } from '../../../../core/components/content-skeleton/content-skeleton';
 
 import {
   Notification,
@@ -30,7 +31,7 @@ type NotificationFilter =
 @Component({
   selector: 'app-notification-center',
   standalone: true,
-  imports: [RouterModule, DatePipe],
+  imports: [RouterModule, DatePipe, ContentSkeleton],
   templateUrl: './notification-center.html',
   styleUrl: './notification-center.scss',
   changeDetection: ChangeDetectionStrategy.OnPush
@@ -44,6 +45,14 @@ export class NotificationCenter {
 
   private readonly notificationService =
     inject(NotificationService);
+  readonly listLoading = this.notificationService.listLoading;
+  readonly listError = this.notificationService.listError;
+
+  retryLoad(): void {
+    this.notificationService.loadNotifications().subscribe({
+      error: error => console.error('Unable to reload notifications', error),
+    });
+  }
 
   private readonly router = inject(Router);
 

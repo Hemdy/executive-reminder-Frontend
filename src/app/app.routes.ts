@@ -66,6 +66,13 @@ loadComponent: () =>
               ),
           },
           {
+            path: ':id/edit',
+            loadComponent: () =>
+              import('./features/reminders/pages/reminder-form/reminder-form').then(
+                (m) => m.ReminderForm,
+              ),
+          },
+          {
             path: ':id',
             loadComponent: () =>
               import('./features/reminders/pages/reminder-details/reminder-details').then(

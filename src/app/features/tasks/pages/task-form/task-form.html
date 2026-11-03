@@ -26,6 +26,9 @@
     </div>
   }
 
+  @if (isEditMode() && employeesLoading()) {
+    <app-content-skeleton kind="form" />
+  } @else {
   <form
     class="task-form-card"
     [formGroup]="taskForm"
@@ -178,7 +181,7 @@
           </select>
         </div>
 
-        <div class="form-field">
+        <!-- <div class="form-field">
           <label for="status">
             Status
           </label>
@@ -193,7 +196,7 @@
               </option>
             }
           </select>
-        </div>
+        </div> -->
 
       </div>
 
@@ -275,5 +278,6 @@
     </footer>
 
   </form>
+  }
 
 </section>

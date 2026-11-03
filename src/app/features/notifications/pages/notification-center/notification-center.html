@@ -83,7 +83,12 @@
 
     </div>
 
-    @if (hasNotifications()) {
+    @if (listLoading()) {
+      <app-content-skeleton kind="list" />
+    } @else if (listError()) {
+      <p role="alert">{{ listError() }}</p>
+      <button type="button" class="clear-button" (click)="retryLoad()">Retry</button>
+    } @else if (hasNotifications()) {
 
       <div class="notification-list">
 

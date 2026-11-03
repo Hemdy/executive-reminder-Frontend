@@ -37,7 +37,12 @@
 
   </div>
 
-  @if (meeting(); as meeting) {
+  @if (recordLoading()) {
+    <app-content-skeleton kind="table" />
+  } @else if (recordError()) {
+    <p role="alert">{{ recordError() }}</p>
+    <button type="button" class="secondary-button" (click)="retryLoadRecord()">Retry</button>
+  } @else if (meeting(); as meeting) {
 
     <div class="meeting-header">
 

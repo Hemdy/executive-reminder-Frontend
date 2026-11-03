@@ -86,6 +86,7 @@ describe('ReminderForm', () => {
     component.reminderForm.patchValue({
       title: 'Follow up',
       recipientId: user.id,
+      participantIds: [user.id],
       reminderDate: '2026-11-01',
       reminderTime: '09:00'
     });
@@ -112,6 +113,7 @@ describe('ReminderForm', () => {
     component.reminderForm.patchValue({
       title: 'Follow up',
       recipientId: user.id,
+      participantIds: [user.id],
       reminderDate: '2026-11-01',
       reminderTime: '09:00'
     });

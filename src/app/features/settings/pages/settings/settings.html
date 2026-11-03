@@ -142,7 +142,7 @@
           }
 
           @if (pushNotifications.isLoadingPreferences()) {
-            <p class="push-status" role="status">Loading notification preferences...</p>
+            <app-content-skeleton kind="list" />
           } @else {
             <div class="preference-grid">
               <label class="preference-option">

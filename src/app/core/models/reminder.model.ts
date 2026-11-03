@@ -28,7 +28,7 @@ export interface Reminder {
   description?: string;
 
   recipient: User;
-  participants?: User[];
+  participants?: Array<User | { user: User }>;
   createdBy: User;
 
   priority: ReminderPriority;

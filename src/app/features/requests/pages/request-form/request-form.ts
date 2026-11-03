@@ -22,6 +22,7 @@ import {
   UpdateRequestRequest
 } from '../../../../core/models/request.model';
 import { RequestService } from '../../../../core/services/request.service';
+import { ContentSkeleton } from '../../../../core/components/content-skeleton/content-skeleton';
 import { RoleService } from '../../../../core/services/role.service';
 import { LoadingService } from '../../../../core/services/loading.service';
 import { ToastService } from '../../../../core/services/toast.service';
@@ -29,7 +30,7 @@ import { ToastService } from '../../../../core/services/toast.service';
 @Component({
   selector: 'app-request-form',
   standalone: true,
-  imports: [ReactiveFormsModule, RouterModule],
+  imports: [ReactiveFormsModule, RouterModule, ContentSkeleton],
   templateUrl: './request-form.html',
   styleUrl: './request-form.scss',
   changeDetection: ChangeDetectionStrategy.OnPush
@@ -68,6 +69,7 @@ export class RequestForm {
   readonly isEditMode = computed(() => this.requestId() !== null);
 
   readonly users = this.roleService.assignableUsers;
+  readonly usersLoading = this.roleService.assignableUsersLoading ?? signal(false);
 
   readonly types: RequestType[] = [
     'GENERAL',

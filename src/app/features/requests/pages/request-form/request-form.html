@@ -21,6 +21,9 @@
     </div>
   </div>
 
+  @if (isEditMode() && usersLoading()) {
+    <app-content-skeleton kind="form" />
+  } @else {
   <form class="form-card" [formGroup]="form" (ngSubmit)="save()">
 
     <div class="form-section">
@@ -86,19 +89,23 @@
         <div class="field">
           <label for="assignedTo">Assigned To <span>*</span></label>
 
-          <select
-            id="assignedTo"
-            formControlName="assignedToId"
-          >
-            <option value="">Select person</option>
+          @if (usersLoading()) {
+            <app-content-skeleton kind="list" />
+          } @else {
+            <select
+              id="assignedTo"
+              formControlName="assignedToId"
+            >
+              <option value="">Select person</option>
 
-            @for (user of users(); track user.id) {
-              <option [value]="user.id">
-               {{user.title}} {{ user.firstName }} {{ user.lastName }}
-                — {{ user.role }}
-              </option>
-            }
-          </select>
+              @for (user of users(); track user.id) {
+                <option [value]="user.id">
+                  {{ user.title }} {{ user.firstName }} {{ user.lastName }}
+                  — {{ user.role }}
+                </option>
+              }
+            </select>
+          }
 
           @if (assignedToControl.invalid && assignedToControl.touched) {
             <small class="error">
@@ -170,5 +177,6 @@
     </div>
 
   </form>
+  }
 
 </section>

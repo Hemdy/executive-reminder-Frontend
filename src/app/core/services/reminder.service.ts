@@ -1,6 +1,6 @@
 import { HttpClient } from '@angular/common/http';
 import { Injectable, computed, inject, signal } from '@angular/core';
-import { Observable, tap } from 'rxjs';
+import { Observable, catchError, finalize, tap, throwError } from 'rxjs';
 import { User } from '../models/user.model';
 import { CreateReminderRequest, Reminder, ReminderAttachment, ReminderComment, ReminderStatus, UpdateReminderRequest } from '../models/reminder.model';
 import { API_BASE_URL } from '../config/api.config';
@@ -11,6 +11,8 @@ export class ReminderService {
   private readonly apiUrl = `${API_BASE_URL}/reminders`;
   private readonly remindersSignal = signal<Reminder[]>([]);
   readonly reminders = this.remindersSignal.asReadonly();
+  readonly listLoading = signal(true);
+  readonly listError = signal('');
   readonly pendingReminders = computed(() => this.remindersSignal().filter(reminder => reminder.status === 'PENDING'));
   readonly triggeredReminders = computed(() => this.remindersSignal().filter(reminder => reminder.status === 'TRIGGERED'));
   readonly completedReminders = computed(() => this.remindersSignal().filter(reminder => reminder.status === 'COMPLETED'));
@@ -30,7 +32,16 @@ export class ReminderService {
     }));
   }
   loadReminders(): Observable<Reminder[]> {
-    return this.http.get<Reminder[]>(this.apiUrl).pipe(tap(reminders => this.remindersSignal.set(reminders.map(reminder => this.normalize(reminder)))));
+    this.listLoading.set(true);
+    this.listError.set('');
+    return this.http.get<Reminder[]>(this.apiUrl).pipe(
+      tap(reminders => this.remindersSignal.set(reminders.map(reminder => this.normalize(reminder)))),
+      catchError(error => {
+        this.listError.set('Unable to load reminders. Please try again.');
+        return throwError(() => error);
+      }),
+      finalize(() => this.listLoading.set(false))
+    );
   }
 
   createReminder(request: CreateReminderRequest, _recipient?: User, _createdBy?: User): Observable<Reminder> {
@@ -96,6 +107,9 @@ export class ReminderService {
     return {
       ...reminder,
       reminderDate: reminder.reminderDate.slice(0, 10),
+      participants: reminder.participants?.map(participant =>
+        'user' in participant ? participant.user : participant
+      ) ?? [],
       commentsCount: reminder._count?.comments ?? reminder.commentsCount ?? 0,
       attachmentsCount: reminder._count?.attachments ?? reminder.attachmentsCount ?? 0,
     };
