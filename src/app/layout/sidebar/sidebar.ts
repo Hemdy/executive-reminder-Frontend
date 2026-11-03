@@ -68,6 +68,11 @@ export class Sidebar {
       icon: '♢',
       route: '/notifications'
     },
+    {
+      label: 'Settings',
+      icon: '⚙',
+      route: '/settings'
+    },
   ];
 
   readonly adminNavigation: NavigationItem[] = [
@@ -83,12 +88,6 @@ export class Sidebar {
     //   route: '/users',
     //   permission: 'users:view'
     // },
-    {
-      label: 'Settings',
-      icon: '⚙',
-      route: '/settings',
-      permission: 'settings:view'
-    }
   ];
 
   isVisible(item: NavigationItem): boolean {

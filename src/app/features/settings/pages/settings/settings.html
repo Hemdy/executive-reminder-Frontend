@@ -1,0 +1,178 @@
+<main class="settings-page">
+  <header class="page-header">
+    <div>
+      <span class="eyebrow">Preferences</span>
+      <h1>Settings</h1>
+      <p>Manage device notifications and the updates you receive.</p>
+    </div>
+  </header>
+
+  <section class="settings-section" aria-labelledby="notifications-heading">
+    <div class="section-heading">
+      <div>
+        <h2 id="notifications-heading">Notifications</h2>
+        <p>Choose how you receive updates from your workspace.</p>
+      </div>
+    </div>
+
+    <div class="settings-options">
+      <button
+        class="settings-option"
+        type="button"
+        [class.selected]="activePanel() === 'enable'"
+        [attr.aria-expanded]="activePanel() === 'enable'"
+        aria-controls="enable-notifications-panel"
+        (click)="activePanel.set(activePanel() === 'enable' ? null : 'enable')"
+      >
+        <span class="option-icon" aria-hidden="true">♢</span>
+        <span class="option-copy">
+          <strong>Enable Notifications</strong>
+          <small>Allow this device to show alerts for important updates.</small>
+        </span>
+        <span class="option-arrow" aria-hidden="true">›</span>
+      </button>
+
+      <button
+        class="settings-option"
+        type="button"
+        [class.selected]="activePanel() === 'preferences'"
+        [attr.aria-expanded]="activePanel() === 'preferences'"
+        aria-controls="notification-preferences-panel"
+        (click)="activePanel.set(activePanel() === 'preferences' ? null : 'preferences')"
+      >
+        <span class="option-icon" aria-hidden="true">☷</span>
+        <span class="option-copy">
+          <strong>Manage Notification Preferences</strong>
+          <small>Choose which activity can send push notifications.</small>
+        </span>
+        <span class="option-arrow" aria-hidden="true">›</span>
+      </button>
+    </div>
+
+    @if (activePanel() === 'enable') {
+      <section id="enable-notifications-panel" class="settings-detail" aria-labelledby="enable-title">
+        <div class="detail-heading">
+          <div>
+            <h3 id="enable-title">Enable Notifications</h3>
+            <p>Turn on device notifications to receive timely workspace updates.</p>
+          </div>
+          <button class="back-button" type="button" (click)="activePanel.set(null)">
+            Back to options
+          </button>
+        </div>
+
+        @if (pushNotifications.requiresIosInstall()) {
+          <div class="ios-install-card" role="region" aria-label="iOS notification setup instructions">
+            <strong>iOS setup required for native notifications</strong>
+            <p>
+              Add this app to your Home Screen before alerts can appear in your iOS notification tray.
+            </p>
+            <ol>
+              <li>Tap the <strong>Share</strong> icon at the bottom of Safari.</li>
+              <li>Scroll down and tap <strong>Add to Home Screen</strong>.</li>
+              <li>Open the app from your Home Screen, then return here to enable notifications.</li>
+            </ol>
+          </div>
+        } @else if (pushNotifications.isSupported()) {
+          <p class="push-status" role="status">
+            @if (pushNotifications.statusMessage()) {
+              {{ pushNotifications.statusMessage() }}
+            } @else if (pushNotifications.isSubscribed() && pushNotifications.isRegistered()) {
+              Push notifications are enabled on this device.
+            } @else if (pushNotifications.isSubscribed()) {
+              Registering push notifications for this device...
+            } @else {
+              Enable device notifications for important updates.
+            }
+          </p>
+          @if (pushNotifications.statusError()) {
+            <p class="push-error" role="alert">{{ pushNotifications.statusError() }}</p>
+          }
+
+          <div class="detail-actions">
+            @if (pushNotifications.canEnable()) {
+              <button
+                class="primary-button"
+                type="button"
+                [disabled]="pushNotifications.isBusy() || pushNotifications.isConfigLoading()"
+                (click)="pushNotifications.enable()"
+              >
+                {{ pushNotifications.isConfigLoading() ? 'Checking availability...' : pushNotifications.isBusy() ? 'Enabling...' : 'Enable Notifications' }}
+              </button>
+            } @else if (pushNotifications.isSubscribed()) {
+              <button
+                class="secondary-button"
+                type="button"
+                [disabled]="pushNotifications.isBusy()"
+                (click)="pushNotifications.disable()"
+              >
+                {{ pushNotifications.isBusy() ? 'Updating...' : 'Disable Notifications' }}
+              </button>
+            }
+          </div>
+        } @else {
+          <p class="push-status" role="status">
+            Device notifications are not supported in this browser.
+          </p>
+        }
+      </section>
+    }
+
+    @if (activePanel() === 'preferences') {
+      <section
+        id="notification-preferences-panel"
+        class="settings-detail"
+        aria-labelledby="preferences-title"
+      >
+        <div class="detail-heading">
+          <div>
+            <h3 id="preferences-title">Notification Preferences</h3>
+            <p>Choose which updates can appear as push notifications. In-app notifications remain enabled.</p>
+          </div>
+          <button class="back-button" type="button" (click)="activePanel.set(null)">
+            Back to options
+          </button>
+        </div>
+
+        @if (pushNotifications.isSupported()) {
+          @if (pushNotifications.preferencesMessage()) {
+            <p class="preference-message" role="status">
+              {{ pushNotifications.preferencesMessage() }}
+            </p>
+          }
+
+          @if (pushNotifications.isLoadingPreferences()) {
+            <p class="push-status" role="status">Loading notification preferences...</p>
+          } @else {
+            <div class="preference-grid">
+              <label class="preference-option">
+                <span><strong>Tasks</strong><small>Assignments, updates, deadlines, and comments</small></span>
+                <input type="checkbox" [checked]="pushNotifications.preferences().tasks" [disabled]="pushNotifications.isSavingPreferences()" (change)="setPreference('tasks', $event)" />
+              </label>
+              <label class="preference-option">
+                <span><strong>Reminders</strong><small>Changes, due alerts, and status updates</small></span>
+                <input type="checkbox" [checked]="pushNotifications.preferences().reminders" [disabled]="pushNotifications.isSavingPreferences()" (change)="setPreference('reminders', $event)" />
+              </label>
+              <label class="preference-option">
+                <span><strong>Requests</strong><small>Submissions, decisions, and comments</small></span>
+                <input type="checkbox" [checked]="pushNotifications.preferences().requests" [disabled]="pushNotifications.isSavingPreferences()" (change)="setPreference('requests', $event)" />
+              </label>
+              <label class="preference-option">
+                <span><strong>Meetings</strong><small>Invitations, changes, and scheduled alerts</small></span>
+                <input type="checkbox" [checked]="pushNotifications.preferences().meetings" [disabled]="pushNotifications.isSavingPreferences()" (change)="setPreference('meetings', $event)" />
+              </label>
+            </div>
+          }
+
+          @if (pushNotifications.preferencesError()) {
+            <p class="preference-error" role="alert">{{ pushNotifications.preferencesError() }}</p>
+          }
+        } @else {
+          <p class="push-status" role="status">
+            Device notification preferences are unavailable because notifications are not supported in this browser.
+          </p>
+        }
+      </section>
+    }
+  </section>
+</main>

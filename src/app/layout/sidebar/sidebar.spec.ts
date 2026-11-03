@@ -49,7 +49,7 @@ describe('Sidebar', () => {
 
   it('shows privileged navigation for Admin users with the configured permissions', () => {
     roles.push('ADMIN');
-    permissions.push('roles:view', 'settings:view');
+    permissions.push('roles:view');
     fixture.destroy();
     fixture = TestBed.createComponent(Sidebar);
     component = fixture.componentInstance;
@@ -73,7 +73,7 @@ describe('Sidebar', () => {
 
   it('shows Roles and Settings to a Director with those grants', () => {
     roles.push('DIRECTOR');
-    permissions.push('roles:view', 'settings:view');
+    permissions.push('roles:view');
     fixture.destroy();
     fixture = TestBed.createComponent(Sidebar);
     component = fixture.componentInstance;
@@ -83,7 +83,7 @@ describe('Sidebar', () => {
     expect(fixture.nativeElement.textContent).toContain('Settings');
   });
 
-  it('does not show Roles or Settings without their explicit permissions', () => {
+  it('shows Settings to a regular user without settings permissions', () => {
     roles.push('COMPLIANCE OFFICER');
     fixture.destroy();
     fixture = TestBed.createComponent(Sidebar);
@@ -91,6 +91,6 @@ describe('Sidebar', () => {
     fixture.detectChanges();
 
     expect(fixture.nativeElement.textContent).not.toContain('Roles');
-    expect(fixture.nativeElement.textContent).not.toContain('Settings');
+    expect(fixture.nativeElement.textContent).toContain('Settings');
   });
 });

@@ -156,6 +156,13 @@ loadComponent: () =>
         },
 
         {
+          path: 'settings',
+          loadComponent: () =>
+            import('./features/settings/pages/settings/settings')
+              .then(m => m.Settings)
+        },
+
+        {
           path: 'calendar',
           loadComponent: () =>
             import('./features/calendar/pages/calendar/calendar')
@@ -175,14 +182,6 @@ loadComponent: () =>
       //     loadComponent: () =>
       //       import('./features/users/pages/user-list/user-list.component')
       //         .then(m => m.UserListComponent)
-      //   },
-
-      //   {
-      //     path: 'settings',
-      //     canActivate: [roleGuard(['ADMIN'])],
-      //     loadComponent: () =>
-      //       import('./features/settings/pages/settings/settings.component')
-      //         .then(m => m.SettingsComponent)
       //   },
 
       {
