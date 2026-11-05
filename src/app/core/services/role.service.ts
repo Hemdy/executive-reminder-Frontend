@@ -102,8 +102,8 @@ export class RoleService {
     );
   }
 
-  deleteUser(id: string): Observable<{ id: string; deleted: boolean }> {
-    return this.http.delete<{ id: string; deleted: boolean }>(`${this.apiUrl}/users/${id}`).pipe(
+  deleteUser(id: string): Observable<{ id: string; deleted: boolean; softDeleted?: boolean }> {
+    return this.http.delete<{ id: string; deleted: boolean; softDeleted?: boolean }>(`${this.apiUrl}/users/${id}`).pipe(
       tap(() => this.usersSignal.update(users => users.filter(user => user.id !== id)))
     );
   }

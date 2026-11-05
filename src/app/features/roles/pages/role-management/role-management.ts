@@ -54,6 +54,8 @@ export class RoleManagement implements OnInit {
   readonly showRoleForm = signal(false);
   readonly isSavingUser = signal(false);
   readonly isSavingRole = signal(false);
+  readonly userActionId = signal<string | null>(null);
+  readonly userAction = signal<'status' | 'delete' | null>(null);
   readonly selectedRole = signal<ManagedRole | null>(null);
   readonly formError = signal('');
   private readonly userEditor = viewChild<ElementRef<HTMLFormElement>>('userEditor');
@@ -241,17 +243,37 @@ readonly permissionOptions = [
   }
 
   toggleUser(user: ManagedUser): void {
-    this.roleService.setUserActive(user.id, !user.isActive).subscribe({
-      error: error => this.showRequestError(error)
+    if (this.userActionId()) {
+      return;
+    }
+    this.userActionId.set(user.id);
+    this.userAction.set('status');
+    this.roleService.setUserActive(user.id, !user.isActive).pipe(
+      finalize(() => {
+        this.userActionId.set(null);
+        this.userAction.set(null);
+      })
+    ).subscribe({
+      next: () => this.toast.success(`User ${user.isActive ? 'deactivated' : 'reactivated'} successfully.`),
+      error: error => this.showRequestError(error, 'Unable to update user status.')
     });
   }
 
   removeUser(user: ManagedUser): void {
-    if (confirm(`Delete ${user.firstName} ${user.lastName}?`)) {
-      this.roleService.deleteUser(user.id).subscribe({
-        error: error => this.showRequestError(error)
-      });
+    if (this.userActionId() || !confirm(`Delete ${user.firstName} ${user.lastName}?`)) {
+      return;
     }
+    this.userActionId.set(user.id);
+    this.userAction.set('delete');
+    this.roleService.deleteUser(user.id).pipe(
+      finalize(() => {
+        this.userActionId.set(null);
+        this.userAction.set(null);
+      })
+    ).subscribe({
+      next: () => this.toast.success('User deleted successfully.'),
+      error: error => this.showRequestError(error, 'Unable to delete user.')
+    });
   }
 
   openNewRole(): void {

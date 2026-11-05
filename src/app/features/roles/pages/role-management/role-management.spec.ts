@@ -5,7 +5,7 @@ import { AuthService } from '../../../../core/services/auth.service';
 import { RoleService } from '../../../../core/services/role.service';
 import { ToastService } from '../../../../core/services/toast.service';
 import { RoleManagement } from './role-management';
-import { Subject, of, throwError } from 'rxjs';
+import { Subject, of, tap, throwError } from 'rxjs';
 
 describe('RoleManagement', () => {
   let component: RoleManagement;
@@ -13,7 +13,10 @@ describe('RoleManagement', () => {
   const roles = signal<ManagedRole[]>([]);
   const users = signal<ManagedUser[]>([]);
   let currentRole = 'ADMIN';
-  const permissions = ['roles:view', 'roles:edit', 'roles:create', 'roles:delete', 'users:view'];
+  const permissions = [
+    'roles:view', 'roles:edit', 'roles:create', 'roles:delete',
+    'users:view', 'users:edit', 'users:delete'
+  ];
   const savedUser: ManagedUser = {
     id: 'user-1',
     firstName: 'Ada',
@@ -37,8 +40,15 @@ describe('RoleManagement', () => {
     loadUsers: vi.fn(() => of([])),
     createUser: vi.fn(() => of(savedUser)),
     updateUser: vi.fn(() => of(savedUser)),
-    setUserActive: vi.fn(() => of(savedUser)),
-    deleteUser: vi.fn(() => of({ id: savedUser.id, deleted: true })),
+    setUserActive: vi.fn((id: string, isActive: boolean) => {
+      const updated = { ...savedUser, id, isActive };
+      return of(updated).pipe(
+        tap(user => users.update(current => current.map(existing => existing.id === user.id ? user : existing)))
+      );
+    }),
+    deleteUser: vi.fn((id: string) => of({ id, deleted: true }).pipe(
+      tap(() => users.update(current => current.filter(user => user.id !== id)))
+    )),
     createRole: vi.fn(() => of(savedRole)),
     updateRole: vi.fn(() => of(savedRole)),
     setRoleActive: vi.fn(() => of(savedRole)),
@@ -64,13 +74,25 @@ describe('RoleManagement', () => {
     roles.set([]);
     users.set([]);
     currentRole = 'ADMIN';
-    permissions.splice(0, permissions.length, 'roles:view', 'roles:edit', 'roles:create', 'roles:delete', 'users:view');
+    permissions.splice(
+      0,
+      permissions.length,
+      'roles:view', 'roles:edit', 'roles:create', 'roles:delete',
+      'users:view', 'users:edit', 'users:delete'
+    );
     roleServiceMock.loadRoles.mockClear();
     roleServiceMock.loadUsers.mockClear();
     roleServiceMock.createUser.mockReset().mockReturnValue(of(savedUser));
     roleServiceMock.updateUser.mockReset().mockReturnValue(of(savedUser));
-    roleServiceMock.setUserActive.mockClear();
-    roleServiceMock.deleteUser.mockClear();
+    roleServiceMock.setUserActive.mockReset().mockImplementation((id, isActive) => {
+      const updated = { ...savedUser, id, isActive };
+      return of(updated).pipe(
+        tap(user => users.update(current => current.map(existing => existing.id === user.id ? user : existing)))
+      );
+    });
+    roleServiceMock.deleteUser.mockReset().mockImplementation(id => of({ id, deleted: true }).pipe(
+      tap(() => users.update(current => current.filter(user => user.id !== id)))
+    ));
     roleServiceMock.createRole.mockReset().mockReturnValue(of(savedRole));
     roleServiceMock.updateRole.mockReset().mockReturnValue(of(savedRole));
     roleServiceMock.setRoleActive.mockClear();
@@ -237,6 +259,95 @@ describe('RoleManagement', () => {
       type: 'error',
       message: 'User update failed.'
     });
+  });
+
+  it('deactivates and reactivates users with progress feedback and duplicate-submit protection', () => {
+    const pendingStatus = new Subject<ManagedUser>();
+    roleServiceMock.setUserActive.mockReturnValue(pendingStatus.pipe(
+      tap(updated => users.update(current =>
+        current.map(existing => existing.id === updated.id ? updated : existing)
+      ))
+    ));
+    users.set([savedUser]);
+    const toast = TestBed.inject(ToastService);
+
+    component.toggleUser(savedUser);
+    fixture.detectChanges();
+
+    expect(component.userActionId()).toBe(savedUser.id);
+    expect(fixture.nativeElement.textContent).toContain('Deactivating...');
+    component.toggleUser(savedUser);
+    expect(roleServiceMock.setUserActive).toHaveBeenCalledOnce();
+
+    pendingStatus.next({ ...savedUser, isActive: false });
+    pendingStatus.complete();
+    fixture.detectChanges();
+    expect(component.userActionId()).toBeNull();
+    expect(users()[0].isActive).toBe(false);
+    expect(toast.current()?.message).toBe('User deactivated successfully.');
+
+    roleServiceMock.setUserActive.mockReturnValue(of({ ...savedUser, isActive: true }));
+    component.toggleUser({ ...savedUser, isActive: false });
+    expect(roleServiceMock.setUserActive).toHaveBeenLastCalledWith(savedUser.id, true);
+    expect(toast.current()?.message).toBe('User reactivated successfully.');
+  });
+
+  it('soft-deletes a user with progress feedback and refreshes the local list on success', () => {
+    const pendingDelete = new Subject<{ id: string; deleted: boolean }>();
+    roleServiceMock.deleteUser.mockReturnValue(pendingDelete.pipe(
+      tap(() => users.update(current => current.filter(user => user.id !== savedUser.id)))
+    ));
+    users.set([savedUser]);
+    const confirmSpy = vi.spyOn(window, 'confirm').mockReturnValue(true);
+    const toast = TestBed.inject(ToastService);
+
+    component.removeUser(savedUser);
+    fixture.detectChanges();
+
+    expect(component.userActionId()).toBe(savedUser.id);
+    expect(fixture.nativeElement.textContent).toContain('Deleting...');
+    component.removeUser(savedUser);
+    expect(roleServiceMock.deleteUser).toHaveBeenCalledOnce();
+
+    pendingDelete.next({ id: savedUser.id, deleted: true });
+    pendingDelete.complete();
+    fixture.detectChanges();
+    expect(component.userActionId()).toBeNull();
+    expect(users()).toEqual([]);
+    expect(toast.current()?.message).toBe('User deleted successfully.');
+    confirmSpy.mockRestore();
+  });
+
+  it('shows an error and restores user action controls when deactivation fails', () => {
+    roleServiceMock.setUserActive.mockReturnValue(
+      throwError(() => ({ error: { message: 'The last active administrator cannot be deactivated.' } }))
+    );
+    const toast = TestBed.inject(ToastService);
+
+    component.toggleUser(savedUser);
+
+    expect(component.userActionId()).toBeNull();
+    expect(toast.current()).toMatchObject({
+      type: 'error',
+      message: 'The last active administrator cannot be deactivated.'
+    });
+  });
+
+  it('shows a deletion error and restores the delete control', () => {
+    roleServiceMock.deleteUser.mockReturnValue(
+      throwError(() => ({ error: { message: 'User deletion failed.' } }))
+    );
+    const confirmSpy = vi.spyOn(window, 'confirm').mockReturnValue(true);
+    const toast = TestBed.inject(ToastService);
+
+    component.removeUser(savedUser);
+
+    expect(component.userActionId()).toBeNull();
+    expect(toast.current()).toMatchObject({
+      type: 'error',
+      message: 'User deletion failed.'
+    });
+    confirmSpy.mockRestore();
   });
 
   it.each([

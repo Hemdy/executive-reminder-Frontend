@@ -59,11 +59,19 @@
               <td data-label="Status"><span [class]="user.isActive ? 'state active-state' : 'state inactive-state'">{{ user.isActive ? 'Active' : 'Inactive' }}</span></td>
               <td class="actions" data-label="Actions">
                 @if (authService.hasPermission('users:edit')) {
-                  <button type="button" (click)="editUser(user)">Edit</button>
-                  <!-- <button type="button" (click)="toggleUser(user)">{{ user.isActive ? 'Deactivate' : 'Activate' }}</button> -->
+                  <button type="button" (click)="editUser(user)" [disabled]="userActionId() !== null">Edit</button>
+                  <button type="button" (click)="toggleUser(user)" [disabled]="userActionId() !== null">
+                    @if (userActionId() === user.id && userAction() === 'status') {
+                      {{ user.isActive ? 'Deactivating...' : 'Activating...' }}
+                    } @else {
+                      {{ user.isActive ? 'Deactivate' : 'Activate' }}
+                    }
+                  </button>
                 }
                 @if (authService.hasPermission('users:delete')) {
-                  <button type="button" class="danger" (click)="removeUser(user)">Delete</button>
+                  <button type="button" class="danger" (click)="removeUser(user)" [disabled]="userActionId() !== null">
+                    {{ userActionId() === user.id && userAction() === 'delete' ? 'Deleting...' : 'Delete' }}
+                  </button>
                 }
               </td>
             </tr>
