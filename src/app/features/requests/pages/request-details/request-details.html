@@ -11,13 +11,15 @@
 
     <div class="top-actions">
 
-      <button
-        class="secondary-button"
-        type="button"
-        (click)="editRequest()"
-      >
-        Edit Request
-      </button>
+      @if (canManageRequest()) {
+        <button
+          class="secondary-button"
+          type="button"
+          (click)="editRequest()"
+        >
+          Edit Request
+        </button>
+      }
 
       @if (canApprove()) {
         <button
@@ -345,7 +347,8 @@
           canReject() ||
           canRequestInformation() ||
           canComplete() ||
-          canReopen()
+          canReopen() ||
+          canManageRequest()
         ) {
 
           <div class="content-card">
@@ -407,6 +410,7 @@
               }
 
               @if (
+                canManageRequest() &&
                 request.status !== 'COMPLETED' &&
                 request.status !== 'CANCELLED'
               ) {
@@ -419,14 +423,16 @@
                 </button>
               }
 
-              <button
-                class="action-button delete"
-                type="button"
-                [disabled]="isDeleting()"
-                (click)="deleteRequest()"
-              >
-                {{ isDeleting() ? 'Deleting request...' : 'Delete Request' }}
-              </button>
+              @if (canManageRequest()) {
+                <button
+                  class="action-button delete"
+                  type="button"
+                  [disabled]="isDeleting()"
+                  (click)="deleteRequest()"
+                >
+                  {{ isDeleting() ? 'Deleting request...' : 'Delete Request' }}
+                </button>
+              }
 
             </div>
 

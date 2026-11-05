@@ -22,7 +22,9 @@ export class TaskService {
   readonly listError = signal('');
   readonly pendingTasks = computed(() => this.tasksSignal().filter(task => task.status === 'PENDING'));
   readonly inProgressTasks = computed(() => this.tasksSignal().filter(task => task.status === 'IN_PROGRESS'));
-  readonly completedTasks = computed(() => this.tasksSignal().filter(task => task.status === 'COMPLETED'));
+  readonly completedTasks = computed(() =>
+    this.tasksSignal().filter(task => task.status === 'COMPLETED' || task.status === 'CLOSED')
+  );
 
   constructor() {
     this.loadTasks().subscribe({ error: error => console.error('Unable to load tasks', error) });
@@ -103,7 +105,7 @@ export class TaskService {
   }
 
   isOverdue(task: Task): boolean {
-    if (task.status === 'COMPLETED' || task.status === 'CANCELLED') return false;
+    if (task.status === 'COMPLETED' || task.status === 'CLOSED' || task.status === 'CANCELLED') return false;
     return new Date(`${task.dueDate}T${task.dueTime || '23:59'}`).getTime() < Date.now();
   }
 

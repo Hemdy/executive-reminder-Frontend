@@ -17,7 +17,12 @@ const currentUser: User = {
 };
 const currentUserSignal = signal<User | null>(currentUser);
 
-function makeReminder(id: string, recipientId: string, participantIds: string[] = []): Reminder {
+function makeReminder(
+  id: string,
+  recipientId: string,
+  participantIds: string[] = [],
+  createdById = 'creator'
+): Reminder {
   const user = (userId: string): User => ({
     id: userId,
     firstName: userId,
@@ -30,7 +35,7 @@ function makeReminder(id: string, recipientId: string, participantIds: string[] 
     title: id,
     recipient: user(recipientId),
     participants: participantIds.map(user),
-    createdBy: user('creator'),
+    createdBy: user(createdById),
     priority: 'MEDIUM',
     category: 'General',
     reminderDate: '2030-01-01',
@@ -53,7 +58,10 @@ describe('ReminderList', () => {
       imports: [ReminderList],
       providers: [{
         provide: AuthService,
-        useValue: { currentUser: currentUserSignal.asReadonly() }
+        useValue: {
+          currentUser: currentUserSignal.asReadonly(),
+          hasPermission: () => true
+        }
       }]
     })
     .compileComponents();
@@ -70,6 +78,11 @@ describe('ReminderList', () => {
   it('deletes the individually selected reminders after confirmation', () => {
     const reminderService = TestBed.inject(ReminderService);
     const deleteReminder = vi.spyOn(reminderService, 'deleteReminder').mockReturnValue(of(undefined));
+    vi.spyOn(reminderService, 'reminders').mockReturnValue([
+      makeReminder('reminder-1', 'another-user', [], 'current-user'),
+      makeReminder('reminder-2', 'another-user', [], 'current-user')
+    ]);
+    currentUserSignal.set({ ...currentUser });
     vi.spyOn(window, 'confirm').mockReturnValue(true);
 
     component.toggleSelection('reminder-1', true);
@@ -87,6 +100,7 @@ describe('ReminderList', () => {
     vi.spyOn(reminderService, 'reminders').mockReturnValue([
       makeReminder('recipient', 'current-user'),
       makeReminder('participant', 'another-user', ['current-user']),
+      makeReminder('created', 'another-user', [], 'current-user'),
       makeReminder('unrelated', 'another-user')
     ]);
     currentUserSignal.set({ ...currentUser, id: 'another-user' });
@@ -94,6 +108,10 @@ describe('ReminderList', () => {
     component.searchTerm.set('refresh');
     component.searchTerm.set('');
 
-    expect(component.reminders().map(reminder => reminder.id)).toEqual(['recipient', 'participant']);
+    expect(component.reminders().map(reminder => reminder.id)).toEqual([
+      'recipient',
+      'participant',
+      'created'
+    ]);
   });
 });

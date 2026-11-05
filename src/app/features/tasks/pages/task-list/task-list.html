@@ -42,6 +42,7 @@
       <option value="PENDING">Pending</option>
       <option value="IN_PROGRESS">In Progress</option>
       <option value="COMPLETED">Completed</option>
+      <option value="CLOSED">Closed</option>
       <option value="CANCELLED">Cancelled</option>
     </select>
 
@@ -159,20 +160,21 @@
 
           <thead>
             <tr>
-              <th class="selection-column">
-                <label class="select-all-label">
-                  <input
-                    type="checkbox"
-                    class="selection-checkbox"
-                    aria-label="Select all visible tasks"
-                    [checked]="allVisibleSelected()"
-                    [indeterminate]="someVisibleSelected()"
-                    [disabled]="deletingSelected()"
-                    (change)="toggleAllSelection($any($event.target).checked)"
-                  />
-                  <!-- <span>Select all</span> -->
-                </label>
-              </th>
+              @if (manageableTasks().length > 0) {
+                <th class="selection-column">
+                  <label class="select-all-label">
+                    <input
+                      type="checkbox"
+                      class="selection-checkbox"
+                      aria-label="Select all visible tasks"
+                      [checked]="allVisibleSelected()"
+                      [indeterminate]="someVisibleSelected()"
+                      [disabled]="deletingSelected()"
+                      (change)="toggleAllSelection($any($event.target).checked)"
+                    />
+                  </label>
+                </th>
+              }
               <th>Task</th>
               <th>Assignee</th>
               <th>Priority</th>
@@ -196,17 +198,19 @@
                 (click)="viewTask(task)"
               >
 
-                <td class="selection-column">
-                  <input
-                    type="checkbox"
-                    class="selection-checkbox"
-                    [attr.aria-label]="'Select task ' + task.title"
-                    [checked]="isSelected(task.id)"
-                    [disabled]="deletingSelected()"
-                    (click)="$event.stopPropagation()"
-                    (change)="toggleSelection(task.id, $any($event.target).checked)"
-                  />
-                </td>
+                @if (canDeleteTask(task)) {
+                  <td class="selection-column">
+                    <input
+                      type="checkbox"
+                      class="selection-checkbox"
+                      [attr.aria-label]="'Select task ' + task.title"
+                      [checked]="isSelected(task.id)"
+                      [disabled]="deletingSelected()"
+                      (click)="$event.stopPropagation()"
+                      (change)="toggleSelection(task.id, $any($event.target).checked)"
+                    />
+                  </td>
+                }
 
                 <td>
                   <div class="task-title">
@@ -266,7 +270,7 @@
                     class="status-badge"
                     [class.status-pending]="task.status === 'PENDING'"
                     [class.status-progress]="task.status === 'IN_PROGRESS'"
-                    [class.status-completed]="task.status === 'COMPLETED'"
+                    [class.status-completed]="task.status === 'COMPLETED' || task.status === 'CLOSED'"
                     [class.status-cancelled]="task.status === 'CANCELLED'"
                   >
                     {{ getStatusLabel(task.status) }}

@@ -168,7 +168,7 @@
         [disabled]="isSaving()"
       >
         @if (isSaving()) {
-          {{ isEditMode() ? 'Saving changes...' : 'Creating request...' }}
+          {{ isEditMode() ? 'Updating request...' : 'Creating request...' }}
         } @else {
           {{ isEditMode() ? 'Save Changes' : 'Create Request' }}
         }

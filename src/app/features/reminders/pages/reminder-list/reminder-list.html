@@ -170,20 +170,21 @@
 
           <thead>
             <tr>
-              <th class="selection-column">
-                <label class="select-all-label">
-                  <input
-                    type="checkbox"
-                    class="selection-checkbox"
-                    aria-label="Select all visible reminders"
-                    [checked]="allVisibleSelected()"
-                    [indeterminate]="someVisibleSelected()"
-                    [disabled]="deletingSelected()"
-                    (change)="toggleAllSelection($any($event.target).checked)"
-                  />
-                  <!-- <span>Select all</span> -->
-                </label>
-              </th>
+              @if (manageableReminders().length > 0) {
+                <th class="selection-column">
+                  <label class="select-all-label">
+                    <input
+                      type="checkbox"
+                      class="selection-checkbox"
+                      aria-label="Select all visible reminders"
+                      [checked]="allVisibleSelected()"
+                      [indeterminate]="someVisibleSelected()"
+                      [disabled]="deletingSelected()"
+                      (change)="toggleAllSelection($any($event.target).checked)"
+                    />
+                  </label>
+                </th>
+              }
               <th>Reminder</th>
               <th>Recipient</th>
               <th>Priority</th>
@@ -208,17 +209,19 @@
                 (click)="viewReminder(reminder)"
               >
 
-                <td class="selection-column">
-                  <input
-                    type="checkbox"
-                    class="selection-checkbox"
-                    [attr.aria-label]="'Select reminder ' + reminder.title"
-                    [checked]="isSelected(reminder.id)"
-                    [disabled]="deletingSelected()"
-                    (click)="$event.stopPropagation()"
-                    (change)="toggleSelection(reminder.id, $any($event.target).checked)"
-                  />
-                </td>
+                @if (canDeleteReminder(reminder)) {
+                  <td class="selection-column">
+                    <input
+                      type="checkbox"
+                      class="selection-checkbox"
+                      [attr.aria-label]="'Select reminder ' + reminder.title"
+                      [checked]="isSelected(reminder.id)"
+                      [disabled]="deletingSelected()"
+                      (click)="$event.stopPropagation()"
+                      (change)="toggleSelection(reminder.id, $any($event.target).checked)"
+                    />
+                  </td>
+                }
 
                 <td>
                   <div class="reminder-title">

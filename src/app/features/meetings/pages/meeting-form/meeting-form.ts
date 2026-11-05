@@ -28,6 +28,7 @@ import {
 } from '../../../../core/models/meeting.model';
 
 import { MeetingService } from '../../../../core/services/meeting.service';
+import { AuthService } from '../../../../core/services/auth.service';
 import { ContentSkeleton } from '../../../../core/components/content-skeleton/content-skeleton';
 import { RoleService } from '../../../../core/services/role.service';
 import { LoadingService } from '../../../../core/services/loading.service';
@@ -54,6 +55,7 @@ export class MeetingForm {
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
   private readonly meetingService = inject(MeetingService);
+  private readonly authService = inject(AuthService);
   private readonly roleService = inject(RoleService);
   private readonly loading = inject(LoadingService);
   private readonly toast = inject(ToastService);
@@ -156,6 +158,10 @@ export class MeetingForm {
       this.router.navigate(['/meetings']);
       return;
     }
+    if (meeting.organizer.id !== this.authService.currentUser()?.id) {
+      void this.router.navigate(['/meetings']);
+      return;
+    }
 
     this.form.patchValue({
       title: meeting.title,
@@ -184,6 +190,8 @@ export class MeetingForm {
     const values = this.form.getRawValue();
 
     if (this.isEditMode()) {
+      this.isSaving.set(true);
+      const loadingTask = this.loading.begin('Updating meeting…');
       const updateRequest: UpdateMeetingRequest = {
         title: values.title,
         description: values.description || undefined,
@@ -201,8 +209,16 @@ export class MeetingForm {
         this.meetingId()!,
         updateRequest
       ).subscribe({
-        next: () => this.router.navigate(['/meetings', this.meetingId()!]),
-        error: error => this.form.setErrors({ api: error.error?.message ?? 'Unable to update the meeting.' })
+        next: () => {
+          this.isSaving.set(false);
+          this.loading.end(loadingTask);
+          void this.router.navigate(['/meetings', this.meetingId()!]);
+        },
+        error: error => {
+          this.isSaving.set(false);
+          this.loading.end(loadingTask);
+          this.form.setErrors({ api: error.error?.message ?? 'Unable to update the meeting.' });
+        }
       });
 
       return;

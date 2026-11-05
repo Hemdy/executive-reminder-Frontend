@@ -17,7 +17,12 @@ const currentUser: User = {
 };
 const currentUserSignal = signal<User | null>(currentUser);
 
-function makeTask(id: string, assignedToId: string, participantIds: string[] = []): Task {
+function makeTask(
+  id: string,
+  assignedToId: string,
+  participantIds: string[] = [],
+  createdById = 'creator'
+): Task {
   const user = (userId: string): User => ({
     id: userId,
     firstName: userId,
@@ -30,7 +35,7 @@ function makeTask(id: string, assignedToId: string, participantIds: string[] = [
     title: id,
     assignedTo: user(assignedToId),
     participants: participantIds.map(userId => ({ user: user(userId) })),
-    createdBy: user('creator'),
+    createdBy: user(createdById),
     priority: 'MEDIUM',
     category: 'General',
     dueDate: '2030-01-01',
@@ -51,7 +56,10 @@ describe('TaskList', () => {
       imports: [TaskList],
       providers: [{
         provide: AuthService,
-        useValue: { currentUser: currentUserSignal.asReadonly() }
+        useValue: {
+          currentUser: currentUserSignal.asReadonly(),
+          hasPermission: () => true
+        }
       }]
     })
     .compileComponents();
@@ -68,10 +76,16 @@ describe('TaskList', () => {
   it('deletes the individually selected tasks after confirmation', () => {
     const taskService = TestBed.inject(TaskService);
     const deleteTask = vi.spyOn(taskService, 'deleteTask').mockReturnValue(of(undefined));
+    vi.spyOn(taskService, 'tasks').mockReturnValue([
+      makeTask('task-1', 'another-user', [], 'current-user'),
+      makeTask('task-2', 'another-user', [], 'current-user')
+    ]);
+    currentUserSignal.set({ ...currentUser });
     vi.spyOn(window, 'confirm').mockReturnValue(true);
 
     component.toggleSelection('task-1', true);
     component.toggleSelection('task-2', true);
+    expect(component.selectedCount()).toBe(2);
     component.deleteSelected();
 
     expect(deleteTask).toHaveBeenCalledTimes(2);
@@ -85,6 +99,7 @@ describe('TaskList', () => {
     vi.spyOn(taskService, 'tasks').mockReturnValue([
       makeTask('assigned', 'current-user'),
       makeTask('participant', 'another-user', ['current-user']),
+      makeTask('created', 'another-user', [], 'current-user'),
       makeTask('unrelated', 'another-user')
     ]);
     currentUserSignal.set({ ...currentUser, id: 'another-user' });
@@ -92,6 +107,21 @@ describe('TaskList', () => {
     component.searchTerm.set('refresh');
     component.searchTerm.set('');
 
-    expect(component.tasks().map(task => task.id)).toEqual(['assigned', 'participant']);
+    expect(component.tasks().map(task => task.id)).toEqual(['assigned', 'participant', 'created']);
+  });
+
+  it('does not allow assignees to select another user’s task for deletion', () => {
+    const taskService = TestBed.inject(TaskService);
+    const deleteTask = vi.spyOn(taskService, 'deleteTask');
+    vi.spyOn(taskService, 'tasks').mockReturnValue([
+      makeTask('owned-by-another', 'current-user')
+    ]);
+    currentUserSignal.set({ ...currentUser });
+
+    component.toggleSelection('owned-by-another', true);
+    component.deleteSelected();
+
+    expect(deleteTask).not.toHaveBeenCalled();
+    expect(component.selectedCount()).toBe(0);
   });
 });

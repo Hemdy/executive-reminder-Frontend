@@ -175,6 +175,30 @@
   font-size: 11px;
 }
 
+.dashboard-status-item {
+  color: inherit;
+  text-decoration: none;
+  border-radius: 8px;
+
+  &:hover {
+    background: rgba(31, 75, 153, 0.06);
+  }
+}
+
+.status-count {
+  display: grid !important;
+  min-width: 28px;
+  height: 28px;
+  place-items: center;
+  margin: 0 !important;
+  padding: 0 7px;
+  border-radius: 14px;
+  background: #e8eef8;
+  color: var(--primary) !important;
+  font-size: 12px !important;
+  font-weight: 700;
+}
+
 .schedule-marker {
   width: 8px;
   height: 8px;

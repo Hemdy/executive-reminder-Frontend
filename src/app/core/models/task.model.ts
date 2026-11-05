@@ -10,6 +10,7 @@ export type TaskStatus =
   | 'PENDING'
   | 'IN_PROGRESS'
   | 'COMPLETED'
+  | 'CLOSED'
   | 'CANCELLED';
 
 export interface Task {

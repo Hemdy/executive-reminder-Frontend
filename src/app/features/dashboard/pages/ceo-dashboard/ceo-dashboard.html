@@ -218,6 +218,58 @@
       </div>
     </article>
 
+    <article class="dashboard-card">
+      <div class="card-header">
+        <div>
+          <h2>In Progress</h2>
+          <span>Tasks, reminders, requests, and meetings in progress</span>
+        </div>
+        <span class="status-count" [attr.aria-label]="inProgressItems().length + ' items in progress'">
+          {{ inProgressItems().length }}
+        </span>
+      </div>
+      <div class="schedule-list">
+        @for (item of inProgressItems(); track item.type + item.id) {
+          <a class="schedule-item dashboard-status-item" [routerLink]="item.route">
+            <time>{{ item.date | date:'mediumDate' }}</time>
+            <div class="schedule-marker"></div>
+            <div class="schedule-content">
+              <strong>{{ item.title }}</strong>
+              <span>{{ item.type }} · {{ item.owner }}</span>
+            </div>
+          </a>
+        } @empty {
+          <div class="empty-placeholder">No items in progress.</div>
+        }
+      </div>
+    </article>
+
+    <article class="dashboard-card">
+      <div class="card-header">
+        <div>
+          <h2>Completed</h2>
+          <span>Completed tasks, reminders, requests, and meetings</span>
+        </div>
+        <span class="status-count" [attr.aria-label]="completedItems().length + ' completed items'">
+          {{ completedItems().length }}
+        </span>
+      </div>
+      <div class="schedule-list">
+        @for (item of completedItems(); track item.type + item.id) {
+          <a class="schedule-item dashboard-status-item" [routerLink]="item.route">
+            <time>{{ item.date | date:'mediumDate' }}</time>
+            <div class="schedule-marker"></div>
+            <div class="schedule-content">
+              <strong>{{ item.title }}</strong>
+              <span>{{ item.type }} · {{ item.owner }}</span>
+            </div>
+          </a>
+        } @empty {
+          <div class="empty-placeholder">No completed items.</div>
+        }
+      </div>
+    </article>
+
   </section>
 
 

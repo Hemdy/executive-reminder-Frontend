@@ -317,7 +317,7 @@
         [disabled]="isSaving()"
       >
         @if (isSaving()) {
-          {{ isEditMode() ? 'Saving changes...' : 'Scheduling meeting...' }}
+          {{ isEditMode() ? 'Updating meeting...' : 'Scheduling meeting...' }}
         } @else {
           {{ isEditMode() ? 'Save Changes' : 'Schedule Meeting' }}
         }

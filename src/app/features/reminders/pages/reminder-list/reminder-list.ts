@@ -9,6 +9,7 @@ import { Router, RouterModule } from '@angular/router';
 import { ContentSkeleton } from '../../../../core/components/content-skeleton/content-skeleton';
 import { AuthService } from '../../../../core/services/auth.service';
 import { ReminderService } from '../../../../core/services/reminder.service';
+import { LoadingService } from '../../../../core/services/loading.service';
 import { catchError, from, map, mergeMap, of, toArray } from 'rxjs';
 import {
   Reminder,
@@ -44,6 +45,7 @@ export class ReminderList {
 
   private readonly authService = inject(AuthService);
   private readonly router = inject(Router);
+  private readonly loading = inject(LoadingService);
 
   readonly searchTerm = signal('');
   readonly statusFilter =
@@ -65,7 +67,8 @@ export class ReminderList {
     return this.reminderService.reminders().filter(reminder => {
       const isAssignedToUser =
         userId !== undefined &&
-        (reminder.recipient.id === userId ||
+        (reminder.createdBy.id === userId ||
+          reminder.recipient.id === userId ||
           reminder.participants?.some(participant =>
             ('user' in participant ? participant.user.id : participant.id) === userId
           ) === true);
@@ -97,13 +100,24 @@ export class ReminderList {
 
   });
 
-  readonly selectedCount = computed(() => this.selectedIds().size);
+  readonly manageableReminders = computed(() =>
+    this.reminders().filter(reminder => this.canDeleteReminder(reminder))
+  );
+  readonly selectedCount = computed(() =>
+    this.manageableReminders().filter(reminder => this.selectedIds().has(reminder.id)).length
+  );
   readonly allVisibleSelected = computed(
-    () => this.reminders().length > 0 && this.reminders().every(reminder => this.selectedIds().has(reminder.id))
+    () => this.manageableReminders().length > 0 &&
+      this.manageableReminders().every(reminder => this.selectedIds().has(reminder.id))
   );
   readonly someVisibleSelected = computed(
-    () => this.reminders().some(reminder => this.selectedIds().has(reminder.id)) && !this.allVisibleSelected()
+    () => this.manageableReminders().some(reminder => this.selectedIds().has(reminder.id)) &&
+      !this.allVisibleSelected()
   );
+
+  canDeleteReminder(reminder: Reminder): boolean {
+    return reminder.createdBy.id === this.currentUser()?.id;
+  }
 
   createReminder(): void {
     this.router.navigate(['/reminders/new']);
@@ -122,7 +136,8 @@ export class ReminderList {
 
   toggleSelection(id: string, checked: boolean): void {
     const selected = new Set(this.selectedIds());
-    if (checked) {
+    const reminder = this.reminders().find(item => item.id === id);
+    if (checked && reminder && this.canDeleteReminder(reminder)) {
       selected.add(id);
     } else {
       selected.delete(id);
@@ -133,7 +148,7 @@ export class ReminderList {
 
   toggleAllSelection(checked: boolean): void {
     const selected = new Set(this.selectedIds());
-    for (const reminder of this.reminders()) {
+    for (const reminder of this.manageableReminders()) {
       if (checked) {
         selected.add(reminder.id);
       } else {
@@ -145,12 +160,15 @@ export class ReminderList {
   }
 
   deleteSelected(): void {
-    const ids = [...this.selectedIds()];
+    const ids = this.manageableReminders()
+      .filter(reminder => this.selectedIds().has(reminder.id))
+      .map(reminder => reminder.id);
     if (!ids.length || this.deletingSelected()) return;
     if (!window.confirm(`Delete ${ids.length} selected reminder(s)? This action cannot be undone.`)) return;
 
     this.deletingSelected.set(true);
     this.deleteError.set('');
+    const loadingTask = this.loading.begin('Deleting selected reminders…');
     from(ids).pipe(
       mergeMap(id => this.reminderService.deleteReminder(id).pipe(
         map(() => ({ id, deleted: true as const })),
@@ -162,6 +180,7 @@ export class ReminderList {
         const failed = results.filter(result => !result.deleted);
         this.selectedIds.set(new Set(failed.map(result => result.id)));
         this.deletingSelected.set(false);
+        this.loading.end(loadingTask);
         if (failed.length) {
           console.error('Unable to delete selected reminders', failed);
           this.deleteError.set(
@@ -172,6 +191,7 @@ export class ReminderList {
       error: error => {
         console.error('Unable to delete selected reminders', error);
         this.deletingSelected.set(false);
+        this.loading.end(loadingTask);
         this.deleteError.set('Unable to delete the selected reminders. Please try again.');
       }
     });

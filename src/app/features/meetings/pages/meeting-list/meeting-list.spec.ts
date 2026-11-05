@@ -51,7 +51,10 @@ describe('MeetingList', () => {
       imports: [MeetingList],
       providers: [{
         provide: AuthService,
-        useValue: { currentUser: currentUserSignal.asReadonly() }
+        useValue: {
+          currentUser: currentUserSignal.asReadonly(),
+          hasPermission: () => true
+        }
       }]
     })
     .compileComponents();
@@ -68,6 +71,11 @@ describe('MeetingList', () => {
   it('deletes the individually selected meetings after confirmation', () => {
     const meetingService = TestBed.inject(MeetingService);
     const deleteMeeting = vi.spyOn(meetingService, 'deleteMeeting').mockReturnValue(of(undefined));
+    vi.spyOn(meetingService, 'meetings').mockReturnValue([
+      makeMeeting('meeting-1', 'current-user'),
+      makeMeeting('meeting-2', 'current-user')
+    ]);
+    currentUserSignal.set({ ...currentUser });
     vi.spyOn(window, 'confirm').mockReturnValue(true);
 
     component.toggleSelection('meeting-1', true);
@@ -94,5 +102,20 @@ describe('MeetingList', () => {
 
     expect(component.meetings().map(meeting => meeting.id)).toEqual(['participant', 'organizer']);
     expect(component.totalCount()).toBe(2);
+  });
+
+  it('does not allow participants to select another user\'s meeting for deletion', () => {
+    const meetingService = TestBed.inject(MeetingService);
+    const deleteMeeting = vi.spyOn(meetingService, 'deleteMeeting');
+    vi.spyOn(meetingService, 'meetings').mockReturnValue([
+      makeMeeting('participant-meeting', 'another-user', ['current-user'])
+    ]);
+    currentUserSignal.set({ ...currentUser });
+
+    component.toggleSelection('participant-meeting', true);
+    component.deleteSelected();
+
+    expect(deleteMeeting).not.toHaveBeenCalled();
+    expect(component.selectedCount()).toBe(0);
   });
 });

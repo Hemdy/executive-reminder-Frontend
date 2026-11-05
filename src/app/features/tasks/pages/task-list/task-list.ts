@@ -14,6 +14,7 @@ import {
   TaskStatus
 } from '../../../../core/models/task.model';
 import { TaskService } from '../../../../core/services/task.service';
+import { LoadingService } from '../../../../core/services/loading.service';
 import { catchError, from, map, mergeMap, of, toArray } from 'rxjs';
 
 @Component({
@@ -39,6 +40,7 @@ export class TaskList {
 
   private readonly authService = inject(AuthService);
   private readonly router = inject(Router);
+  private readonly loading = inject(LoadingService);
 
   readonly searchTerm = signal('');
   readonly statusFilter = signal<'ALL' | TaskStatus>('ALL');
@@ -56,7 +58,8 @@ export class TaskList {
     return this.taskService.tasks().filter(task => {
       const isAssignedToUser =
         userId !== undefined &&
-        (task.assignedTo.id === userId ||
+        (task.createdBy.id === userId ||
+          task.assignedTo.id === userId ||
           task.participants?.some(participant => participant.user.id === userId) === true);
       const matchesSearch =
         !search ||
@@ -77,12 +80,17 @@ export class TaskList {
 
   });
 
-  readonly selectedCount = computed(() => this.selectedIds().size);
+  readonly manageableTasks = computed(() => this.tasks().filter(task => this.canDeleteTask(task)));
+  readonly selectedCount = computed(() =>
+    this.manageableTasks().filter(task => this.selectedIds().has(task.id)).length
+  );
   readonly allVisibleSelected = computed(
-    () => this.tasks().length > 0 && this.tasks().every(task => this.selectedIds().has(task.id))
+    () => this.manageableTasks().length > 0 &&
+      this.manageableTasks().every(task => this.selectedIds().has(task.id))
   );
   readonly someVisibleSelected = computed(
-    () => this.tasks().some(task => this.selectedIds().has(task.id)) && !this.allVisibleSelected()
+    () => this.manageableTasks().some(task => this.selectedIds().has(task.id)) &&
+      !this.allVisibleSelected()
   );
 
   readonly currentUser = this.authService.currentUser;
@@ -95,13 +103,18 @@ export class TaskList {
     this.router.navigate(['/tasks', task.id]);
   }
 
+  canDeleteTask(task: Task): boolean {
+    return task.createdBy.id === this.currentUser()?.id;
+  }
+
   isSelected(id: string): boolean {
     return this.selectedIds().has(id);
   }
 
   toggleSelection(id: string, checked: boolean): void {
     const selected = new Set(this.selectedIds());
-    if (checked) {
+    const task = this.tasks().find(item => item.id === id);
+    if (checked && task && this.canDeleteTask(task)) {
       selected.add(id);
     } else {
       selected.delete(id);
@@ -112,7 +125,7 @@ export class TaskList {
 
   toggleAllSelection(checked: boolean): void {
     const selected = new Set(this.selectedIds());
-    for (const task of this.tasks()) {
+    for (const task of this.manageableTasks()) {
       if (checked) {
         selected.add(task.id);
       } else {
@@ -124,12 +137,15 @@ export class TaskList {
   }
 
   deleteSelected(): void {
-    const ids = [...this.selectedIds()];
+    const ids = this.manageableTasks()
+      .filter(task => this.selectedIds().has(task.id))
+      .map(task => task.id);
     if (!ids.length || this.deletingSelected()) return;
     if (!window.confirm(`Delete ${ids.length} selected task(s)? This action cannot be undone.`)) return;
 
     this.deletingSelected.set(true);
     this.deleteError.set('');
+    const loadingTask = this.loading.begin('Deleting selected tasks…');
     from(ids).pipe(
       mergeMap(id => this.taskService.deleteTask(id).pipe(
         map(() => ({ id, deleted: true as const })),
@@ -141,6 +157,7 @@ export class TaskList {
         const failed = results.filter(result => !result.deleted);
         this.selectedIds.set(new Set(failed.map(result => result.id)));
         this.deletingSelected.set(false);
+        this.loading.end(loadingTask);
         if (failed.length) {
           console.error('Unable to delete selected tasks', failed);
           this.deleteError.set(
@@ -151,13 +168,28 @@ export class TaskList {
       error: error => {
         console.error('Unable to delete selected tasks', error);
         this.deletingSelected.set(false);
+        this.loading.end(loadingTask);
         this.deleteError.set('Unable to delete the selected tasks. Please try again.');
       }
     });
   }
 
   updateStatus(task: Task, status: TaskStatus): void {
-    this.taskService.updateStatus(task.id, status);
+    const messages = {
+      PENDING: 'Reopening task…',
+      IN_PROGRESS: 'Starting task…',
+      COMPLETED: 'Completing task…',
+      CLOSED: 'Confirming task…',
+      CANCELLED: 'Cancelling task…'
+    } satisfies Record<TaskStatus, string>;
+    const loadingTask = this.loading.begin(messages[status]);
+    this.taskService.updateStatus(task.id, status).subscribe({
+      next: () => this.loading.end(loadingTask),
+      error: error => {
+        this.loading.end(loadingTask);
+        console.error('Unable to update task status', error);
+      }
+    });
   }
 
   isOverdue(task: Task): boolean {

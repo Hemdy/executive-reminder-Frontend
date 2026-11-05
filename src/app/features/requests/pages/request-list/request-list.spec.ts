@@ -17,7 +17,7 @@ const currentUser: User = {
 };
 const currentUserSignal = signal<User | null>(currentUser);
 
-function makeRequest(id: string, assignedToId: string): Request {
+function makeRequest(id: string, assignedToId: string, requesterId = 'requester'): Request {
   const user = (userId: string): User => ({
     id: userId,
     firstName: userId,
@@ -30,7 +30,7 @@ function makeRequest(id: string, assignedToId: string): Request {
     title: id,
     type: 'GENERAL',
     priority: 'MEDIUM',
-    requester: user('requester'),
+    requester: user(requesterId),
     assignedTo: user(assignedToId),
     status: 'PENDING',
     createdAt: '2026-01-01',
@@ -49,7 +49,10 @@ describe('RequestList', () => {
       imports: [RequestList],
       providers: [{
         provide: AuthService,
-        useValue: { currentUser: currentUserSignal.asReadonly() }
+        useValue: {
+          currentUser: currentUserSignal.asReadonly(),
+          hasPermission: () => true
+        }
       }]
     })
     .compileComponents();
@@ -66,6 +69,11 @@ describe('RequestList', () => {
   it('deletes the individually selected requests after confirmation', () => {
     const requestService = TestBed.inject(RequestService);
     const deleteRequest = vi.spyOn(requestService, 'deleteRequest').mockReturnValue(of(undefined));
+    vi.spyOn(requestService, 'requests').mockReturnValue([
+      makeRequest('request-1', 'another-user', 'current-user'),
+      makeRequest('request-2', 'another-user', 'current-user')
+    ]);
+    currentUserSignal.set({ ...currentUser });
     vi.spyOn(window, 'confirm').mockReturnValue(true);
 
     component.toggleSelection('request-1', true);
@@ -78,10 +86,11 @@ describe('RequestList', () => {
     expect(component.selectedCount()).toBe(0);
   });
 
-  it('shows only requests assigned to the current user', () => {
+  it('shows requests created by or assigned to the current user', () => {
     const requestService = TestBed.inject(RequestService);
     vi.spyOn(requestService, 'requests').mockReturnValue([
       makeRequest('assigned', 'current-user'),
+      makeRequest('created', 'another-user', 'current-user'),
       makeRequest('unrelated', 'another-user')
     ]);
     currentUserSignal.set({ ...currentUser, id: 'another-user' });
@@ -89,7 +98,7 @@ describe('RequestList', () => {
     component.searchTerm.set('refresh');
     component.searchTerm.set('');
 
-    expect(component.requests().map(request => request.id)).toEqual(['assigned']);
-    expect(component.totalCount()).toBe(1);
+    expect(component.requests().map(request => request.id)).toEqual(['assigned', 'created']);
+    expect(component.totalCount()).toBe(2);
   });
 });

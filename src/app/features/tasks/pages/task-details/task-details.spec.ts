@@ -172,6 +172,18 @@ describe('TaskDetails', () => {
     expect((fixture.nativeElement as HTMLElement).textContent).not.toContain('Start Task');
   });
 
+  it('lets the creator manage a task without task write permission', () => {
+    currentUser = { ...currentTask.createdBy };
+    currentTask = { ...currentTask, status: 'COMPLETED' };
+    fixture.destroy();
+    fixture = TestBed.createComponent(TaskDetails);
+    component = fixture.componentInstance;
+    fixture.detectChanges();
+
+    expect(component.canManageTask()).toBe(true);
+    expect(component.canConfirmTask()).toBe(true);
+  });
+
   it('intercepts comment form submission and posts without a browser document navigation', () => {
     component.commentText.set('Started reviewing the report.');
     fixture.detectChanges();

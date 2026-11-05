@@ -328,7 +328,7 @@
         [disabled]="isSaving()"
       >
         @if (isSaving()) {
-          {{ isEditMode() ? 'Saving changes...' : 'Creating reminder...' }}
+          {{ isEditMode() ? 'Updating reminder...' : 'Creating reminder...' }}
         } @else {
           {{ isEditMode() ? 'Save Changes' : 'Create Reminder' }}
         }

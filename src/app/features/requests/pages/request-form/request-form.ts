@@ -116,13 +116,7 @@ export class RequestForm {
       })
     });
 
-    const currentUser = this.authService.currentUser();
-
     if (!this.isEditMode()) {
-      this.form.patchValue({
-        assignedToId: currentUser?.id ?? 'user-ceo'
-      });
-
       return;
     }
 
@@ -130,6 +124,11 @@ export class RequestForm {
 
     if (!request) {
       this.router.navigate(['/requests']);
+      return;
+    }
+    if (request.requester.id !== this.authService.currentUser()?.id) {
+      this.form.setErrors({ permission: 'Only the request creator can edit this request.' });
+      void this.router.navigate(['/requests']);
       return;
     }
 
@@ -177,6 +176,8 @@ export class RequestForm {
     }
 
     if (this.isEditMode()) {
+      this.isSaving.set(true);
+      const loadingTask = this.loading.begin('Updating request…');
       const updateRequest: UpdateRequestRequest = {
         title: values.title,
         description: values.description || undefined,
@@ -193,8 +194,16 @@ export class RequestForm {
         this.requestId()!,
         updateRequest
       ).subscribe({
-        next: () => this.router.navigate(['/requests', this.requestId()!]),
-        error: error => this.form.setErrors({ api: error.error?.message ?? 'Unable to update the request.' })
+        next: () => {
+          this.isSaving.set(false);
+          this.loading.end(loadingTask);
+          void this.router.navigate(['/requests', this.requestId()!]);
+        },
+        error: error => {
+          this.isSaving.set(false);
+          this.loading.end(loadingTask);
+          this.form.setErrors({ api: error.error?.message ?? 'Unable to update the request.' });
+        }
       });
       return;
     }

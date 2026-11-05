@@ -424,9 +424,14 @@ th {
   .actions,
   td.actions {
     display: flex;
+    align-items: center;
     justify-content: flex-start;
     gap: 8px 14px;
-    white-space: normal;
+    flex-wrap: nowrap;
+    white-space: nowrap;
+  }
+  .actions button {
+    flex: 0 0 auto;
   }
   .actions::before {
     flex: 0 0 calc((100% - 12px) * 0.35);

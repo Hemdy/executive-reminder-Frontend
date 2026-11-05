@@ -70,35 +70,55 @@ export class RequestDetails implements OnInit {
     return request ? this.requestService.isOverdue(request) : false;
   });
 
-  readonly canApprove = computed(() => {
+  readonly canManageRequest = computed(() => {
     const request = this.request();
     const user = this.authService.currentUser();
-    if (!request || !user) return false;
-    return user.role === 'CEO' && (request.status === 'PENDING' || request.status === 'IN_REVIEW' || request.status === 'NEEDS_INFORMATION');
+    return Boolean(
+      request &&
+      user &&
+      request.requester.id === user.id
+    );
+  });
+
+  readonly canProcessRequest = computed(() => {
+    const request = this.request();
+    const user = this.authService.currentUser();
+    return Boolean(
+      request &&
+      user &&
+      request.assignedTo.id === user.id &&
+      this.authService.hasPermission('requests:write')
+    );
+  });
+
+  readonly canApprove = computed(() => {
+    const request = this.request();
+    return Boolean(request && this.canProcessRequest() &&
+      (request.status === 'PENDING' || request.status === 'IN_REVIEW' || request.status === 'NEEDS_INFORMATION'));
   });
 
   readonly canReject = computed(() => {
     const request = this.request();
-    const user = this.authService.currentUser();
-    if (!request || !user) return false;
-    return user.role === 'CEO' && (request.status === 'PENDING' || request.status === 'IN_REVIEW' || request.status === 'NEEDS_INFORMATION');
+    return Boolean(request && this.canProcessRequest() &&
+      (request.status === 'PENDING' || request.status === 'IN_REVIEW' || request.status === 'NEEDS_INFORMATION'));
   });
 
   readonly canRequestInformation = computed(() => {
     const request = this.request();
-    const user = this.authService.currentUser();
-    if (!request || !user) return false;
-    return user.role === 'CEO' && (request.status === 'PENDING' || request.status === 'IN_REVIEW');
+    return Boolean(request && this.canProcessRequest() &&
+      (request.status === 'PENDING' || request.status === 'IN_REVIEW'));
   });
 
   readonly canComplete = computed(() => {
     const request = this.request();
-    return request?.status === 'APPROVED' || request?.status === 'IN_REVIEW';
+    return this.canManageRequest() &&
+      (request?.status === 'APPROVED' || request?.status === 'IN_REVIEW');
   });
 
   readonly canReopen = computed(() => {
     const request = this.request();
-    return request?.status === 'REJECTED' || request?.status === 'CANCELLED' || request?.status === 'COMPLETED';
+    return this.canManageRequest() &&
+      (request?.status === 'REJECTED' || request?.status === 'CANCELLED' || request?.status === 'COMPLETED');
   });
 
   ngOnInit(): void {
@@ -134,7 +154,7 @@ export class RequestDetails implements OnInit {
 
   editRequest(): void {
     const request = this.request();
-    if (request) this.router.navigate(['/requests', request.id, 'edit']);
+    if (request && this.canManageRequest()) this.router.navigate(['/requests', request.id, 'edit']);
   }
 
   approveRequest(): void { this.updateStatus('APPROVED'); }
@@ -142,7 +162,9 @@ export class RequestDetails implements OnInit {
   requestMoreInformation(): void { this.updateStatus('NEEDS_INFORMATION'); }
   completeRequest(): void { this.updateStatus('COMPLETED'); }
   reopenRequest(): void { this.updateStatus('PENDING'); }
-  cancelRequest(): void { this.updateStatus('CANCELLED'); }
+  cancelRequest(): void {
+    if (this.canManageRequest()) this.updateStatus('CANCELLED');
+  }
 
   updateCommentText(event: Event): void {
     this.commentText.set((event.target as HTMLTextAreaElement).value);
@@ -175,13 +197,11 @@ export class RequestDetails implements OnInit {
   }
 
   canManageComment(comment: RequestComment): boolean {
-    return comment.author.id === this.authService.currentUser()?.id ||
-      this.authService.hasPermission('requests:write');
+    return comment.author.id === this.authService.currentUser()?.id;
   }
 
   canDeleteAttachment(attachment: RequestAttachment): boolean {
-    return attachment.uploader.id === this.authService.currentUser()?.id ||
-      this.authService.hasPermission('requests:write');
+    return attachment.uploader.id === this.authService.currentUser()?.id;
   }
 
   editComment(comment: RequestComment): void {
@@ -338,7 +358,7 @@ export class RequestDetails implements OnInit {
 
   deleteRequest(): void {
     const request = this.request();
-    if (!request || this.isDeleting()) return;
+    if (!request || !this.canManageRequest() || this.isDeleting()) return;
     const confirmed = window.confirm(`Delete "${request.title}"? This action cannot be undone.`);
     if (!confirmed) return;
     this.isDeleting.set(true);
@@ -371,7 +391,31 @@ export class RequestDetails implements OnInit {
   private updateStatus(status: RequestStatus): void {
     const request = this.request();
     if (!request) return;
-    this.requestService.updateStatus(request.id, status).subscribe();
+    const ownerStatuses: RequestStatus[] = ['PENDING', 'COMPLETED', 'CANCELLED'];
+    const assigneeStatuses: RequestStatus[] = ['IN_REVIEW', 'APPROVED', 'REJECTED', 'NEEDS_INFORMATION'];
+    const isOwner = request.requester.id === this.authService.currentUser()?.id;
+    if (
+      (isOwner && !this.canManageRequest()) ||
+      (!isOwner && (!this.canProcessRequest() || !assigneeStatuses.includes(status))) ||
+      (isOwner && !ownerStatuses.includes(status) && !assigneeStatuses.includes(status))
+    ) return;
+    const message = {
+      PENDING: 'Reopening request…',
+      IN_REVIEW: 'Submitting request for review…',
+      APPROVED: 'Approving request…',
+      REJECTED: 'Rejecting request…',
+      NEEDS_INFORMATION: 'Requesting more information…',
+      COMPLETED: 'Completing request…',
+      CANCELLED: 'Cancelling request…'
+    }[status];
+    const loadingTask = this.loading.begin(message);
+    this.requestService.updateStatus(request.id, status).subscribe({
+      next: () => this.loading.end(loadingTask),
+      error: error => {
+        this.loading.end(loadingTask);
+        this.toast.error(error.error?.message ?? 'Unable to update the request.');
+      }
+    });
   }
 
   private loadRequestActivity(requestId: string): void {

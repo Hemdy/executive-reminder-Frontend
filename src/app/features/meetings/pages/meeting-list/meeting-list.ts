@@ -9,11 +9,13 @@ import { Router } from '@angular/router';
 import { ContentSkeleton } from '../../../../core/components/content-skeleton/content-skeleton';
 
 import {
+  Meeting,
   MeetingStatus,
   MeetingType
 } from '../../../../core/models/meeting.model';
 import { AuthService } from '../../../../core/services/auth.service';
 import { MeetingService } from '../../../../core/services/meeting.service';
+import { LoadingService } from '../../../../core/services/loading.service';
 import { catchError, from, map, mergeMap, of, toArray } from 'rxjs';
 
 @Component({
@@ -39,6 +41,7 @@ export class MeetingList {
 
   private readonly authService = inject(AuthService);
   private readonly router = inject(Router);
+  private readonly loading = inject(LoadingService);
 
   readonly currentUser = this.authService.currentUser;
   readonly searchTerm = signal('');
@@ -117,12 +120,19 @@ export class MeetingList {
 
   });
 
-  readonly selectedCount = computed(() => this.selectedIds().size);
+  readonly manageableMeetings = computed(() =>
+    this.meetings().filter(meeting => this.canDeleteMeeting(meeting))
+  );
+  readonly selectedCount = computed(() =>
+    this.manageableMeetings().filter(meeting => this.selectedIds().has(meeting.id)).length
+  );
   readonly allVisibleSelected = computed(
-    () => this.meetings().length > 0 && this.meetings().every(meeting => this.selectedIds().has(meeting.id))
+    () => this.manageableMeetings().length > 0 &&
+      this.manageableMeetings().every(meeting => this.selectedIds().has(meeting.id))
   );
   readonly someVisibleSelected = computed(
-    () => this.meetings().some(meeting => this.selectedIds().has(meeting.id)) && !this.allVisibleSelected()
+    () => this.manageableMeetings().some(meeting => this.selectedIds().has(meeting.id)) &&
+      !this.allVisibleSelected()
   );
 
   readonly totalCount = computed(
@@ -167,13 +177,18 @@ export class MeetingList {
     this.router.navigate(['/meetings', id]);
   }
 
+  canDeleteMeeting(meeting: Meeting): boolean {
+    return meeting.organizer.id === this.currentUser()?.id;
+  }
+
   isSelected(id: string): boolean {
     return this.selectedIds().has(id);
   }
 
   toggleSelection(id: string, checked: boolean): void {
     const selected = new Set(this.selectedIds());
-    if (checked) {
+    const meeting = this.meetings().find(item => item.id === id);
+    if (checked && meeting && this.canDeleteMeeting(meeting)) {
       selected.add(id);
     } else {
       selected.delete(id);
@@ -184,7 +199,7 @@ export class MeetingList {
 
   toggleAllSelection(checked: boolean): void {
     const selected = new Set(this.selectedIds());
-    for (const meeting of this.meetings()) {
+    for (const meeting of this.manageableMeetings()) {
       if (checked) {
         selected.add(meeting.id);
       } else {
@@ -196,12 +211,15 @@ export class MeetingList {
   }
 
   deleteSelected(): void {
-    const ids = [...this.selectedIds()];
+    const ids = this.manageableMeetings()
+      .filter(meeting => this.selectedIds().has(meeting.id))
+      .map(meeting => meeting.id);
     if (!ids.length || this.deletingSelected()) return;
     if (!window.confirm(`Delete ${ids.length} selected meeting(s)? This action cannot be undone.`)) return;
 
     this.deletingSelected.set(true);
     this.deleteError.set('');
+    const loadingTask = this.loading.begin('Deleting selected meetings…');
     from(ids).pipe(
       mergeMap(id => this.meetingService.deleteMeeting(id).pipe(
         map(() => ({ id, deleted: true as const })),
@@ -213,6 +231,7 @@ export class MeetingList {
         const failed = results.filter(result => !result.deleted);
         this.selectedIds.set(new Set(failed.map(result => result.id)));
         this.deletingSelected.set(false);
+        this.loading.end(loadingTask);
         if (failed.length) {
           console.error('Unable to delete selected meetings', failed);
           this.deleteError.set(
@@ -223,6 +242,7 @@ export class MeetingList {
       error: error => {
         console.error('Unable to delete selected meetings', error);
         this.deletingSelected.set(false);
+        this.loading.end(loadingTask);
         this.deleteError.set('Unable to delete the selected meetings. Please try again.');
       }
     });

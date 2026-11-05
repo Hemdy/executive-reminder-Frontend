@@ -100,6 +100,11 @@ describe('ReminderDetails', () => {
     expect(component.comments()[0].body).toBe('Updated');
   });
 
+  it('lets the creator manage a reminder without reminder write permission', () => {
+    expect(component.canManageReminder()).toBe(true);
+    expect(component.canChangeReminderStatus('CANCELLED')).toBe(true);
+  });
+
   it('removes an owned attachment after confirmation and blocks another uploader', () => {
     const attachment: ReminderAttachment = {
       id: 'attachment-1',

@@ -101,6 +101,10 @@ describe('MeetingDetails', () => {
     expect(component.comments()[0].body).toBe('Updated');
   });
 
+  it('lets the organizer manage a meeting without meeting write permission', () => {
+    expect(component.canManageMeeting()).toBe(true);
+  });
+
   it('removes an owned attachment after confirmation and blocks another uploader', () => {
     const attachment: MeetingAttachment = {
       id: 'attachment-1',

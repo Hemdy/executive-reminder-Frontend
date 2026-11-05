@@ -150,20 +150,21 @@
 
           <thead>
             <tr>
-              <th class="selection-column">
-                <label class="select-all-label">
-                  <input
-                    type="checkbox"
-                    class="selection-checkbox"
-                    aria-label="Select all visible meetings"
-                    [checked]="allVisibleSelected()"
-                    [indeterminate]="someVisibleSelected()"
-                    [disabled]="deletingSelected()"
-                    (change)="toggleAllSelection($any($event.target).checked)"
-                  />
-                  <!-- <span>Select all</span> -->
-                </label>
-              </th>
+              @if (manageableMeetings().length > 0) {
+                <th class="selection-column">
+                  <label class="select-all-label">
+                    <input
+                      type="checkbox"
+                      class="selection-checkbox"
+                      aria-label="Select all visible meetings"
+                      [checked]="allVisibleSelected()"
+                      [indeterminate]="someVisibleSelected()"
+                      [disabled]="deletingSelected()"
+                      (change)="toggleAllSelection($any($event.target).checked)"
+                    />
+                  </label>
+                </th>
+              }
               <th>Meeting</th>
               <th>Date & Time</th>
               <th>Type</th>
@@ -185,17 +186,19 @@
                 (click)="viewMeeting(meeting.id)"
               >
 
-                <td class="selection-column">
-                  <input
-                    type="checkbox"
-                    class="selection-checkbox"
-                    [attr.aria-label]="'Select meeting ' + meeting.title"
-                    [checked]="isSelected(meeting.id)"
-                    [disabled]="deletingSelected()"
-                    (click)="$event.stopPropagation()"
-                    (change)="toggleSelection(meeting.id, $any($event.target).checked)"
-                  />
-                </td>
+                @if (canDeleteMeeting(meeting)) {
+                  <td class="selection-column">
+                    <input
+                      type="checkbox"
+                      class="selection-checkbox"
+                      [attr.aria-label]="'Select meeting ' + meeting.title"
+                      [checked]="isSelected(meeting.id)"
+                      [disabled]="deletingSelected()"
+                      (click)="$event.stopPropagation()"
+                      (change)="toggleSelection(meeting.id, $any($event.target).checked)"
+                    />
+                  </td>
+                }
 
                 <td>
 

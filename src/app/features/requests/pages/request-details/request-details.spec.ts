@@ -97,6 +97,10 @@ describe('RequestDetails', () => {
     expect(component.comments()[0].body).toBe('Updated');
   });
 
+  it('lets the requester manage a request without request write permission', () => {
+    expect(component.canManageRequest()).toBe(true);
+  });
+
   it('removes an owned attachment after confirmation and blocks another uploader', () => {
     const attachment: RequestAttachment = {
       id: 'attachment-1',

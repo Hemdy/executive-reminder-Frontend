@@ -12,17 +12,19 @@
 
     <div class="top-actions">
 
-      <button
-        class="secondary-button"
-        type="button"
-        (click)="editMeeting()"
-      >
-        Edit Meeting
-      </button>
+      @if (canManageMeeting()) {
+        <button
+          class="secondary-button"
+          type="button"
+          (click)="editMeeting()"
+        >
+          Edit Meeting
+        </button>
+      }
 
       @if (
-        meeting()?.status === 'SCHEDULED' ||
-        meeting()?.status === 'RESCHEDULED'
+        canManageMeeting() &&
+        (meeting()?.status === 'SCHEDULED' || meeting()?.status === 'RESCHEDULED')
       ) {
         <button
           class="complete-button"
@@ -456,10 +458,11 @@
 
         </div>
 
-        <div class="content-card">
+        @if (canManageMeeting()) {
+          <div class="content-card">
 
-          <div class="card-header">
-            <h2>Actions</h2>
+            <div class="card-header">
+              <h2>Actions</h2>
           </div>
 
           <div class="workflow-actions">
@@ -530,7 +533,8 @@
 
           </div>
 
-        </div>
+          </div>
+        }
 
       </aside>
 

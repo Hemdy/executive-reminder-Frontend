@@ -18,6 +18,15 @@ import { RequestService } from '../../../../core/services/request.service';
 import { MeetingService } from '../../../../core/services/meeting.service';
 import { NotificationService } from '../../../../core/services/notification.service';
 
+interface DashboardStatusItem {
+  id: string;
+  title: string;
+  type: 'Task' | 'Reminder' | 'Request' | 'Meeting';
+  date: string;
+  owner: string;
+  route: string;
+}
+
 @Component({
   selector: 'app-ceo-dashboard',
   standalone: true,
@@ -42,6 +51,7 @@ export class CeoDashboard implements OnInit, OnDestroy {
     if (!userId) return [];
 
     return this.tasks.tasks().filter(task =>
+      task.createdBy.id === userId ||
       task.assignedTo.id === userId ||
       task.participants?.some(participant => participant.user.id === userId) === true
     );
@@ -52,6 +62,7 @@ export class CeoDashboard implements OnInit, OnDestroy {
     if (!userId) return [];
 
     return this.reminders.reminders().filter(reminder =>
+      reminder.createdBy.id === userId ||
       reminder.recipient.id === userId ||
       reminder.participants?.some(participant =>
         ('user' in participant ? participant.user.id : participant.id) === userId
@@ -63,7 +74,9 @@ export class CeoDashboard implements OnInit, OnDestroy {
     const userId = this.authService.currentUser()?.id;
     if (!userId) return [];
 
-    return this.requests.requests().filter(request => request.assignedTo.id === userId);
+    return this.requests.requests().filter(request =>
+      request.requester.id === userId || request.assignedTo.id === userId
+    );
   });
 
   readonly assignedMeetings = computed(() => {
@@ -142,7 +155,7 @@ export class CeoDashboard implements OnInit, OnDestroy {
     { label: 'Pending', value: this.assignedTasks().filter(task => task.status === 'PENDING').length + this.assignedReminders().filter(reminder => reminder.status === 'PENDING').length + this.assignedRequests().filter(request => request.status === 'PENDING').length, description: 'Items awaiting action' },
     { label: 'Overdue', value: this.assignedTasks().filter(task => this.tasks.isOverdue(task)).length + this.assignedReminders().filter(reminder => this.reminders.isOverdue(reminder)).length, description: 'Require attention' },
     { label: 'Today', value: this.assignedMeetings().filter(meeting => this.meetings.isToday(meeting)).length, description: 'Scheduled today' },
-    { label: 'Completed', value: this.assignedTasks().filter(task => task.status === 'COMPLETED').length + this.assignedReminders().filter(reminder => reminder.status === 'COMPLETED').length + this.assignedRequests().filter(request => request.status === 'COMPLETED').length, description: 'Completed items' }
+    { label: 'Completed', value: this.assignedTasks().filter(task => task.status === 'COMPLETED' || task.status === 'CLOSED').length + this.assignedReminders().filter(reminder => reminder.status === 'COMPLETED').length + this.assignedRequests().filter(request => request.status === 'COMPLETED').length + this.assignedMeetings().filter(meeting => meeting.status === 'COMPLETED').length, description: 'Completed items' }
   ]);
 
   readonly schedule = computed(() => {
@@ -170,6 +183,90 @@ export class CeoDashboard implements OnInit, OnDestroy {
   readonly pendingTasks = computed(() =>
     this.assignedTasks().filter(task => task.status === 'PENDING').slice(0, 5)
   );
+  readonly inProgressItems = computed<DashboardStatusItem[]>(() => [
+    ...this.assignedTasks()
+      .filter(task => task.status === 'IN_PROGRESS')
+      .map(task => ({
+        id: task.id,
+        title: task.title,
+        type: 'Task' as const,
+        date: task.dueDate,
+        owner: `${task.createdBy.firstName} ${task.createdBy.lastName}`,
+        route: `/tasks/${task.id}`
+      })),
+    ...this.assignedReminders()
+      .filter(reminder => reminder.status === 'TRIGGERED')
+      .map(reminder => ({
+        id: reminder.id,
+        title: reminder.title,
+        type: 'Reminder' as const,
+        date: reminder.reminderDate,
+        owner: `${reminder.createdBy.firstName} ${reminder.createdBy.lastName}`,
+        route: `/reminders/${reminder.id}`
+      })),
+    ...this.assignedRequests()
+      .filter(request => request.status === 'IN_REVIEW')
+      .map(request => ({
+        id: request.id,
+        title: request.title,
+        type: 'Request' as const,
+        date: request.dueDate ?? request.createdAt,
+        owner: `${request.requester.firstName} ${request.requester.lastName}`,
+        route: `/requests/${request.id}`
+      })),
+    ...this.assignedMeetings()
+      .filter(meeting => meeting.status === 'SCHEDULED' || meeting.status === 'RESCHEDULED')
+      .map(meeting => ({
+        id: meeting.id,
+        title: meeting.title,
+        type: 'Meeting' as const,
+        date: meeting.meetingDate,
+        owner: `${meeting.organizer.firstName} ${meeting.organizer.lastName}`,
+        route: `/meetings/${meeting.id}`
+      }))
+  ]);
+  readonly completedItems = computed<DashboardStatusItem[]>(() => [
+    ...this.assignedTasks()
+      .filter(task => task.status === 'COMPLETED' || task.status === 'CLOSED')
+      .map(task => ({
+        id: task.id,
+        title: task.title,
+        type: 'Task' as const,
+        date: task.dueDate,
+        owner: `${task.createdBy.firstName} ${task.createdBy.lastName}`,
+        route: `/tasks/${task.id}`
+      })),
+    ...this.assignedReminders()
+      .filter(reminder => reminder.status === 'COMPLETED')
+      .map(reminder => ({
+        id: reminder.id,
+        title: reminder.title,
+        type: 'Reminder' as const,
+        date: reminder.reminderDate,
+        owner: `${reminder.createdBy.firstName} ${reminder.createdBy.lastName}`,
+        route: `/reminders/${reminder.id}`
+      })),
+    ...this.assignedRequests()
+      .filter(request => request.status === 'COMPLETED')
+      .map(request => ({
+        id: request.id,
+        title: request.title,
+        type: 'Request' as const,
+        date: request.dueDate ?? request.createdAt,
+        owner: `${request.requester.firstName} ${request.requester.lastName}`,
+        route: `/requests/${request.id}`
+      })),
+    ...this.assignedMeetings()
+      .filter(meeting => meeting.status === 'COMPLETED')
+      .map(meeting => ({
+        id: meeting.id,
+        title: meeting.title,
+        type: 'Meeting' as const,
+        date: meeting.meetingDate,
+        owner: `${meeting.organizer.firstName} ${meeting.organizer.lastName}`,
+        route: `/meetings/${meeting.id}`
+      }))
+  ]);
   readonly upcomingReminders = computed(() =>
     this.assignedReminders()
       .filter(reminder => reminder.status === 'PENDING')

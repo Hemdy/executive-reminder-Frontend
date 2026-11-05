@@ -148,6 +148,11 @@ export class ReminderForm {
       );
       return;
     }
+    if (reminder.createdBy.id !== this.currentUser()?.id) {
+      this.errorMessage.set('Only the reminder creator can edit this reminder.');
+      void this.router.navigate(['/reminders']);
+      return;
+    }
 
     this.isEditMode.set(true);
     this.reminderId.set(id);
@@ -210,6 +215,9 @@ export class ReminderForm {
     }
 
     this.isSaving.set(true);
+    const loadingTask = this.loading.begin(
+      this.isEditMode() ? 'Updating reminder…' : 'Creating reminder…'
+    );
 
     if (this.isEditMode() && this.reminderId()) {
       this.reminderService.updateReminder(
@@ -230,15 +238,16 @@ export class ReminderForm {
       ).subscribe({
         next: () => {
           this.isSaving.set(false);
+          this.loading.end(loadingTask);
           void this.router.navigate(['/reminders', this.reminderId()!]);
         },
         error: error => {
           this.isSaving.set(false);
+          this.loading.end(loadingTask);
           this.errorMessage.set(error.error?.message ?? 'Unable to update the reminder.');
         }
       });
     } else {
-      const loadingTask = this.loading.begin('Creating reminder…');
       this.reminderService.createReminder(
           {
             title: formValue.title,

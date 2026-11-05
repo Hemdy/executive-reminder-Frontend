@@ -85,11 +85,23 @@ export class TaskDetails implements OnInit {
     return Boolean(
       task &&
       user &&
-      (task.assignedTo.id === user.id || this.authService.hasPermission('tasks:write'))
+      task.assignedTo.id === user.id &&
+      (task.createdBy.id !== user.id || this.canManageTask())
     );
   });
 
-  readonly canManageTask = computed(() => this.authService.hasPermission('tasks:write'));
+  readonly canManageTask = computed(() => {
+    const task = this.task();
+    const user = this.authService.currentUser();
+    return Boolean(
+      task &&
+      user &&
+      task.createdBy.id === user.id
+    );
+  });
+  readonly canConfirmTask = computed(() =>
+    this.canManageTask() && this.task()?.status === 'COMPLETED'
+  );
 
   readonly canUseTaskActivity = computed(() => {
     const task = this.task();
@@ -137,7 +149,7 @@ export class TaskDetails implements OnInit {
   editTask(): void {
     const task = this.task();
 
-    if (!task) {
+    if (!task || !this.canManageTask()) {
       return;
     }
 
@@ -151,7 +163,7 @@ export class TaskDetails implements OnInit {
   startTask(): void {
     const task = this.task();
 
-    if (!task) {
+    if (!task || !this.canUpdateTaskStatus()) {
       return;
     }
 
@@ -161,7 +173,7 @@ export class TaskDetails implements OnInit {
   completeTask(): void {
     const task = this.task();
 
-    if (!task) {
+    if (!task || !this.canUpdateTaskStatus()) {
       return;
     }
 
@@ -171,7 +183,7 @@ export class TaskDetails implements OnInit {
   cancelTask(): void {
     const task = this.task();
 
-    if (!task) {
+    if (!task || !this.canManageTask()) {
       return;
     }
 
@@ -181,11 +193,17 @@ export class TaskDetails implements OnInit {
   reopenTask(): void {
     const task = this.task();
 
-    if (!task) {
+    if (!task || !this.canManageTask()) {
       return;
     }
 
     this.updateStatus(task.id, 'PENDING');
+  }
+
+  confirmTask(): void {
+    const task = this.task();
+    if (!task || !this.canConfirmTask()) return;
+    this.updateStatus(task.id, 'CLOSED');
   }
 
   updateCommentText(event: Event): void {
@@ -222,13 +240,11 @@ export class TaskDetails implements OnInit {
   }
 
   canManageComment(comment: TaskComment): boolean {
-    return comment.author.id === this.authService.currentUser()?.id ||
-      this.authService.hasPermission('tasks:write');
+    return comment.author.id === this.authService.currentUser()?.id;
   }
 
   canDeleteAttachment(attachment: TaskAttachment): boolean {
-    return attachment.uploader.id === this.authService.currentUser()?.id ||
-      this.authService.hasPermission('tasks:write');
+    return attachment.uploader.id === this.authService.currentUser()?.id;
   }
 
   editComment(comment: TaskComment): void {
@@ -436,7 +452,7 @@ export class TaskDetails implements OnInit {
   deleteTask(): void {
     const task = this.task();
 
-    if (!task || this.isDeleting()) {
+    if (!task || !this.canManageTask() || this.isDeleting()) {
       return;
     }
 
@@ -478,9 +494,24 @@ export class TaskDetails implements OnInit {
   }
 
   private updateStatus(taskId: string, status: TaskStatus): void {
+    if (status === 'CLOSED' && !this.canManageTask()) return;
+    if ((status === 'IN_PROGRESS' || status === 'COMPLETED') && !this.canUpdateTaskStatus()) return;
+    if ((status === 'CANCELLED' || status === 'PENDING') && !this.canManageTask()) return;
     this.taskActionError.set('');
+    const message = {
+      IN_PROGRESS: 'Starting task…',
+      COMPLETED: 'Completing task…',
+      CLOSED: 'Confirming task…',
+      CANCELLED: 'Cancelling task…',
+      PENDING: 'Reopening task…'
+    }[status];
+    const loadingTask = this.loading.begin(message);
     this.taskService.updateStatus(taskId, status).subscribe({
-      error: () => this.taskActionError.set('Unable to update this task. Please try again.')
+      next: () => this.loading.end(loadingTask),
+      error: () => {
+        this.loading.end(loadingTask);
+        this.taskActionError.set('Unable to update this task. Please try again.');
+      }
     });
   }
 

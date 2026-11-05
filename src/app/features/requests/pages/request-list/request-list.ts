@@ -9,12 +9,14 @@ import { Router } from '@angular/router';
 import { ContentSkeleton } from '../../../../core/components/content-skeleton/content-skeleton';
 
 import {
+  Request,
   RequestPriority,
   RequestStatus,
   RequestType
 } from '../../../../core/models/request.model';
 import { AuthService } from '../../../../core/services/auth.service';
 import { RequestService } from '../../../../core/services/request.service';
+import { LoadingService } from '../../../../core/services/loading.service';
 import { catchError, from, map, mergeMap, of, toArray } from 'rxjs';
 
 @Component({
@@ -42,6 +44,7 @@ export class RequestList {
 
   private readonly authService = inject(AuthService);
   private readonly router = inject(Router);
+  private readonly loading = inject(LoadingService);
 
   readonly currentUser = this.authService.currentUser;
   readonly searchTerm = signal('');
@@ -84,7 +87,9 @@ export class RequestList {
     const userId = this.currentUser()?.id;
     if (!userId) return [];
 
-    return this.requestService.requests().filter(request => request.assignedTo.id === userId);
+    return this.requestService.requests().filter(request =>
+      request.requester.id === userId || request.assignedTo.id === userId
+    );
   });
 
   readonly requests = computed(() => {
@@ -124,12 +129,19 @@ export class RequestList {
 
   });
 
-  readonly selectedCount = computed(() => this.selectedIds().size);
+  readonly manageableRequests = computed(() =>
+    this.requests().filter(request => this.canDeleteRequest(request))
+  );
+  readonly selectedCount = computed(() =>
+    this.manageableRequests().filter(request => this.selectedIds().has(request.id)).length
+  );
   readonly allVisibleSelected = computed(
-    () => this.requests().length > 0 && this.requests().every(request => this.selectedIds().has(request.id))
+    () => this.manageableRequests().length > 0 &&
+      this.manageableRequests().every(request => this.selectedIds().has(request.id))
   );
   readonly someVisibleSelected = computed(
-    () => this.requests().some(request => this.selectedIds().has(request.id)) && !this.allVisibleSelected()
+    () => this.manageableRequests().some(request => this.selectedIds().has(request.id)) &&
+      !this.allVisibleSelected()
   );
 
   readonly totalCount = computed(
@@ -168,13 +180,18 @@ export class RequestList {
     this.router.navigate(['/requests', id]);
   }
 
+  canDeleteRequest(request: Request): boolean {
+    return request.requester.id === this.currentUser()?.id;
+  }
+
   isSelected(id: string): boolean {
     return this.selectedIds().has(id);
   }
 
   toggleSelection(id: string, checked: boolean): void {
     const selected = new Set(this.selectedIds());
-    if (checked) {
+    const request = this.requests().find(item => item.id === id);
+    if (checked && request && this.canDeleteRequest(request)) {
       selected.add(id);
     } else {
       selected.delete(id);
@@ -185,7 +202,7 @@ export class RequestList {
 
   toggleAllSelection(checked: boolean): void {
     const selected = new Set(this.selectedIds());
-    for (const request of this.requests()) {
+    for (const request of this.manageableRequests()) {
       if (checked) {
         selected.add(request.id);
       } else {
@@ -197,12 +214,15 @@ export class RequestList {
   }
 
   deleteSelected(): void {
-    const ids = [...this.selectedIds()];
+    const ids = this.manageableRequests()
+      .filter(request => this.selectedIds().has(request.id))
+      .map(request => request.id);
     if (!ids.length || this.deletingSelected()) return;
     if (!window.confirm(`Delete ${ids.length} selected request(s)? This action cannot be undone.`)) return;
 
     this.deletingSelected.set(true);
     this.deleteError.set('');
+    const loadingTask = this.loading.begin('Deleting selected requests…');
     from(ids).pipe(
       mergeMap(id => this.requestService.deleteRequest(id).pipe(
         map(() => ({ id, deleted: true as const })),
@@ -214,6 +234,7 @@ export class RequestList {
         const failed = results.filter(result => !result.deleted);
         this.selectedIds.set(new Set(failed.map(result => result.id)));
         this.deletingSelected.set(false);
+        this.loading.end(loadingTask);
         if (failed.length) {
           console.error('Unable to delete selected requests', failed);
           this.deleteError.set(
@@ -224,6 +245,7 @@ export class RequestList {
       error: error => {
         console.error('Unable to delete selected requests', error);
         this.deletingSelected.set(false);
+        this.loading.end(loadingTask);
         this.deleteError.set('Unable to delete the selected requests. Please try again.');
       }
     });

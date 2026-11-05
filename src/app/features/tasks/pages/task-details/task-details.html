@@ -69,6 +69,16 @@
           </button>
         }
 
+        @if (canConfirmTask()) {
+          <button
+            type="button"
+            class="primary-button"
+            (click)="confirmTask()"
+          >
+            Confirm &amp; Close Task
+          </button>
+        }
+
       </div>
 
     </header>
@@ -269,7 +279,7 @@
                 class="status-badge"
                 [class.status-pending]="currentTask.status === 'PENDING'"
                 [class.status-progress]="currentTask.status === 'IN_PROGRESS'"
-                [class.status-completed]="currentTask.status === 'COMPLETED'"
+                [class.status-completed]="currentTask.status === 'COMPLETED' || currentTask.status === 'CLOSED'"
                 [class.status-cancelled]="currentTask.status === 'CANCELLED'"
               >
                 {{ getStatusLabel(currentTask.status) }}
@@ -389,10 +399,19 @@
               </button>
             }
 
+            @if (canConfirmTask()) {
+              <button
+                type="button"
+                (click)="confirmTask()"
+              >
+                Confirm &amp; Close Task
+              </button>
+            }
+
             @if (
               canManageTask() &&
               currentTask.status !== 'CANCELLED' &&
-              currentTask.status !== 'COMPLETED'
+              currentTask.status !== 'CLOSED'
             ) {
               <button
                 type="button"
@@ -404,7 +423,9 @@
 
             @if (
               canManageTask() &&
-              (currentTask.status === 'COMPLETED' || currentTask.status === 'CANCELLED')
+              (currentTask.status === 'COMPLETED' ||
+                currentTask.status === 'CLOSED' ||
+                currentTask.status === 'CANCELLED')
             ) {
               <button
                 type="button"

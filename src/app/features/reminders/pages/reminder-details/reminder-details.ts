@@ -56,6 +56,29 @@ export class ReminderDetails implements OnInit {
     return reminder ? this.reminderService.isOverdue(reminder) : false;
   });
 
+  readonly canManageReminder = computed(() => {
+    const reminder = this.reminder();
+    const user = this.authService.currentUser();
+    return Boolean(
+      reminder &&
+      user &&
+      reminder.createdBy.id === user.id
+    );
+  });
+
+  canChangeReminderStatus(status: ReminderStatus): boolean {
+    const reminder = this.reminder();
+    const user = this.authService.currentUser();
+    if (!reminder || !user) return false;
+    if (reminder.createdBy.id === user.id) {
+      return true;
+    }
+    return reminder.recipient.id === user.id &&
+      ((status === 'TRIGGERED' && reminder.status === 'PENDING') ||
+        (status === 'COMPLETED' &&
+          (reminder.status === 'PENDING' || reminder.status === 'TRIGGERED')));
+  }
+
   ngOnInit(): void {
     const id = this.route.snapshot.paramMap.get('id');
     if (id) {
@@ -89,33 +112,43 @@ export class ReminderDetails implements OnInit {
 
   editReminder(): void {
     const reminder = this.reminder();
-    if (!reminder || this.isDeleting()) return;
+    if (!reminder || !this.canManageReminder() || this.isDeleting()) return;
     this.router.navigate(['/reminders', reminder.id, 'edit']);
   }
 
-  markTriggered(): void {
+  acknowledgeReminder(): void {
     const reminder = this.reminder();
-    if (reminder) this.reminderService.updateStatus(reminder.id, 'TRIGGERED').subscribe();
+    if (reminder && this.canChangeReminderStatus('TRIGGERED')) {
+      this.updateStatus(reminder.id, 'TRIGGERED');
+    }
   }
 
   completeReminder(): void {
     const reminder = this.reminder();
-    if (reminder) this.reminderService.updateStatus(reminder.id, 'COMPLETED').subscribe();
+    if (reminder && this.canChangeReminderStatus('COMPLETED')) {
+      this.updateStatus(reminder.id, 'COMPLETED');
+    }
   }
 
   dismissReminder(): void {
     const reminder = this.reminder();
-    if (reminder) this.reminderService.updateStatus(reminder.id, 'DISMISSED').subscribe();
+    if (reminder && this.canManageReminder()) {
+      this.updateStatus(reminder.id, 'DISMISSED');
+    }
   }
 
   cancelReminder(): void {
     const reminder = this.reminder();
-    if (reminder) this.reminderService.updateStatus(reminder.id, 'CANCELLED').subscribe();
+    if (reminder && this.canManageReminder()) {
+      this.updateStatus(reminder.id, 'CANCELLED');
+    }
   }
 
   reopenReminder(): void {
     const reminder = this.reminder();
-    if (reminder) this.reminderService.updateStatus(reminder.id, 'PENDING').subscribe();
+    if (reminder && this.canManageReminder()) {
+      this.updateStatus(reminder.id, 'PENDING');
+    }
   }
 
   updateCommentText(event: Event): void {
@@ -149,13 +182,11 @@ export class ReminderDetails implements OnInit {
   }
 
   canManageComment(comment: ReminderComment): boolean {
-    return comment.author.id === this.authService.currentUser()?.id ||
-      this.authService.hasPermission('reminders:write');
+    return comment.author.id === this.authService.currentUser()?.id;
   }
 
   canDeleteAttachment(attachment: ReminderAttachment): boolean {
-    return attachment.uploader.id === this.authService.currentUser()?.id ||
-      this.authService.hasPermission('reminders:write');
+    return attachment.uploader.id === this.authService.currentUser()?.id;
   }
 
   editComment(comment: ReminderComment): void {
@@ -312,7 +343,7 @@ export class ReminderDetails implements OnInit {
 
   deleteReminder(): void {
     const reminder = this.reminder();
-    if (!reminder) return;
+    if (!reminder || !this.canManageReminder()) return;
     const confirmed = window.confirm('Are you sure you want to delete this reminder?');
     if (!confirmed) return;
     this.isDeleting.set(true);
@@ -329,6 +360,24 @@ export class ReminderDetails implements OnInit {
         this.loading.end(loadingTask);
         this.toast.error(error.error?.message ?? 'Unable to delete the reminder.');
       },
+    });
+  }
+
+  private updateStatus(reminderId: string, status: ReminderStatus): void {
+    const message = {
+      TRIGGERED: 'Acknowledging reminder…',
+      COMPLETED: 'Completing reminder…',
+      DISMISSED: 'Dismissing reminder…',
+      CANCELLED: 'Cancelling reminder…',
+      PENDING: 'Reopening reminder…'
+    }[status];
+    const loadingTask = this.loading.begin(message);
+    this.reminderService.updateStatus(reminderId, status).subscribe({
+      next: () => this.loading.end(loadingTask),
+      error: error => {
+        this.loading.end(loadingTask);
+        this.toast.error(error.error?.message ?? 'Unable to update the reminder.');
+      }
     });
   }
 

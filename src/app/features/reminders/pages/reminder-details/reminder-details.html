@@ -38,25 +38,27 @@
 
       <div class="header-actions">
 
-        <button
-          type="button"
-          class="secondary-button"
-          (click)="editReminder()"
-        >
-          Edit Reminder
-        </button>
-
-        @if (currentReminder.status === 'PENDING') {
+        @if (canManageReminder()) {
           <button
             type="button"
-            class="primary-button"
-            (click)="markTriggered()"
+            class="secondary-button"
+            (click)="editReminder()"
           >
-            Trigger Reminder
+            Edit Reminder
           </button>
         }
 
-        @if (currentReminder.status === 'TRIGGERED') {
+        @if (currentReminder.status === 'PENDING' && canChangeReminderStatus('TRIGGERED')) {
+          <button
+            type="button"
+            class="primary-button"
+            (click)="acknowledgeReminder()"
+          >
+            Acknowledge Reminder
+          </button>
+        }
+
+        @if (currentReminder.status === 'TRIGGERED' && canChangeReminderStatus('COMPLETED')) {
           <button
             type="button"
             class="primary-button"
@@ -344,18 +346,20 @@
           <div class="action-list">
 
             @if (
-              currentReminder.status === 'PENDING'
+              currentReminder.status === 'PENDING' &&
+              canChangeReminderStatus('TRIGGERED')
             ) {
               <button
                 type="button"
-                (click)="markTriggered()"
+                (click)="acknowledgeReminder()"
               >
-                Trigger Reminder
+                Acknowledge Reminder
               </button>
             }
 
             @if (
-              currentReminder.status === 'TRIGGERED'
+              currentReminder.status === 'TRIGGERED' &&
+              canChangeReminderStatus('COMPLETED')
             ) {
               <button
                 type="button"
@@ -364,15 +368,18 @@
                 Mark Completed
               </button>
 
-              <button
-                type="button"
-                (click)="dismissReminder()"
-              >
-                Dismiss Reminder
-              </button>
+              @if (canManageReminder()) {
+                <button
+                  type="button"
+                  (click)="dismissReminder()"
+                >
+                  Dismiss Reminder
+                </button>
+              }
             }
 
             @if (
+              canManageReminder() &&
               currentReminder.status !== 'CANCELLED' &&
               currentReminder.status !== 'COMPLETED' &&
               currentReminder.status !== 'DISMISSED'
@@ -386,9 +393,10 @@
             }
 
             @if (
-              currentReminder.status === 'COMPLETED' ||
-              currentReminder.status === 'DISMISSED' ||
-              currentReminder.status === 'CANCELLED'
+              canManageReminder() &&
+              (currentReminder.status === 'COMPLETED' ||
+                currentReminder.status === 'DISMISSED' ||
+                currentReminder.status === 'CANCELLED')
             ) {
               <button
                 type="button"
@@ -398,14 +406,16 @@
               </button>
             }
 
-            <button
-              type="button"
-              class="danger-action"
-              [disabled]="isDeleting()"
-              (click)="deleteReminder()"
-            >
-              {{ isDeleting() ? 'Deleting reminder...' : 'Delete Reminder' }}
-            </button>
+            @if (canManageReminder()) {
+              <button
+                type="button"
+                class="danger-action"
+                [disabled]="isDeleting()"
+                (click)="deleteReminder()"
+              >
+                {{ isDeleting() ? 'Deleting reminder...' : 'Delete Reminder' }}
+              </button>
+            }
 
           </div>
 

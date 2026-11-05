@@ -85,6 +85,16 @@ export class MeetingDetails implements OnInit {
       : false;
   });
 
+  readonly canManageMeeting = computed(() => {
+    const meeting = this.meeting();
+    const user = this.authService.currentUser();
+    return Boolean(
+      meeting &&
+      user &&
+      meeting.organizer.id === user.id
+    );
+  });
+
   ngOnInit(): void {
     const id = this.route.snapshot.paramMap.get('id');
     if (id) {
@@ -119,7 +129,7 @@ export class MeetingDetails implements OnInit {
   editMeeting(): void {
     const meeting = this.meeting();
 
-    if (meeting) {
+    if (meeting && this.canManageMeeting()) {
       this.router.navigate([
         '/meetings',
         meeting.id,
@@ -129,25 +139,25 @@ export class MeetingDetails implements OnInit {
   }
 
   markCompleted(): void {
-    this.updateStatus('COMPLETED');
+    if (this.canManageMeeting()) this.updateStatus('COMPLETED');
   }
 
   reschedule(): void {
-    this.updateStatus('RESCHEDULED');
+    if (this.canManageMeeting()) this.updateStatus('RESCHEDULED');
   }
 
   cancelMeeting(): void {
-    this.updateStatus('CANCELLED');
+    if (this.canManageMeeting()) this.updateStatus('CANCELLED');
   }
 
   restoreMeeting(): void {
-    this.updateStatus('SCHEDULED');
+    if (this.canManageMeeting()) this.updateStatus('SCHEDULED');
   }
 
   deleteMeeting(): void {
     const meeting = this.meeting();
 
-    if (!meeting || this.isDeleting()) {
+    if (!meeting || !this.canManageMeeting() || this.isDeleting()) {
       return;
     }
 
@@ -234,13 +244,11 @@ export class MeetingDetails implements OnInit {
   }
 
   canManageComment(comment: MeetingComment): boolean {
-    return comment.author.id === this.authService.currentUser()?.id ||
-      this.authService.hasPermission('meetings:write');
+    return comment.author.id === this.authService.currentUser()?.id;
   }
 
   canDeleteAttachment(attachment: MeetingAttachment): boolean {
-    return attachment.uploader.id === this.authService.currentUser()?.id ||
-      this.authService.hasPermission('meetings:write');
+    return attachment.uploader.id === this.authService.currentUser()?.id;
   }
 
   editComment(comment: MeetingComment): void {
@@ -453,15 +461,29 @@ export class MeetingDetails implements OnInit {
   }
 
   private updateStatus(status: MeetingStatus): void {
+    if (!this.canManageMeeting()) return;
     const meeting = this.meeting();
 
     if (!meeting) {
       return;
     }
 
+    const message = {
+      SCHEDULED: 'Scheduling meeting…',
+      RESCHEDULED: 'Rescheduling meeting…',
+      COMPLETED: 'Completing meeting…',
+      CANCELLED: 'Cancelling meeting…'
+    }[status];
+    const loadingTask = this.loading.begin(message);
     this.meetingService.updateStatus(
       meeting.id,
       status
-    ).subscribe();
+    ).subscribe({
+      next: () => this.loading.end(loadingTask),
+      error: error => {
+        this.loading.end(loadingTask);
+        this.toast.error(error.error?.message ?? 'Unable to update the meeting.');
+      }
+    });
   }
 }

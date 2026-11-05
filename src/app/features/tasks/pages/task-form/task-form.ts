@@ -92,6 +92,7 @@ export class TaskForm {
     'PENDING',
     'IN_PROGRESS',
     'COMPLETED',
+    'CLOSED',
     'CANCELLED'
   ];
 
@@ -134,6 +135,11 @@ export class TaskForm {
 
     if (!task) {
       this.errorMessage.set('The requested task could not be found.');
+      return;
+    }
+    if (task.createdBy.id !== this.currentUser()?.id) {
+      this.errorMessage.set('Only the task creator can edit this task.');
+      void this.router.navigate(['/tasks']);
       return;
     }
 
@@ -188,6 +194,9 @@ export class TaskForm {
     }
 
     this.isSaving.set(true);
+    const loadingTask = this.loading.begin(
+      this.isEditMode() ? 'Updating task…' : 'Creating task…'
+    );
 
     if (this.isEditMode() && this.taskId()) {
       this.taskService.updateTask(
@@ -206,15 +215,16 @@ export class TaskForm {
       ).subscribe({
         next: () => {
           this.isSaving.set(false);
+          this.loading.end(loadingTask);
           void this.router.navigate(['/tasks', this.taskId()!]);
         },
         error: error => {
           this.isSaving.set(false);
+          this.loading.end(loadingTask);
           this.errorMessage.set(error.error?.message ?? 'Unable to update the task.');
         }
       });
     } else {
-      const loadingTask = this.loading.begin('Creating task…');
       this.taskService.createTask(
         {
           title: formValue.title,

@@ -57,6 +57,10 @@ describe('RequestForm', () => {
     expect(component).toBeTruthy();
   });
 
+  it('does not preselect the creator as the request assignee', () => {
+    expect(component.form.controls.assignedToId.value).toBe('');
+  });
+
   it('keeps the creation loader active until success, then toasts and opens the request', () => {
     const loading = TestBed.inject(LoadingService);
     const toast = TestBed.inject(ToastService);
