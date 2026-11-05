@@ -6,10 +6,12 @@ import { Settings } from './settings';
 describe('Settings', () => {
   let fixture: ComponentFixture<Settings>;
   let enableNotifications: ReturnType<typeof vi.fn>;
+  let disableNotifications: ReturnType<typeof vi.fn>;
   let updatePreferences: ReturnType<typeof vi.fn>;
 
   beforeEach(async () => {
-    enableNotifications = vi.fn();
+    enableNotifications = vi.fn().mockResolvedValue(undefined);
+    disableNotifications = vi.fn().mockResolvedValue(undefined);
     updatePreferences = vi.fn();
 
     await TestBed.configureTestingModule({
@@ -32,7 +34,7 @@ describe('Settings', () => {
           preferencesError: signal(''),
           preferencesMessage: signal(''),
           enable: enableNotifications,
-          disable: vi.fn(),
+          disable: disableNotifications,
           updatePreferences,
         },
       }],
@@ -42,7 +44,7 @@ describe('Settings', () => {
     fixture.detectChanges();
   });
 
-  it('shows notification settings options and the enable action', () => {
+  it('shows notification settings options and a push notification switch', () => {
     const element = fixture.nativeElement as HTMLElement;
 
     expect(element.textContent).toContain('Enable Notifications');
@@ -53,14 +55,43 @@ describe('Settings', () => {
     enableOption?.click();
     fixture.detectChanges();
 
-    const enableButton =
-      element.querySelector<HTMLButtonElement>('#enable-notifications-panel .primary-button');
-    expect(enableButton?.textContent).toContain('Enable Notifications');
-    enableButton?.click();
+    const pushSwitch =
+      element.querySelector<HTMLInputElement>('#enable-notifications-panel input[role="switch"]');
+    expect(pushSwitch?.checked).toBe(false);
+    if (pushSwitch) {
+      pushSwitch.checked = true;
+      pushSwitch.dispatchEvent(new Event('change', { bubbles: true }));
+    }
     expect(enableNotifications).toHaveBeenCalledOnce();
   });
 
-  it('opens and updates the notification preferences list from its option', () => {
+  it('immediately reflects a push toggle and restores its saved state after the operation', async () => {
+    const element = fixture.nativeElement as HTMLElement;
+    const enableOption = [...element.querySelectorAll<HTMLButtonElement>('.settings-option')]
+      .find(button => button.textContent?.includes('Enable Notifications'));
+    enableOption?.click();
+    fixture.detectChanges();
+
+    const pushSwitch =
+      element.querySelector<HTMLInputElement>('#enable-notifications-panel input[role="switch"]');
+    expect(pushSwitch).not.toBeNull();
+    if (!pushSwitch) return;
+
+    pushSwitch.checked = true;
+    pushSwitch.dispatchEvent(new Event('change', { bubbles: true }));
+    TestBed.inject(PushNotificationsService).isBusy.set(true);
+    fixture.detectChanges();
+    expect(fixture.componentInstance.pushEnabled()).toBe(true);
+    expect(element.textContent).toContain('Enabling push notifications');
+
+    TestBed.inject(PushNotificationsService).isBusy.set(false);
+    await Promise.resolve();
+    fixture.detectChanges();
+    expect(fixture.componentInstance.pushEnabled()).toBe(false);
+    expect(pushSwitch.checked).toBe(false);
+  });
+
+  it('renders module preferences as switches and updates the selected preference', () => {
     const element = fixture.nativeElement as HTMLElement;
     const preferencesOption = [...element.querySelectorAll<HTMLButtonElement>('.settings-option')]
       .find(button => button.textContent?.includes('Manage Notification Preferences'));
@@ -70,13 +101,34 @@ describe('Settings', () => {
     expect(element.querySelector('#notification-preferences-panel')?.textContent)
       .toContain('Tasks');
 
-    const tasksPreference =
-      element.querySelector<HTMLInputElement>('#notification-preferences-panel input');
-    expect(tasksPreference).not.toBeNull();
+    const switches = element.querySelectorAll<HTMLInputElement>(
+      '#notification-preferences-panel input[role="switch"]'
+    );
+    expect(switches).toHaveLength(4);
+    expect([...switches].map(input => input.getAttribute('aria-label'))).toEqual([
+      'Task notifications',
+      'Reminder notifications',
+      'Request notifications',
+      'Meeting notifications'
+    ]);
+    const tasksPreference = switches[0];
     if (tasksPreference) {
       tasksPreference.checked = false;
       tasksPreference.dispatchEvent(new Event('change', { bubbles: true }));
     }
     expect(updatePreferences).toHaveBeenCalledWith({ tasks: false });
+  });
+
+  it('shows saving feedback while module preferences are being persisted', () => {
+    const pushNotifications = TestBed.inject(PushNotificationsService);
+    const element = fixture.nativeElement as HTMLElement;
+    const preferencesOption = [...element.querySelectorAll<HTMLButtonElement>('.settings-option')]
+      .find(button => button.textContent?.includes('Manage Notification Preferences'));
+    preferencesOption?.click();
+    pushNotifications.isSavingPreferences.set(true);
+    fixture.detectChanges();
+
+    expect(element.querySelector('[role="status"]')?.textContent)
+      .toContain('Saving notification preferences');
   });
 });

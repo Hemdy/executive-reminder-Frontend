@@ -18,11 +18,32 @@ type SettingsPanel = 'enable' | 'preferences';
 export class Settings {
   readonly pushNotifications = inject(PushNotificationsService);
   readonly activePanel = signal<SettingsPanel | null>(null);
+  readonly pendingPushEnabled = signal<boolean | null>(null);
+
+  pushEnabled(): boolean {
+    return this.pendingPushEnabled() ??
+      (this.pushNotifications.isSubscribed() && this.pushNotifications.isRegistered());
+  }
 
   setPreference(key: keyof PushPreferences, event: Event): void {
     const input = event.target;
     if (input instanceof HTMLInputElement) {
       this.pushNotifications.updatePreferences({ [key]: input.checked });
     }
+  }
+
+  setPushEnabled(event: Event): void {
+    const input = event.target;
+    if (!(input instanceof HTMLInputElement)) {
+      return;
+    }
+
+    if (this.pushNotifications.isBusy()) return;
+
+    this.pendingPushEnabled.set(input.checked);
+    const operation = input.checked
+      ? this.pushNotifications.enable()
+      : this.pushNotifications.disable();
+    void operation.then(() => this.pendingPushEnabled.set(null));
   }
 }

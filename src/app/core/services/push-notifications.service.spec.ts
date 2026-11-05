@@ -173,6 +173,23 @@ describe('PushNotificationsService', () => {
     expect(service.preferencesMessage()).toBe('Notification preferences saved.');
   });
 
+  it('optimistically updates preferences and restores them when saving fails', () => {
+    initializeService();
+    currentUser.mockReturnValue({ id: 'user-1' });
+    const previousPreferences = service.preferences();
+
+    service.updatePreferences({ tasks: false });
+
+    expect(service.preferences().tasks).toBe(false);
+    expect(service.isSavingPreferences()).toBe(true);
+    const request = http.expectOne(`${API_BASE_URL}/notifications/push/preferences`);
+    request.flush({ message: 'Save failed' }, { status: 500, statusText: 'Server Error' });
+
+    expect(service.preferences()).toEqual(previousPreferences);
+    expect(service.isSavingPreferences()).toBe(false);
+    expect(service.preferencesError()).toBe('Unable to save notification preferences. Please try again.');
+  });
+
   it('removes the backend subscription before unsubscribing this device', async () => {
     swPush.subscription = of(subscription);
     initializeService();
@@ -191,6 +208,21 @@ describe('PushNotificationsService', () => {
     expect(swPush.unsubscribe).toHaveBeenCalledOnce();
     expect(service.isSubscribed()).toBe(false);
     expect(service.statusMessage()).toBe('Push notifications are disabled on this device.');
+  });
+
+  it('keeps push notifications enabled and reports an error when backend disable fails', async () => {
+    swPush.subscription = of(subscription);
+    initializeService();
+
+    const disablePromise = service.disable();
+    await new Promise(resolve => setTimeout(resolve, 0));
+    const request = http.expectOne(`${API_BASE_URL}/notifications/push/subscription`);
+    request.flush({ message: 'Delete failed' }, { status: 500, statusText: 'Server Error' });
+    await disablePromise;
+
+    expect(swPush.unsubscribe).not.toHaveBeenCalled();
+    expect(service.isSubscribed()).toBe(true);
+    expect(service.statusError()).toBe('Unable to disable push notifications. Please try again.');
   });
 
   it('navigates to the root-relative route in a push notification click payload', () => {

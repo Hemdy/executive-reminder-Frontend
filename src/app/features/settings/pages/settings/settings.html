@@ -89,27 +89,28 @@
             <p class="push-error" role="alert">{{ pushNotifications.statusError() }}</p>
           }
 
-          <div class="detail-actions">
-            @if (pushNotifications.canEnable()) {
-              <button
-                class="primary-button"
-                type="button"
-                [disabled]="pushNotifications.isBusy() || pushNotifications.isConfigLoading()"
-                (click)="pushNotifications.enable()"
-              >
-                {{ pushNotifications.isConfigLoading() ? 'Checking availability...' : pushNotifications.isBusy() ? 'Enabling...' : 'Enable Notifications' }}
-              </button>
-            } @else if (pushNotifications.isSubscribed()) {
-              <button
-                class="secondary-button"
-                type="button"
-                [disabled]="pushNotifications.isBusy()"
-                (click)="pushNotifications.disable()"
-              >
-                {{ pushNotifications.isBusy() ? 'Updating...' : 'Disable Notifications' }}
-              </button>
-            }
+          <div class="push-toggle-row">
+            <span class="push-toggle-label">Push notifications on this device</span>
+            <label class="toggle-control" [class.is-disabled]="pushNotifications.isBusy() || pushNotifications.isConfigLoading() || (!pushNotifications.isSubscribed() && !pushNotifications.canEnable())">
+              <span class="visually-hidden">Push notifications on this device</span>
+              <input
+                type="checkbox"
+                role="switch"
+                aria-label="Push notifications on this device"
+                [checked]="pushEnabled()"
+                [disabled]="pushNotifications.isBusy() || pushNotifications.isConfigLoading() || (!pushNotifications.isSubscribed() && !pushNotifications.canEnable())"
+                (change)="setPushEnabled($event)"
+              />
+              <span class="switch-track" aria-hidden="true"><span class="switch-thumb"></span></span>
+            </label>
           </div>
+          @if (pushNotifications.isConfigLoading()) {
+            <p class="save-progress" role="status">Checking notification availability…</p>
+          } @else if (pushNotifications.isBusy()) {
+            <p class="save-progress" role="status" aria-live="polite">
+              {{ pushEnabled() ? 'Enabling push notifications…' : 'Disabling push notifications…' }}
+            </p>
+          }
         } @else {
           <p class="push-status" role="status">
             Device notifications are not supported in this browser.
@@ -147,21 +148,37 @@
             <div class="preference-grid">
               <label class="preference-option">
                 <span><strong>Tasks</strong><small>Assignments, updates, deadlines, and comments</small></span>
-                <input type="checkbox" [checked]="pushNotifications.preferences().tasks" [disabled]="pushNotifications.isSavingPreferences()" (change)="setPreference('tasks', $event)" />
+                <span class="toggle-control">
+                  <input type="checkbox" role="switch" aria-label="Task notifications" [checked]="pushNotifications.preferences().tasks" [disabled]="pushNotifications.isSavingPreferences()" (change)="setPreference('tasks', $event)" />
+                  <span class="switch-track" aria-hidden="true"><span class="switch-thumb"></span></span>
+                </span>
               </label>
               <label class="preference-option">
                 <span><strong>Reminders</strong><small>Changes, due alerts, and status updates</small></span>
-                <input type="checkbox" [checked]="pushNotifications.preferences().reminders" [disabled]="pushNotifications.isSavingPreferences()" (change)="setPreference('reminders', $event)" />
+                <span class="toggle-control">
+                  <input type="checkbox" role="switch" aria-label="Reminder notifications" [checked]="pushNotifications.preferences().reminders" [disabled]="pushNotifications.isSavingPreferences()" (change)="setPreference('reminders', $event)" />
+                  <span class="switch-track" aria-hidden="true"><span class="switch-thumb"></span></span>
+                </span>
               </label>
               <label class="preference-option">
                 <span><strong>Requests</strong><small>Submissions, decisions, and comments</small></span>
-                <input type="checkbox" [checked]="pushNotifications.preferences().requests" [disabled]="pushNotifications.isSavingPreferences()" (change)="setPreference('requests', $event)" />
+                <span class="toggle-control">
+                  <input type="checkbox" role="switch" aria-label="Request notifications" [checked]="pushNotifications.preferences().requests" [disabled]="pushNotifications.isSavingPreferences()" (change)="setPreference('requests', $event)" />
+                  <span class="switch-track" aria-hidden="true"><span class="switch-thumb"></span></span>
+                </span>
               </label>
               <label class="preference-option">
                 <span><strong>Meetings</strong><small>Invitations, changes, and scheduled alerts</small></span>
-                <input type="checkbox" [checked]="pushNotifications.preferences().meetings" [disabled]="pushNotifications.isSavingPreferences()" (change)="setPreference('meetings', $event)" />
+                <span class="toggle-control">
+                  <input type="checkbox" role="switch" aria-label="Meeting notifications" [checked]="pushNotifications.preferences().meetings" [disabled]="pushNotifications.isSavingPreferences()" (change)="setPreference('meetings', $event)" />
+                  <span class="switch-track" aria-hidden="true"><span class="switch-thumb"></span></span>
+                </span>
               </label>
             </div>
+          }
+
+          @if (pushNotifications.isSavingPreferences()) {
+            <p class="save-progress" role="status" aria-live="polite">Saving notification preferences…</p>
           }
 
           @if (pushNotifications.preferencesError()) {

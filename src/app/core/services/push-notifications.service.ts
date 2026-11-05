@@ -279,19 +279,9 @@ export class PushNotificationsService {
       const subscription = await this.getCurrentSubscription();
       if (subscription) {
         await firstValueFrom(
-          this.http
-            .delete<void>(`${this.apiUrl}/subscription`, {
-              body: { endpoint: subscription.endpoint },
-            })
-            .pipe(
-              catchError(err => {
-                console.warn(
-                  'Backend delete subscription error (proceeding with browser unsubscribe)',
-                  err,
-                );
-                return of(null);
-              }),
-            ),
+          this.http.delete<void>(`${this.apiUrl}/subscription`, {
+            body: { endpoint: subscription.endpoint },
+          }),
         );
         await this.unsubscribeBrowser(subscription);
       }
@@ -360,14 +350,18 @@ export class PushNotificationsService {
     if (!this.auth.currentUser() || this.isSavingPreferences()) {
       return;
     }
+    const previousPreferences = this.preferences();
+    const nextPreferences = { ...previousPreferences, ...updates };
     this.isSavingPreferences.set(true);
     this.preferencesError.set('');
     this.preferencesMessage.set('');
+    this.preferences.set(nextPreferences);
     this.http
       .patch<PushPreferences>(`${this.apiUrl}/preferences`, updates)
       .pipe(
         catchError(error => {
           console.error('Unable to update push notification preferences', error);
+          this.preferences.set(previousPreferences);
           this.preferencesError.set('Unable to save notification preferences. Please try again.');
           return EMPTY;
         }),
