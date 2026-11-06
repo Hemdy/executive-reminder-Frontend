@@ -73,38 +73,54 @@
 
   </section>
 
-  <section class="task-summary">
-    <div>
-      <span class="summary-label">Total</span>
-      <strong>{{ tasks().length }}</strong>
-    </div>
+  <section class="module-summary-grid">
+    <article class="module-summary-card">
+      <span class="module-summary-icon" aria-hidden="true">▦</span>
+      <div class="module-summary-copy">
+        <div class="module-summary-label">Total</div>
+        <strong class="module-summary-value">{{ tasks().length }}</strong>
+        <div class="module-summary-description">Across your workspace</div>
+      </div>
+    </article>
 
-    <div>
-      <span class="summary-label">Pending</span>
-      <strong>
+    <article class="module-summary-card module-summary-card--warning">
+      <span class="module-summary-icon" aria-hidden="true">◷</span>
+      <div class="module-summary-copy">
+        <div class="module-summary-label">Pending</div>
+        <strong class="module-summary-value">
         {{
           tasks().filter(task => task.status === 'PENDING').length
         }}
-      </strong>
-    </div>
+        </strong>
+        <div class="module-summary-description">Awaiting action</div>
+      </div>
+    </article>
 
-    <div>
-      <span class="summary-label">In Progress</span>
-      <strong>
+    <article class="module-summary-card module-summary-card--info">
+      <span class="module-summary-icon" aria-hidden="true">↗</span>
+      <div class="module-summary-copy">
+        <div class="module-summary-label">In Progress</div>
+        <strong class="module-summary-value">
         {{
           tasks().filter(task => task.status === 'IN_PROGRESS').length
         }}
-      </strong>
-    </div>
+        </strong>
+        <div class="module-summary-description">Currently underway</div>
+      </div>
+    </article>
 
-    <div>
-      <span class="summary-label">Overdue</span>
-      <strong class="danger-text">
+    <article class="module-summary-card module-summary-card--danger">
+      <span class="module-summary-icon" aria-hidden="true">!</span>
+      <div class="module-summary-copy">
+        <div class="module-summary-label">Overdue</div>
+        <strong class="module-summary-value danger-text">
         {{
           tasks().filter(task => isOverdue(task)).length
         }}
-      </strong>
-    </div>
+        </strong>
+        <div class="module-summary-description">Past the due date</div>
+      </div>
+    </article>
   </section>
 
   <section class="task-table-card">

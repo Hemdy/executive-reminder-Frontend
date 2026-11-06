@@ -121,59 +121,6 @@ h1 {
   font-weight: 600;
 }
 
-.reminder-summary {
-  display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  gap: 12px;
-  margin-bottom: 16px;
-}
-
-.reminder-summary > div {
-  --summary-bg: #edf7f2;
-  --summary-outline: #c9e2d4;
-  --summary-accent: #39745a;
-
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  min-height: 70px;
-  padding: 14px 18px;
-  background: var(--summary-bg);
-  border: 1px solid var(--summary-outline);
-  border-radius: 8px;
-
-  &:nth-child(4n + 2) {
-    --summary-bg: #eef4ff;
-    --summary-outline: #cbdaf5;
-    --summary-accent: #315b9b;
-  }
-
-  &:nth-child(4n + 3) {
-    --summary-bg: #fff6e9;
-    --summary-outline: #eedbb9;
-    --summary-accent: #8a6833;
-  }
-
-  &:nth-child(4n + 4) {
-    --summary-bg: #f3f0fb;
-    --summary-outline: #d9d0ef;
-    --summary-accent: #65538f;
-  }
-
-  strong {
-    color: var(--summary-accent);
-  }
-}
-
-.reminder-summary span {
-  color: var(--text-muted);
-  font-size: 13px;
-}
-
-.reminder-summary strong {
-  font-size: 22px;
-}
-
 .danger-text {
   color: var(--danger);
 }
@@ -436,9 +383,6 @@ tbody tr:last-child td {
     flex-basis: 100%;
   }
 
-  .reminder-summary {
-    grid-template-columns: repeat(2, 1fr);
-  }
 }
 
 @media (max-width: 600px) {
@@ -455,7 +399,4 @@ tbody tr:last-child td {
     flex: 1;
   }
 
-  // .reminder-summary {
-  //   grid-template-columns: 1fr;
-  // }
 }

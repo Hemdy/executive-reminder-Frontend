@@ -13,43 +13,61 @@
     </button>
   </div>
 
-  <div class="summary-grid">
+  <div class="module-summary-grid">
 
-    <div class="summary-card">
-      <div class="summary-label">Total Requests</div>
-      <div class="summary-value">{{ totalCount() }}</div>
-      <div class="summary-description">All requests</div>
-    </div>
+    <article class="module-summary-card">
+      <span class="module-summary-icon" aria-hidden="true">▤</span>
+      <div class="module-summary-copy">
+        <div class="module-summary-label">Total Requests</div>
+        <strong class="module-summary-value">{{ totalCount() }}</strong>
+        <div class="module-summary-description">All requests</div>
+      </div>
+    </article>
 
-    <div class="summary-card">
-      <div class="summary-label">Pending</div>
-      <div class="summary-value">{{ pendingCount() }}</div>
-      <div class="summary-description">Awaiting action</div>
-    </div>
+    <article class="module-summary-card module-summary-card--warning">
+      <span class="module-summary-icon" aria-hidden="true">◷</span>
+      <div class="module-summary-copy">
+        <div class="module-summary-label">Pending</div>
+        <strong class="module-summary-value">{{ pendingCount() }}</strong>
+        <div class="module-summary-description">Awaiting action</div>
+      </div>
+    </article>
 
-    <div class="summary-card">
-      <div class="summary-label">In Review</div>
-      <div class="summary-value">{{ inReviewCount() }}</div>
-      <div class="summary-description">Currently being reviewed</div>
-    </div>
+    <article class="module-summary-card module-summary-card--info">
+      <span class="module-summary-icon" aria-hidden="true">⌕</span>
+      <div class="module-summary-copy">
+        <div class="module-summary-label">In Review</div>
+        <strong class="module-summary-value">{{ inReviewCount() }}</strong>
+        <div class="module-summary-description">Currently being reviewed</div>
+      </div>
+    </article>
 
-    <div class="summary-card">
-      <div class="summary-label">Attention</div>
-      <div class="summary-value">{{ attentionCount() }}</div>
-      <div class="summary-description">High priority or needs info</div>
-    </div>
+    <article class="module-summary-card module-summary-card--danger">
+      <span class="module-summary-icon" aria-hidden="true">!</span>
+      <div class="module-summary-copy">
+        <div class="module-summary-label">Attention</div>
+        <strong class="module-summary-value">{{ attentionCount() }}</strong>
+        <div class="module-summary-description">High priority or needs info</div>
+      </div>
+    </article>
 
-    <div class="summary-card">
-      <div class="summary-label">Approved</div>
-      <div class="summary-value">{{ approvedCount() }}</div>
-      <div class="summary-description">Approved requests</div>
-    </div>
+    <article class="module-summary-card module-summary-card--success">
+      <span class="module-summary-icon" aria-hidden="true">✓</span>
+      <div class="module-summary-copy">
+        <div class="module-summary-label">Approved</div>
+        <strong class="module-summary-value">{{ approvedCount() }}</strong>
+        <div class="module-summary-description">Approved requests</div>
+      </div>
+    </article>
 
-    <div class="summary-card">
-      <div class="summary-label">Completed</div>
-      <div class="summary-value">{{ completedCount() }}</div>
-      <div class="summary-description">Completed requests</div>
-    </div>
+    <article class="module-summary-card module-summary-card--success">
+      <span class="module-summary-icon" aria-hidden="true">✓</span>
+      <div class="module-summary-copy">
+        <div class="module-summary-label">Completed</div>
+        <strong class="module-summary-value">{{ completedCount() }}</strong>
+        <div class="module-summary-description">Completed requests</div>
+      </div>
+    </article>
 
   </div>
 

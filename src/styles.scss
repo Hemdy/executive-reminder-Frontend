@@ -56,6 +56,200 @@ button {
   cursor: pointer;
 }
 
+.module-summary-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 220px), 1fr));
+  gap: 14px;
+  margin-bottom: 18px;
+}
+
+.module-summary-card {
+  --summary-background: #eef4ff;
+  --summary-border: #cbdaf5;
+  --summary-accent: #315b9b;
+  --summary-muted: #5e7190;
+
+  position: relative;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  align-items: center;
+  gap: 0;
+  min-width: 0;
+  min-height: 108px;
+  padding: 16px 18px;
+  border: 1px solid var(--summary-border);
+  border-radius: 14px;
+  background: var(--summary-background);
+  overflow: hidden;
+  box-shadow: 0 2px 8px rgba(31, 55, 89, 0.05);
+  transition:
+    transform 160ms ease,
+    border-color 160ms ease,
+    box-shadow 160ms ease;
+
+  &.module-summary-card--warning {
+    --summary-background: #fff6e9;
+    --summary-border: #eedbb9;
+    --summary-accent: #8a6833;
+    --summary-muted: #8a795d;
+  }
+
+  &.module-summary-card--info {
+    --summary-background: #f3f0fb;
+    --summary-border: #d9d0ef;
+    --summary-accent: #65538f;
+    --summary-muted: #766a91;
+  }
+
+  &.module-summary-card--success {
+    --summary-background: #edf7f2;
+    --summary-border: #c9e2d4;
+    --summary-accent: #39745a;
+    --summary-muted: #62816f;
+  }
+
+  &.module-summary-card--danger {
+    --summary-background: #fff0ef;
+    --summary-border: #f3cfca;
+    --summary-accent: #a64036;
+    --summary-muted: #895b56;
+  }
+
+  &.module-summary-card--neutral {
+    --summary-background: #f2f4f7;
+    --summary-border: #d9dee7;
+    --summary-accent: #586579;
+    --summary-muted: #6a7485;
+  }
+
+  // &:hover {
+  //   transform: translateY(-2px);
+  //   border-color: var(--summary-accent);
+  //   box-shadow: 0 7px 16px rgba(31, 55, 89, 0.09);
+  // }
+}
+
+.module-summary-icon {
+  position: absolute;
+  top: 20px;
+  right: 16px;
+  z-index: 0;
+  isolation: isolate;
+  display: grid;
+  width: 46px;
+  height: 46px;
+  place-items: center;
+  color: color-mix(in srgb, var(--summary-accent) 38%, white);
+  font-family: "Segoe UI Symbol", sans-serif;
+  font-size: 34px;
+  font-weight: 700;
+  line-height: 1;
+  transform: rotate(-10deg);
+
+  &::before {
+    position: absolute;
+    top: -32px;
+    right: -34px;
+    z-index: -1;
+    width: 116px;
+    height: 122px;
+    border-radius: 40% 32% 28% 42% / 34% 38% 30% 40%;
+    background: color-mix(in srgb, var(--summary-accent) 14%, transparent);
+    content: "";
+    transform: rotate(22deg);
+  }
+}
+
+.module-summary-copy {
+  min-width: 0;
+  padding-right: 60px;
+}
+
+.module-summary-label {
+  color: var(--summary-muted);
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 1.35;
+  overflow-wrap: anywhere;
+}
+
+.module-summary-value {
+  display: block;
+  margin-top: 5px;
+  color: var(--summary-accent);
+  font-size: 28px;
+  font-weight: 700;
+  line-height: 1.1;
+}
+
+.module-summary-description {
+  margin-top: 4px;
+  color: var(--summary-muted);
+  font-size: 11px;
+  line-height: 1.35;
+  overflow-wrap: anywhere;
+}
+
+@media (max-width: 700px) {
+  .module-summary-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 10px;
+  }
+
+  .module-summary-card {
+    min-height: 100px;
+    padding: 13px;
+    border-radius: 12px;
+  }
+
+  .module-summary-icon {
+    top: 16px;
+    right: 12px;
+    width: 38px;
+    height: 38px;
+    font-size: 28px;
+  }
+
+  .module-summary-icon::before {
+    top: -26px;
+    right: -30px;
+    width: 102px;
+    height: 108px;
+  }
+
+  .module-summary-copy {
+    padding-right: 48px;
+  }
+
+  .module-summary-value {
+    font-size: 25px;
+  }
+}
+
+@media (max-width: 420px) {
+    .module-summary-icon {
+     top: -5px;
+        right: -8px;
+        width: 42px;
+        height: 36px;
+        font-size: 23px;
+  }
+
+
+}
+
+@media (max-width: 360px) {
+  .module-summary-grid {
+    grid-template-columns: 1fr;
+  }
+
+
+
+
+     
+
+}
+
 :is(app-request-details, app-meeting-details) .meeting-comments {
   display: grid;
   gap: 14px;

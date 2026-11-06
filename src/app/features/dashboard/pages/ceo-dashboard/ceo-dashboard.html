@@ -53,19 +53,20 @@
     @for (item of summary(); track item.label) {
 
       <article class="summary-card">
-
-        <div class="summary-label">
-          {{ item.label }}
+        <span class="summary-icon" aria-hidden="true">
+          @switch (item.label) {
+            @case ('Pending') { ◷ }
+            @case ('Overdue') { ! }
+            @case ('Today') { ▣ }
+            @case ('Completed') { ✓ }
+            @default { ◉ }
+          }
+        </span>
+        <div class="summary-copy">
+          <div class="summary-label">{{ item.label }}</div>
+          <div class="summary-value">{{ item.value }}</div>
+          <div class="summary-description">{{ item.description }}</div>
         </div>
-
-        <div class="summary-value">
-          {{ item.value }}
-        </div>
-
-        <div class="summary-description">
-          {{ item.description }}
-        </div>
-
       </article>
 
     }
@@ -78,10 +79,12 @@
     <article class="dashboard-card">
 
       <div class="card-header">
-
-        <div>
-          <h2>Today's Schedule</h2>
-          <span>Live data from your workspace</span>
+        <div class="card-heading">
+          <span class="card-icon" aria-hidden="true">▣</span>
+          <div>
+            <h2>Today's Schedule</h2>
+            <span>Live data from your workspace</span>
+          </div>
         </div>
 
         <a routerLink="/calendar">
@@ -116,6 +119,14 @@
 
           </div>
 
+        } @empty {
+          <div class="empty-placeholder empty-placeholder--illustrated">
+            <span class="empty-icon" aria-hidden="true">▦</span>
+            <div>
+              <strong>No scheduled events for today</strong>
+              <span>Enjoy your day!</span>
+            </div>
+          </div>
         }
 
       </div>
@@ -126,10 +137,12 @@
     <article class="dashboard-card">
 
       <div class="card-header">
-
-        <div>
-          <h2>Needs Attention</h2>
-          <span>Items requiring your action</span>
+        <div class="card-heading">
+          <span class="card-icon card-icon--danger" aria-hidden="true">!</span>
+          <div>
+            <h2>Needs Attention</h2>
+            <span>Items requiring your action</span>
+          </div>
         </div>
 
         <span class="attention-count">
@@ -164,6 +177,8 @@
 
           </div>
 
+        } @empty {
+          <div class="empty-placeholder">Nothing needs your attention right now.</div>
         }
 
       </div>
@@ -172,9 +187,12 @@
 
     <article class="dashboard-card">
       <div class="card-header">
-        <div>
-          <h2>Pending Tasks</h2>
-          <span>Assigned to you or included as a participant</span>
+        <div class="card-heading">
+          <span class="card-icon" aria-hidden="true">☷</span>
+          <div>
+            <h2>Pending Tasks</h2>
+            <span>Assigned to you or included as a participant</span>
+          </div>
         </div>
         <a routerLink="/tasks">View tasks</a>
       </div>
@@ -196,9 +214,12 @@
 
     <article class="dashboard-card">
       <div class="card-header">
-        <div>
-          <h2>Upcoming Reminders</h2>
-          <span>Assigned to you or included as a participant</span>
+        <div class="card-heading">
+          <span class="card-icon" aria-hidden="true">◷</span>
+          <div>
+            <h2>Upcoming Reminders</h2>
+            <span>Assigned to you or included as a participant</span>
+          </div>
         </div>
         <a routerLink="/reminders">View reminders</a>
       </div>
@@ -220,9 +241,12 @@
 
     <article class="dashboard-card">
       <div class="card-header">
-        <div>
-          <h2>In Progress</h2>
-          <span>Tasks, reminders, requests, and meetings in progress</span>
+        <div class="card-heading">
+          <span class="card-icon" aria-hidden="true">↗</span>
+          <div>
+            <h2>In Progress</h2>
+            <span>Tasks, reminders, requests, and meetings in progress</span>
+          </div>
         </div>
         <span class="status-count" [attr.aria-label]="inProgressItems().length + ' items in progress'">
           {{ inProgressItems().length }}
@@ -246,9 +270,12 @@
 
     <article class="dashboard-card">
       <div class="card-header">
-        <div>
-          <h2>Completed</h2>
-          <span>Completed tasks, reminders, requests, and meetings</span>
+        <div class="card-heading">
+          <span class="card-icon card-icon--success" aria-hidden="true">✓</span>
+          <div>
+            <h2>Completed</h2>
+            <span>Completed tasks, reminders, requests, and meetings</span>
+          </div>
         </div>
         <span class="status-count" [attr.aria-label]="completedItems().length + ' completed items'">
           {{ completedItems().length }}
@@ -278,9 +305,12 @@
     <article class="dashboard-card">
 
       <div class="card-header">
-        <div>
-          <h2>Upcoming</h2>
-          <span>Next 7 days</span>
+        <div class="card-heading">
+          <span class="card-icon" aria-hidden="true">◷</span>
+          <div>
+            <h2>Upcoming</h2>
+            <span>Next 7 days</span>
+          </div>
         </div>
       </div>
 
@@ -302,9 +332,12 @@
     <article class="dashboard-card">
 
       <div class="card-header">
-        <div>
-          <h2>Recent Activity</h2>
-          <span>Your notification activity</span>
+        <div class="card-heading">
+          <span class="card-icon" aria-hidden="true">ϟ</span>
+          <div>
+            <h2>Recent Activity</h2>
+            <span>Your notification activity</span>
+          </div>
         </div>
       </div>
 

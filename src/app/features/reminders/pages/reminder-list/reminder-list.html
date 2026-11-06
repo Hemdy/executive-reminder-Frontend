@@ -73,45 +73,61 @@
 
   </section>
 
-  <section class="reminder-summary">
+  <section class="module-summary-grid">
 
-    <div>
-      <span>All Reminders</span>
-      <strong>{{ reminders().length }}</strong>
-    </div>
+    <article class="module-summary-card">
+      <span class="module-summary-icon" aria-hidden="true">◉</span>
+      <div class="module-summary-copy">
+        <div class="module-summary-label">All Reminders</div>
+        <strong class="module-summary-value">{{ reminders().length }}</strong>
+        <div class="module-summary-description">All scheduled follow-ups</div>
+      </div>
+    </article>
 
-    <div>
-      <span>Pending</span>
-      <strong>
+    <article class="module-summary-card module-summary-card--warning">
+      <span class="module-summary-icon" aria-hidden="true">◷</span>
+      <div class="module-summary-copy">
+        <div class="module-summary-label">Pending</div>
+        <strong class="module-summary-value">
         {{
           reminders().filter(
             reminder => reminder.status === 'PENDING'
           ).length
         }}
-      </strong>
-    </div>
+        </strong>
+        <div class="module-summary-description">Waiting to be triggered</div>
+      </div>
+    </article>
 
-    <div>
-      <span>Triggered</span>
-      <strong>
+    <article class="module-summary-card module-summary-card--info">
+      <span class="module-summary-icon" aria-hidden="true">ϟ</span>
+      <div class="module-summary-copy">
+        <div class="module-summary-label">Triggered</div>
+        <strong class="module-summary-value">
         {{
           reminders().filter(
             reminder => reminder.status === 'TRIGGERED'
           ).length
         }}
-      </strong>
-    </div>
+        </strong>
+        <div class="module-summary-description">Ready for your attention</div>
+      </div>
+    </article>
 
-    <div>
-      <span>Overdue</span>
-      <strong class="danger-text">
+    <article class="module-summary-card module-summary-card--danger">
+      <span class="module-summary-icon" aria-hidden="true">!</span>
+      <div class="module-summary-copy">
+        <div class="module-summary-label">Overdue</div>
+        <strong class="module-summary-value danger-text">
         {{
           reminders().filter(
             reminder => isOverdue(reminder)
           ).length
         }}
-      </strong>
-    </div>
+        </strong>
+        <div class="module-summary-description">Past the scheduled time</div>
+      </div>
+    </article>
 
   </section>
 
