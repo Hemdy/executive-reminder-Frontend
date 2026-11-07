@@ -68,17 +68,24 @@
   transition: transform 150ms ease, border-color 150ms ease, box-shadow 150ms ease;
 
   &:nth-child(4n + 2) {
-    --summary-background: #f3f0fb;
-    --summary-border: #d9d0ef;
-    --summary-accent: #65538f;
-    --summary-muted: #766a91;
-  }
-
-  &:nth-child(4n + 3) {
     --summary-background: #fff6e9;
     --summary-border: #eedbb9;
     --summary-accent: #8a6833;
     --summary-muted: #8a795d;
+  }
+  // &:nth-child(4n + 2) {
+  //   --summary-background: #f3f0fb;
+  //   --summary-border: #d9d0ef;
+  //   --summary-accent: #65538f;
+  //   --summary-muted: #766a91;
+  // }
+
+  &:nth-child(4n + 3) {
+    --summary-background: #fff0ef;
+    --summary-border: #f3cfca;
+    --summary-accent: #a64036;
+    --summary-muted: #895b56;
+
   }
 
   &:nth-child(4n + 4) {
