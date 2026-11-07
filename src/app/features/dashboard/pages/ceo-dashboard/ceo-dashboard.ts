@@ -27,6 +27,20 @@ interface DashboardStatusItem {
   route: string;
 }
 
+type DashboardSectionId =
+  | 'today-schedule'
+  | 'needs-attention'
+  | 'pending-tasks'
+  | 'in-progress-items'
+  | 'completed-items';
+
+interface DashboardSummaryItem {
+  label: 'Today' | 'Pending' | 'Overdue' | 'In Progress' | 'Completed';
+  value: number;
+  description: string;
+  targetId: DashboardSectionId;
+}
+
 @Component({
   selector: 'app-ceo-dashboard',
   standalone: true,
@@ -119,6 +133,17 @@ export class CeoDashboard implements OnInit, OnDestroy {
     }
   }
 
+  scrollToSection(targetId: DashboardSectionId): void {
+    if (!isPlatformBrowser(this.platformId)) {
+      return;
+    }
+
+    document.getElementById(targetId)?.scrollIntoView({
+      behavior: window.matchMedia?.('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth',
+      block: 'start'
+    });
+  }
+
   private getGreeting(): string {
     const hour = new Date().getHours();
 
@@ -151,11 +176,46 @@ export class CeoDashboard implements OnInit, OnDestroy {
     }, nextChange.getTime() - now.getTime());
   }
 
-  readonly summary = computed(() => [
-        { label: 'Today', value: this.assignedMeetings().filter(meeting => this.meetings.isToday(meeting)).length, description: 'Scheduled today' },
-    { label: 'Pending', value: this.assignedTasks().filter(task => task.status === 'PENDING').length + this.assignedReminders().filter(reminder => reminder.status === 'PENDING').length + this.assignedRequests().filter(request => request.status === 'PENDING').length, description: 'Items awaiting action' },
-    { label: 'Overdue', value: this.assignedTasks().filter(task => this.tasks.isOverdue(task)).length + this.assignedReminders().filter(reminder => this.reminders.isOverdue(reminder)).length, description: 'Require attention' },
-    { label: 'Completed', value: this.assignedTasks().filter(task => task.status === 'COMPLETED' || task.status === 'CLOSED').length + this.assignedReminders().filter(reminder => reminder.status === 'COMPLETED').length + this.assignedRequests().filter(request => request.status === 'COMPLETED').length + this.assignedMeetings().filter(meeting => meeting.status === 'COMPLETED').length, description: 'Completed items' }
+  readonly summary = computed<DashboardSummaryItem[]>(() => [
+    {
+      label: 'Today',
+      value: this.assignedMeetings().filter(meeting => this.meetings.isToday(meeting)).length,
+      description: 'Scheduled today',
+      targetId: 'today-schedule'
+    },
+    {
+      label: 'Pending',
+      value:
+        this.assignedTasks().filter(task => task.status === 'PENDING').length +
+        this.assignedReminders().filter(reminder => reminder.status === 'PENDING').length +
+        this.assignedRequests().filter(request => request.status === 'PENDING').length,
+      description: 'Items awaiting action',
+      targetId: 'pending-tasks'
+    },
+    {
+      label: 'Overdue',
+      value:
+        this.assignedTasks().filter(task => this.tasks.isOverdue(task)).length +
+        this.assignedReminders().filter(reminder => this.reminders.isOverdue(reminder)).length,
+      description: 'Require attention',
+      targetId: 'needs-attention'
+    },
+    {
+      label: 'In Progress',
+      value: this.inProgressItems().length,
+      description: 'Currently underway',
+      targetId: 'in-progress-items'
+    },
+    {
+      label: 'Completed',
+      value:
+        this.assignedTasks().filter(task => task.status === 'COMPLETED' || task.status === 'CLOSED').length +
+        this.assignedReminders().filter(reminder => reminder.status === 'COMPLETED').length +
+        this.assignedRequests().filter(request => request.status === 'COMPLETED').length +
+        this.assignedMeetings().filter(meeting => meeting.status === 'COMPLETED').length,
+      description: 'Completed items',
+      targetId: 'completed-items'
+    }
   ]);
 
   readonly schedule = computed(() => {

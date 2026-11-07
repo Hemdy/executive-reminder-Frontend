@@ -253,6 +253,7 @@ describe('CeoDashboard', () => {
       service.listError.set('');
     }
     currentUserSignal.set(currentUser);
+    const scrollToSection = vi.spyOn(component, 'scrollToSection').mockImplementation(() => {});
     fixture.detectChanges();
 
     expect(component.inProgressItems().map(item => item.id)).toEqual([
@@ -268,6 +269,7 @@ describe('CeoDashboard', () => {
       'completed-request',
       'completed-meeting'
     ]);
+    expect(component.summary().find(item => item.label === 'In Progress')?.value).toBe(4);
 
     const cards = Array.from(
       (fixture.nativeElement as HTMLElement).querySelectorAll('.dashboard-card')
@@ -276,6 +278,14 @@ describe('CeoDashboard', () => {
     const completedCard = cards.find(card => card.querySelector('h2')?.textContent?.trim() === 'Completed');
     expect(inProgressCard?.querySelector('.status-count')?.textContent?.trim()).toBe('4');
     expect(completedCard?.querySelector('.status-count')?.textContent?.trim()).toBe('5');
+    const inProgressSummary = Array.from(
+      (fixture.nativeElement as HTMLElement).querySelectorAll<HTMLButtonElement>('.summary-card')
+    ).find(card => card.textContent?.includes('In Progress'));
+    expect(inProgressSummary).toBeDefined();
+    inProgressSummary?.click();
+    expect(scrollToSection).toHaveBeenCalledWith('in-progress-items');
+    expect(fixture.nativeElement.querySelector('#in-progress-items h2')?.textContent?.trim())
+      .toBe('In Progress');
     expect(
       Array.from(inProgressCard?.querySelectorAll<HTMLAnchorElement>('.dashboard-status-item') ?? [])
         .map(link => link.getAttribute('href'))
