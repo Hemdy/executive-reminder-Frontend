@@ -154,7 +154,7 @@ button {
     width: 116px;
     height: 122px;
     border-radius: 40% 32% 28% 42% / 34% 38% 30% 40%;
-    background: color-mix(in srgb, var(--summary-accent) 14%, transparent);
+    background: color-mix(in srgb, var(--summary-accent) 7%, transparent);
     content: "";
     transform: rotate(22deg);
   }
