@@ -97,6 +97,14 @@
     --summary-muted: #895b56;
 
   }
+  &:nth-child(5n + 4) {
+--summary-background: #f3f0fb;
+    --summary-border: #d9d0ef;
+    --summary-accent: #65538f;
+    --summary-muted: #766a91;
+
+
+  }
 
   &:nth-child(5n + 5) {
     --summary-background: #edf7f2;
@@ -297,7 +305,8 @@
 .schedule-item {
   min-height: 58px;
   display: grid;
-  grid-template-columns: minmax(74px, max-content) 8px minmax(0, 1fr);
+  grid-template-areas: "marker content date";
+  grid-template-columns: 8px minmax(0, 1fr) minmax(74px, max-content);
   align-items: center;
   gap: 10px;
   padding: 7px 5px;
@@ -311,7 +320,8 @@
 }
 
 .schedule-item time {
-  justify-self: start;
+  grid-area: date;
+  justify-self: end;
   padding: 6px 8px;
   border-radius: 999px;
   background: #f0f3f9;
@@ -319,6 +329,13 @@
   font-size: 10px;
   line-height: 1.2;
   white-space: nowrap;
+}
+
+
+.schedule{
+  display: flex;
+  align-items: center;
+  gap: 10px;
 }
 
 .dashboard-status-item {
@@ -347,6 +364,7 @@
 }
 
 .schedule-marker {
+  grid-area: marker;
   width: 7px;
   height: 7px;
   border-radius: 50%;
@@ -354,6 +372,7 @@
 }
 
 .schedule-content {
+  grid-area: content;
   min-width: 0;
 }
 
@@ -609,7 +628,7 @@
   }
 
   .schedule-item {
-    grid-template-columns: minmax(68px, max-content) 7px minmax(0, 1fr);
+    grid-template-columns: 7px minmax(0, 1fr) minmax(68px, max-content);
     gap: 7px;
   }
 

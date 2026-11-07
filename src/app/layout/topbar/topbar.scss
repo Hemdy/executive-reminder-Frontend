@@ -109,7 +109,6 @@
 
   border-radius: 50%;
   text-decoration: none;
-  color: rgb(255, 158, 30);
 
   transition: background-color 0.2s ease;
 
@@ -121,6 +120,10 @@
 .notification-icon {
   font-size: 20px;
   line-height: 1;
+background: linear-gradient(135deg, #8C570C 0%, #C58A1D 25%, #F4D16B 50%, #D49A2C 75%, #9D6816 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
 }
 
 .notification-badge {

@@ -216,7 +216,12 @@
       @for (task of pendingTasks(); track task.id) {
 
         <a class="schedule-item" [routerLink]="['/tasks', task.id]">
-          <time>{{ task.dueDate | date:'mediumDate' }}</time>
+          
+          
+          <div class="schedule">
+                      <time>{{ task.dueDate | date:'mediumDate' }}</time>
+          <i class="fa-solid fa-circle-chevron-right"></i>
+        </div>
           <div class="schedule-marker"></div>
 
           <div class="schedule-content">
@@ -248,7 +253,7 @@
         </div>
       </div>
 
-      <a routerLink="/reminders">View reminders</a>
+      <a routerLink="/reminders"><i class="fa-solid fa-circle-chevron-right"></i></a>
     </div>
 
     <div class="schedule-list">
@@ -256,7 +261,12 @@
       @for (reminder of upcomingReminders(); track reminder.id) {
 
         <a class="schedule-item" [routerLink]="['/reminders', reminder.id]">
-          <time>{{ reminder.reminderDate | date:'mediumDate' }}</time>
+          
+          <div class="schedule">
+            <time>{{ reminder.reminderDate | date:'mediumDate' }}</time>
+          <i class="fa-solid fa-circle-chevron-right"></i>
+        </div>
+
           <div class="schedule-marker"></div>
 
           <div class="schedule-content">
@@ -299,13 +309,19 @@
       @for (item of inProgressItems(); track item.type + item.id) {
 
         <a class="schedule-item dashboard-status-item" [routerLink]="item.route">
-          <time>{{ item.date | date:'mediumDate' }}</time>
+          <div class="schedule">
+          <time>{{ item.date | date:'mediumDate' }} </time>
+          <i class="fa-solid fa-circle-chevron-right"></i>
+        </div>
+
+
           <div class="schedule-marker"></div>
 
           <div class="schedule-content">
             <strong>{{ item.title }}</strong>
             <span>{{ item.type }} · {{ item.owner }}</span>
           </div>
+          
         </a>
 
       } @empty {
@@ -342,8 +358,13 @@
       @for (item of completedItems(); track item.type + item.id) {
 
         <a class="schedule-item dashboard-status-item" [routerLink]="item.route">
-          <time>{{ item.date | date:'mediumDate' }}</time>
-          <div class="schedule-marker"></div>
+          <div class="schedule">
+          <time>{{ item.date | date:'mediumDate' }} </time>
+          <i class="fa-solid fa-circle-chevron-right"></i>
+        </div>          <div class="schedule-marker"></div>
+
+
+          
 
           <div class="schedule-content">
             <strong>{{ item.title }}</strong>

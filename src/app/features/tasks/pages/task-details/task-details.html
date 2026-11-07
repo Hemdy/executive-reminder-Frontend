@@ -14,14 +14,16 @@
     <header class="page-header">
       <div>
         <a routerLink="/tasks" class="back-link">
-        <i class="fa-solid fa-circle-chevron-left"></i>
+          <i class="fa-solid fa-circle-chevron-left">
+          </i>
+          <p class="eyebrow">Task Management</p>
         </a>
-
-        <p class="eyebrow">Task Management</p>
-        <div class="header-category">
+        
+          
+        <!-- <div class="header-category">
           <i class="fa-solid fa-folder" aria-hidden="true"></i>
           {{ currentTask.category }}
-        </div>
+        </div> -->
         <h1>{{ currentTask.title }}</h1>
         <p class="created-info">
           <i class="fa-regular fa-user" aria-hidden="true"></i>
