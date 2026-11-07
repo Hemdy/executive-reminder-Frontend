@@ -7,6 +7,8 @@
     [attr.aria-live]="message.type === 'error' ? 'assertive' : 'polite'"
   >
     <span>{{ message.message }}</span>
-    <button type="button" aria-label="Dismiss message" (click)="toast.dismiss()">×</button>
+    <button type="button" aria-label="Dismiss message" (click)="toast.dismiss()">
+      <i class="fa-solid fa-xmark" aria-hidden="true"></i>
+    </button>
   </div>
 }

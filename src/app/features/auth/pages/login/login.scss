@@ -470,7 +470,7 @@
   color: #687080;
 }
 
-.welcome-badge span {
+.welcome-badge i {
   color: var(--primary);
 }
 
@@ -542,18 +542,21 @@
   position: relative;
 }
 
-.input-wrapper > svg {
+.input-wrapper > i {
   position: absolute;
 
   left: 15px;
   top: 50%;
 
+  display: grid;
   width: 17px;
   height: 17px;
+  place-items: center;
 
   transform: translateY(-50%);
 
   color: #9aa1ad;
+  font-size: 17px;
 
   pointer-events: none;
 }
@@ -624,9 +627,10 @@
   padding: 5px;
 }
 
-.password-toggle svg {
+.password-toggle i {
   width: 17px;
   height: 17px;
+  font-size: 17px;
 }
 
 
@@ -727,8 +731,8 @@
     opacity .2s ease;
 }
 
-.primary-button svg {
-  width: 16px;
+.primary-button i {
+  font-size: 16px;
 }
 
 .primary-button:hover {

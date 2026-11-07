@@ -13,7 +13,8 @@
   class="notification-button"
   aria-label="Notifications"
 >
-  <span class="notification-icon">🔔</span>
+  <span class="notification-icon"> <i class="fa-solid fa-bell" aria-hidden="true"></i>
+</span>
 
   @if (unreadNotificationCount() > 0) {
     <span class="notification-badge">
@@ -59,9 +60,7 @@
       [attr.aria-expanded]="mobileSidebarOpen"
       (click)="toggleMobileSidebar.emit()"
     >
-      <span></span>
-      <span></span>
-      <span></span>
+      <i class="fa-solid fa-bars" aria-hidden="true"></i>
     </button>
 
   </div>

@@ -11,6 +11,9 @@ interface NavigationItem {
   permission?: string;
 }
 
+
+
+
 @Component({
   selector: 'app-sidebar',
   standalone: true,
@@ -32,59 +35,60 @@ export class Sidebar {
   readonly authService = inject(AuthService);
   private readonly router = inject(Router);
 
-  readonly navigation: NavigationItem[] = [
-    {
-      label: 'Dashboard',
-      icon: '⌂',
-      route: '/dashboard'
-    },
-    {
-      label: 'Tasks',
-      icon: '✓',
-      route: '/tasks'
-    },
-    {
-      label: 'Reminders',
-      icon: '◷',
-      route: '/reminders'
-    },
-    {
-      label: 'Requests',
-      icon: '▣',
-      route: '/requests'
-    },
-    {
-      label: 'Meetings',
-      icon: '▦',
-      route: '/meetings'
-    },
-    {
-      label: 'Calendar',
-      icon: '□',
-      route: '/calendar'
-    },
-    {
-      label: 'Notifications',
-      icon: '♢',
-      route: '/notifications'
-    },
-    {
-      label: 'Settings',
-      icon: '⚙',
-      route: '/settings'
-    },
-  ];
+readonly navigation: NavigationItem[] = [
+  {
+    label: 'Dashboard',
+    icon: 'fa-solid fa-house',
+    route: '/dashboard'
+  },
+  {
+    label: 'Tasks',
+    icon: 'fa-solid fa-list-check',
+    route: '/tasks'
+  },
+  {
+    label: 'Reminders',
+    icon: 'fa-regular fa-clock',
+    route: '/reminders'
+  },
+  {
+    label: 'Requests',
+    icon: 'fa-solid fa-file-lines',
+    route: '/requests'
+  },
+  {
+    label: 'Meetings',
+    icon: 'fa-solid fa-users',
+    route: '/meetings'
+  },
+  {
+    label: 'Calendar',
+    icon: 'fa-solid fa-calendar-days',
+    route: '/calendar'
+  },
+  {
+    label: 'Notifications',
+    icon: 'fa-solid fa-bell',
+    route: '/notifications'
+  },
+  {
+    label: 'Settings',
+    icon: 'fa-solid fa-gear',
+    route: '/settings'
+  },
+];
 
-  readonly adminNavigation: NavigationItem[] = [
-    {
-      label: 'Roles',
-      icon: '♢',
-      route: '/roles',
-      permission: 'roles:view'
-    },
+readonly adminNavigation: NavigationItem[] = [
+  {
+    label: 'Roles',
+    icon: 'fa-solid fa-user-shield',
+    route: '/roles',
+    permission: 'roles:view'
+  },
+
     // {
     //   label: 'Users',
-    //   icon: '♙',
+    //   icon: 'fa-solid fa-user',
     //   route: '/users',
     //   permission: 'users:view'
     // },

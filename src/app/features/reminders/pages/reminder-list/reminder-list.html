@@ -16,7 +16,7 @@
       class="primary-button"
       (click)="createReminder()"
     >
-      <span>+</span>
+      <span aria-hidden="true"><i class="fa-solid fa-plus"></i></span>
       New Reminder
     </button>
   </header>
@@ -24,7 +24,7 @@
   <section class="reminder-toolbar">
 
     <div class="search-box">
-      <span class="search-icon">⌕</span>
+      <span class="search-icon" aria-hidden="true"><i class="fa-solid fa-magnifying-glass"></i></span>
 
       <input
         type="search"
@@ -76,7 +76,7 @@
   <section class="module-summary-grid">
 
     <article class="module-summary-card">
-      <span class="module-summary-icon" aria-hidden="true">◉</span>
+      <span class="module-summary-icon" aria-hidden="true"><i class="fa-solid fa-bell"></i></span>
       <div class="module-summary-copy">
         <div class="module-summary-label">All Reminders</div>
         <strong class="module-summary-value">{{ reminders().length }}</strong>
@@ -85,7 +85,7 @@
     </article>
 
     <article class="module-summary-card module-summary-card--warning">
-      <span class="module-summary-icon" aria-hidden="true">◷</span>
+      <span class="module-summary-icon" aria-hidden="true"><i class="fa-regular fa-clock"></i></span>
       <div class="module-summary-copy">
         <div class="module-summary-label">Pending</div>
         <strong class="module-summary-value">
@@ -100,7 +100,7 @@
     </article>
 
     <article class="module-summary-card module-summary-card--info">
-      <span class="module-summary-icon" aria-hidden="true">ϟ</span>
+      <span class="module-summary-icon" aria-hidden="true"><i class="fa-solid fa-bolt"></i></span>
       <div class="module-summary-copy">
         <div class="module-summary-label">Triggered</div>
         <strong class="module-summary-value">
@@ -115,7 +115,7 @@
     </article>
 
     <article class="module-summary-card module-summary-card--danger">
-      <span class="module-summary-icon" aria-hidden="true">!</span>
+      <span class="module-summary-icon" aria-hidden="true"><i class="fa-solid fa-circle-exclamation"></i></span>
       <div class="module-summary-copy">
         <div class="module-summary-label">Overdue</div>
         <strong class="module-summary-value danger-text">
@@ -160,7 +160,7 @@
 
       <div class="empty-state">
 
-        <div class="empty-icon">◷</div>
+        <div class="empty-icon" aria-hidden="true"><i class="fa-regular fa-clock"></i></div>
 
         <h3>No reminders found</h3>
 
@@ -335,11 +335,13 @@
                 <td>
                   <div class="activity">
                     <span>
-                      💬 {{ reminder.commentsCount }}
+                      <i class="fa-regular fa-comments" aria-hidden="true"></i>
+                      {{ reminder.commentsCount }}
                     </span>
 
                     <span>
-                      📎 {{ reminder.attachmentsCount }}
+                      <i class="fa-solid fa-paperclip" aria-hidden="true"></i>
+                      {{ reminder.attachmentsCount }}
                     </span>
                   </div>
                 </td>

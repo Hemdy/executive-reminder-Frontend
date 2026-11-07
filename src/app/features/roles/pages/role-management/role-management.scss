@@ -304,10 +304,9 @@ th {
   font-size: 13px;
   line-height: 1.45;
 }
-.role-permission-group li::before {
-  content: '✓';
+.role-permission-group li > i {
   color: #1d7a45;
-  font-weight: 700;
+  font-size: 12px;
 }
 .no-role-permissions {
   margin: 24px 0;

@@ -8,7 +8,7 @@
     </div>
 
     <button class="primary-button" type="button" (click)="createRequest()">
-      <span>+</span>
+      <span aria-hidden="true"><i class="fa-solid fa-plus"></i></span>
       New Request
     </button>
   </div>
@@ -16,7 +16,7 @@
   <div class="module-summary-grid">
 
     <article class="module-summary-card">
-      <span class="module-summary-icon" aria-hidden="true">▤</span>
+      <span class="module-summary-icon" aria-hidden="true"><i class="fa-solid fa-file-lines"></i></span>
       <div class="module-summary-copy">
         <div class="module-summary-label">Total Requests</div>
         <strong class="module-summary-value">{{ totalCount() }}</strong>
@@ -25,7 +25,7 @@
     </article>
 
     <article class="module-summary-card module-summary-card--warning">
-      <span class="module-summary-icon" aria-hidden="true">◷</span>
+      <span class="module-summary-icon" aria-hidden="true"><i class="fa-regular fa-clock"></i></span>
       <div class="module-summary-copy">
         <div class="module-summary-label">Pending</div>
         <strong class="module-summary-value">{{ pendingCount() }}</strong>
@@ -34,7 +34,7 @@
     </article>
 
     <article class="module-summary-card module-summary-card--info">
-      <span class="module-summary-icon" aria-hidden="true">⌕</span>
+      <span class="module-summary-icon" aria-hidden="true"><i class="fa-solid fa-magnifying-glass"></i></span>
       <div class="module-summary-copy">
         <div class="module-summary-label">In Review</div>
         <strong class="module-summary-value">{{ inReviewCount() }}</strong>
@@ -43,7 +43,7 @@
     </article>
 
     <article class="module-summary-card module-summary-card--danger">
-      <span class="module-summary-icon" aria-hidden="true">!</span>
+      <span class="module-summary-icon" aria-hidden="true"><i class="fa-solid fa-circle-exclamation"></i></span>
       <div class="module-summary-copy">
         <div class="module-summary-label">Attention</div>
         <strong class="module-summary-value">{{ attentionCount() }}</strong>
@@ -52,7 +52,7 @@
     </article>
 
     <article class="module-summary-card module-summary-card--success">
-      <span class="module-summary-icon" aria-hidden="true">✓</span>
+      <span class="module-summary-icon" aria-hidden="true"><i class="fa-solid fa-circle-check"></i></span>
       <div class="module-summary-copy">
         <div class="module-summary-label">Approved</div>
         <strong class="module-summary-value">{{ approvedCount() }}</strong>
@@ -61,7 +61,7 @@
     </article>
 
     <article class="module-summary-card module-summary-card--success">
-      <span class="module-summary-icon" aria-hidden="true">✓</span>
+      <span class="module-summary-icon" aria-hidden="true"><i class="fa-solid fa-circle-check"></i></span>
       <div class="module-summary-copy">
         <div class="module-summary-label">Completed</div>
         <strong class="module-summary-value">{{ completedCount() }}</strong>
@@ -74,7 +74,7 @@
   <div class="filters-card">
 
     <div class="search-field">
-      <span class="search-icon">⌕</span>
+      <span class="search-icon" aria-hidden="true"><i class="fa-solid fa-magnifying-glass"></i></span>
 
       <input
         type="search"
@@ -308,8 +308,8 @@
 
                 <td>
                   <div class="activity">
-                    <span>💬 {{ request.commentsCount }}</span>
-                    <span>📎 {{ request.attachmentsCount }}</span>
+                    <span><i class="fa-regular fa-comments" aria-hidden="true"></i> {{ request.commentsCount }}</span>
+                    <span><i class="fa-solid fa-paperclip" aria-hidden="true"></i> {{ request.attachmentsCount }}</span>
                   </div>
                 </td>
 
@@ -326,7 +326,7 @@
     } @else {
 
       <div class="empty-state">
-        <div class="empty-icon">▣</div>
+        <div class="empty-icon" aria-hidden="true"><i class="fa-solid fa-file-circle-question"></i></div>
         <h3>No requests found</h3>
         <p>Try changing your filters or create a new request.</p>
 

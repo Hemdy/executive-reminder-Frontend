@@ -134,31 +134,31 @@ export class NotificationCenter {
       case 'TASK_ASSIGNED':
       case 'TASK_UPDATED':
       case 'TASK_STATUS':
-        return '✓';
+        return 'fa-solid fa-list-check';
 
       case 'TASK_DUE':
-        return '◷';
+        return 'fa-regular fa-clock';
 
       case 'TASK_OVERDUE':
-        return '!';
+        return 'fa-solid fa-triangle-exclamation';
 
       case 'REMINDER':
-        return '◴';
+        return 'fa-solid fa-bell';
 
       case 'REQUEST':
-        return '▣';
+        return 'fa-solid fa-file-lines';
 
       case 'MEETING':
-        return '▦';
+        return 'fa-solid fa-calendar-days';
 
       case 'COMMENT':
-        return '◌';
+        return 'fa-regular fa-comments';
 
       case 'SYSTEM':
-        return '⚙';
+        return 'fa-solid fa-gear';
 
       default:
-        return '•';
+        return 'fa-solid fa-circle-info';
     }
   }
 

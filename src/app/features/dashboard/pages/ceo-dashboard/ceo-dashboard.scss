@@ -120,7 +120,7 @@
     width: 116px;
     height: 122px;
     border-radius: 40% 32% 28% 42% / 34% 38% 30% 40%;
-    background: color-mix(in srgb, var(--summary-accent) 14%, transparent);
+    background: color-mix(in srgb, var(--summary-accent) 7%, transparent);
     content: "";
     transform: rotate(22deg);
   }
@@ -168,10 +168,10 @@
   min-height: 174px;
   flex-direction: column;
   background: var(--surface);
-  border: 1px solid #dce5f2;
+  // border: 1px solid #dce5f2;
   border-radius: 14px;
   overflow: hidden;
-  box-shadow: 0 2px 8px rgba(31, 55, 89, 0.05);
+  // box-shadow: 0 2px 8px rgba(31, 55, 89, 0.05);
   transition: border-color 150ms ease, box-shadow 150ms ease;
 
   &:hover {

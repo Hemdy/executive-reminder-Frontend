@@ -113,7 +113,7 @@
                 class="notification-icon"
                 [class]="getPriorityClass(notification.priority)"
               >
-                {{ getIcon(notification.type) }}
+                <i [class]="getIcon(notification.type)" aria-hidden="true"></i>
               </div>
 
               <div class="notification-content">
@@ -160,7 +160,7 @@
                   aria-label="Mark as unread"
                   (click)="markAsUnread(notification)"
                 >
-                  ●
+                  <i class="fa-solid fa-envelope" aria-hidden="true"></i>
                 </button>
 
               } @else {
@@ -171,7 +171,7 @@
                   aria-label="Mark as read"
                   (click)="markAsRead(notification)"
                 >
-                  ✓
+                  <i class="fa-solid fa-envelope-open" aria-hidden="true"></i>
                 </button>
 
               }
@@ -182,7 +182,7 @@
                 aria-label="Delete notification"
                 (click)="deleteNotification(notification)"
               >
-                ×
+                <i class="fa-solid fa-trash" aria-hidden="true"></i>
               </button>
 
             </div>
@@ -197,8 +197,8 @@
 
       <div class="empty-state">
 
-        <div class="empty-icon">
-          ✓
+        <div class="empty-icon" aria-hidden="true">
+          <i class="fa-solid fa-circle-check"></i>
         </div>
 
         @if (filter() === 'UNREAD') {

@@ -16,7 +16,7 @@
       class="primary-button"
       (click)="createTask()"
     >
-      <span>+</span>
+      <span aria-hidden="true"><i class="fa-solid fa-plus"></i></span>
       New Task
     </button>
   </header>
@@ -24,7 +24,7 @@
   <section class="task-toolbar">
 
     <div class="search-box">
-      <span class="search-icon">⌕</span>
+      <span class="search-icon" aria-hidden="true"><i class="fa-solid fa-magnifying-glass"></i></span>
 
       <input
         type="search"
@@ -73,85 +73,158 @@
 
   </section>
 
-  <section class="module-summary-grid">
-    <article class="module-summary-card">
-      <span class="module-summary-icon" aria-hidden="true">▦</span>
-      <div class="module-summary-copy">
-        <div class="module-summary-label">Total</div>
-        <strong class="module-summary-value">{{ tasks().length }}</strong>
-        <div class="module-summary-description">Across your workspace</div>
-      </div>
-    </article>
+<section class="module-summary-grid">
 
-    <article class="module-summary-card module-summary-card--warning">
-      <span class="module-summary-icon" aria-hidden="true">◷</span>
-      <div class="module-summary-copy">
-        <div class="module-summary-label">Pending</div>
-        <strong class="module-summary-value">
+  <!-- Total -->
+  <article class="module-summary-card">
+    <span class="module-summary-icon" aria-hidden="true">
+      <i class="fa-solid fa-layer-group"></i>
+    </span>
+
+    <div class="module-summary-copy">
+      <div class="module-summary-label">Total</div>
+      <strong class="module-summary-value">
+        {{ tasks().length }}
+      </strong>
+      <div class="module-summary-description">
+        Across your workspace
+      </div>
+    </div>
+  </article>
+
+
+  <!-- Pending -->
+  <article class="module-summary-card module-summary-card--warning">
+    <span class="module-summary-icon" aria-hidden="true">
+      <i class="fa-regular fa-clock"></i>
+    </span>
+
+    <div class="module-summary-copy">
+      <div class="module-summary-label">Pending</div>
+      <strong class="module-summary-value">
         {{
           tasks().filter(task => task.status === 'PENDING').length
         }}
-        </strong>
-        <div class="module-summary-description">Awaiting action</div>
+      </strong>
+      <div class="module-summary-description">
+        Awaiting action
       </div>
-    </article>
+    </div>
+  </article>
 
-    <article class="module-summary-card module-summary-card--info">
-      <span class="module-summary-icon" aria-hidden="true">↗</span>
-      <div class="module-summary-copy">
-        <div class="module-summary-label">In Progress</div>
-        <strong class="module-summary-value">
+
+  <!-- In Progress -->
+  <article class="module-summary-card module-summary-card--info">
+    <span class="module-summary-icon" aria-hidden="true">
+      <i class="fa-solid fa-arrow-trend-up"></i>
+    </span>
+
+    <div class="module-summary-copy">
+      <div class="module-summary-label">In Progress</div>
+      <strong class="module-summary-value">
         {{
           tasks().filter(task => task.status === 'IN_PROGRESS').length
         }}
-        </strong>
-        <div class="module-summary-description">Currently underway</div>
+      </strong>
+      <div class="module-summary-description">
+        Currently underway
       </div>
-    </article>
+    </div>
+  </article>
 
-    <article class="module-summary-card module-summary-card--danger">
-      <span class="module-summary-icon" aria-hidden="true">!</span>
-      <div class="module-summary-copy">
-        <div class="module-summary-label">Overdue</div>
-        <strong class="module-summary-value danger-text">
+
+  <!-- Overdue -->
+  <article class="module-summary-card module-summary-card--danger">
+    <span class="module-summary-icon" aria-hidden="true">
+      <i class="fa-solid fa-circle-exclamation"></i>
+    </span>
+
+    <div class="module-summary-copy">
+      <div class="module-summary-label">Overdue</div>
+      <strong class="module-summary-value danger-text">
         {{
           tasks().filter(task => isOverdue(task)).length
         }}
-        </strong>
-        <div class="module-summary-description">Past the due date</div>
+      </strong>
+      <div class="module-summary-description">
+        Past the due date
       </div>
-    </article>
-  </section>
+    </div>
+  </article>
 
-  <section class="task-table-card">
+</section>
 
-    @if (selectedCount() > 0) {
-      <div class="bulk-actions">
-        <span>{{ selectedCount() }} selected</span>
-        <button
-          type="button"
-          class="bulk-delete-button"
-          [disabled]="deletingSelected()"
-          (click)="deleteSelected()"
-        >
-          {{ deletingSelected() ? 'Deleting…' : 'Delete selected' }}
-        </button>
-      </div>
-    }
-    @if (deleteError()) {
-      <p class="bulk-delete-error" role="alert">{{ deleteError() }}</p>
-    }
 
-    @if (listLoading()) {
-      <app-content-skeleton kind="table" />
-    } @else if (listError()) {
-      <p role="alert">{{ listError() }}</p>
-      <button type="button" class="secondary-button" (click)="retryLoad()">Retry</button>
-    } @else {
+<section class="task-table-card">
+
+  <!-- Bulk Actions -->
+  @if (selectedCount() > 0) {
+    <div class="bulk-actions">
+
+      <span>
+        <i class="fa-solid fa-check-double" aria-hidden="true"></i>
+        {{ selectedCount() }} selected
+      </span>
+
+      <button
+        type="button"
+        class="bulk-delete-button"
+        [disabled]="deletingSelected()"
+        (click)="deleteSelected()"
+      >
+        <i
+          class="fa-solid"
+          [class.fa-trash]="!deletingSelected()"
+          [class.fa-spinner]="deletingSelected()"
+          [class.fa-spin]="deletingSelected()"
+          aria-hidden="true"
+        ></i>
+
+        {{ deletingSelected() ? 'Deleting…' : 'Delete selected' }}
+      </button>
+
+    </div>
+  }
+
+  <!-- Delete Error -->
+  @if (deleteError()) {
+    <p class="bulk-delete-error" role="alert">
+      <i class="fa-solid fa-circle-exclamation" aria-hidden="true"></i>
+      {{ deleteError() }}
+    </p>
+  }
+
+  <!-- Loading State -->
+  @if (listLoading()) {
+
+    <app-content-skeleton kind="table" />
+
+  } @else if (listError()) {
+
+    <p role="alert">
+      <i class="fa-solid fa-triangle-exclamation" aria-hidden="true"></i>
+      {{ listError() }}
+    </p>
+
+    <button
+      type="button"
+      class="secondary-button"
+      (click)="retryLoad()"
+    >
+      <i class="fa-solid fa-rotate-right" aria-hidden="true"></i>
+      Retry
+    </button>
+
+  } @else {
+
     @if (tasks().length === 0) {
 
+      <!-- Empty State -->
       <div class="empty-state">
-        <div class="empty-icon">✓</div>
+
+        <div class="empty-icon" aria-hidden="true">
+          <i class="fa-solid fa-clipboard-check"></i>
+        </div>
 
         <h3>No tasks found</h3>
 
@@ -164,18 +237,22 @@
           class="secondary-button"
           (click)="clearFilters()"
         >
+          <i class="fa-solid fa-filter-circle-xmark" aria-hidden="true"></i>
           Clear Filters
         </button>
+
       </div>
 
     } @else {
 
+      <!-- Task Table -->
       <div class="table-wrapper">
 
         <table>
 
           <thead>
             <tr>
+
               @if (manageableTasks().length > 0) {
                 <th class="selection-column">
                   <label class="select-all-label">
@@ -191,22 +268,47 @@
                   </label>
                 </th>
               }
-              <th>Task</th>
-              <th>Assignee</th>
-              <th>Priority</th>
-              <th>Status</th>
-              <th>Due</th>
-              <th>Activity</th>
-              <th></th>
+
+              <th>
+                <i class="fa-solid fa-list-check" aria-hidden="true"></i>
+                Task
+              </th>
+
+              <th>
+                <i class="fa-solid fa-user" aria-hidden="true"></i>
+                Assignee
+              </th>
+
+              <th>
+                <i class="fa-solid fa-flag" aria-hidden="true"></i>
+                Priority
+              </th>
+
+              <th>
+                <i class="fa-solid fa-circle-dot" aria-hidden="true"></i>
+                Status
+              </th>
+
+              <th>
+                <i class="fa-solid fa-calendar-days" aria-hidden="true"></i>
+                Due
+              </th>
+
+              <th>
+                <i class="fa-solid fa-chart-simple" aria-hidden="true"></i>
+                Activity
+              </th>
+
+              <th>
+                <span class="sr-only">Actions</span>
+              </th>
+
             </tr>
           </thead>
 
           <tbody>
 
-            @for (
-              task of tasks();
-              track task.id
-            ) {
+            @for (task of tasks(); track task.id) {
 
               <tr
                 class="task-row"
@@ -228,7 +330,9 @@
                   </td>
                 }
 
+                <!-- Task Details -->
                 <td>
+
                   <div class="task-title">
                     {{ task.title }}
                   </div>
@@ -240,12 +344,17 @@
                   }
 
                   <span class="category">
+                    <i class="fa-solid fa-tag" aria-hidden="true"></i>
                     {{ task.category }}
                   </span>
+
                 </td>
 
+                <!-- Assignee -->
                 <td>
+
                   <div class="assignee">
+
                     <div class="avatar">
                       {{
                         task.assignedTo.firstName.charAt(0)
@@ -255,6 +364,7 @@
                     </div>
 
                     <div>
+
                       <strong>
                         {{ task.assignedTo.firstName }}
                         {{ task.assignedTo.lastName }}
@@ -262,14 +372,20 @@
 
                       @if (task.assignedTo.department) {
                         <small>
+                          <i class="fa-solid fa-building" aria-hidden="true"></i>
                           {{ task.assignedTo.department }}
                         </small>
                       }
+
                     </div>
+
                   </div>
+
                 </td>
 
+                <!-- Priority -->
                 <td>
+
                   <span
                     class="priority-badge"
                     [class.priority-low]="task.priority === 'LOW'"
@@ -279,9 +395,12 @@
                   >
                     {{ getPriorityLabel(task.priority) }}
                   </span>
+
                 </td>
 
+                <!-- Status -->
                 <td>
+
                   <span
                     class="status-badge"
                     [class.status-pending]="task.status === 'PENDING'"
@@ -291,49 +410,70 @@
                   >
                     {{ getStatusLabel(task.status) }}
                   </span>
+
                 </td>
 
+                <!-- Due Date -->
                 <td>
+
                   <div
                     class="due-date"
                     [class.overdue]="isOverdue(task)"
                   >
+
                     <strong>
                       {{ task.dueDate }}
                     </strong>
 
                     @if (task.dueTime) {
                       <small>
+                        <i class="fa-regular fa-clock" aria-hidden="true"></i>
                         {{ task.dueTime }}
                       </small>
                     }
 
                     @if (isOverdue(task)) {
-                      <span>Overdue</span>
+                      <span>
+                        <i class="fa-solid fa-triangle-exclamation" aria-hidden="true"></i>
+                        Overdue
+                      </span>
                     }
+
                   </div>
+
                 </td>
 
+                <!-- Activity -->
                 <td>
+
                   <div class="activity-counts">
+
                     <span>
-                      💬 {{ task.commentsCount }}
+                      <i class="fa-regular fa-comments" aria-hidden="true"></i>
+                      {{ task.commentsCount }}
                     </span>
 
                     <span>
-                      📎 {{ task.attachmentsCount }}
+                      <i class="fa-solid fa-paperclip" aria-hidden="true"></i>
+                      {{ task.attachmentsCount }}
                     </span>
+
                   </div>
+
                 </td>
 
+                <!-- Actions -->
                 <td>
+
                   <button
                     type="button"
                     class="row-action"
                     (click)="$event.stopPropagation(); viewTask(task)"
                   >
+                    <i class="fa-regular fa-eye" aria-hidden="true"></i>
                     View
                   </button>
+
                 </td>
 
               </tr>
@@ -347,8 +487,10 @@
       </div>
 
     }
-    }
 
-  </section>
+  }
+
+</section>
+
 
 </section>

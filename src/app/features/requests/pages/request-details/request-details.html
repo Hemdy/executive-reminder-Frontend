@@ -6,7 +6,8 @@
       type="button"
       (click)="backToRequests()"
     >
-      ← Back to Requests
+      <i class="fa-solid fa-arrow-left" aria-hidden="true"></i>
+      Back to Requests
     </button>
 
     <div class="top-actions">
@@ -27,7 +28,8 @@
           type="button"
           (click)="approveRequest()"
         >
-          ✓ Approve
+          <i class="fa-solid fa-check" aria-hidden="true"></i>
+          Approve
         </button>
       }
 
@@ -365,7 +367,8 @@
                   type="button"
                   (click)="approveRequest()"
                 >
-                  ✓ Approve Request
+                  <i class="fa-solid fa-check" aria-hidden="true"></i>
+                  Approve Request
                 </button>
               }
 
@@ -395,7 +398,8 @@
                   type="button"
                   (click)="completeRequest()"
                 >
-                  ✓ Mark Completed
+                  <i class="fa-solid fa-circle-check" aria-hidden="true"></i>
+                  Mark Completed
                 </button>
               }
 

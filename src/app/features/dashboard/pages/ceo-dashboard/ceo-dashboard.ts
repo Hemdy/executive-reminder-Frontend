@@ -152,9 +152,9 @@ export class CeoDashboard implements OnInit, OnDestroy {
   }
 
   readonly summary = computed(() => [
+        { label: 'Today', value: this.assignedMeetings().filter(meeting => this.meetings.isToday(meeting)).length, description: 'Scheduled today' },
     { label: 'Pending', value: this.assignedTasks().filter(task => task.status === 'PENDING').length + this.assignedReminders().filter(reminder => reminder.status === 'PENDING').length + this.assignedRequests().filter(request => request.status === 'PENDING').length, description: 'Items awaiting action' },
     { label: 'Overdue', value: this.assignedTasks().filter(task => this.tasks.isOverdue(task)).length + this.assignedReminders().filter(reminder => this.reminders.isOverdue(reminder)).length, description: 'Require attention' },
-    { label: 'Today', value: this.assignedMeetings().filter(meeting => this.meetings.isToday(meeting)).length, description: 'Scheduled today' },
     { label: 'Completed', value: this.assignedTasks().filter(task => task.status === 'COMPLETED' || task.status === 'CLOSED').length + this.assignedReminders().filter(reminder => reminder.status === 'COMPLETED').length + this.assignedRequests().filter(request => request.status === 'COMPLETED').length + this.assignedMeetings().filter(meeting => meeting.status === 'COMPLETED').length, description: 'Completed items' }
   ]);
 

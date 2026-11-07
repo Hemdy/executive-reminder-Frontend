@@ -24,12 +24,12 @@
         aria-controls="enable-notifications-panel"
         (click)="activePanel.set(activePanel() === 'enable' ? null : 'enable')"
       >
-        <span class="option-icon" aria-hidden="true">♢</span>
+        <span class="option-icon" aria-hidden="true"><i class="fa-solid fa-bell"></i></span>
         <span class="option-copy">
           <strong>Enable Notifications</strong>
           <small>Allow this device to show alerts for important updates.</small>
         </span>
-        <span class="option-arrow" aria-hidden="true">›</span>
+        <span class="option-arrow" aria-hidden="true"><i class="fa-solid fa-chevron-right"></i></span>
       </button>
 
       <button
@@ -40,12 +40,12 @@
         aria-controls="notification-preferences-panel"
         (click)="activePanel.set(activePanel() === 'preferences' ? null : 'preferences')"
       >
-        <span class="option-icon" aria-hidden="true">☷</span>
+        <span class="option-icon" aria-hidden="true"><i class="fa-solid fa-sliders"></i></span>
         <span class="option-copy">
           <strong>Manage Notification Preferences</strong>
           <small>Choose which activity can send push notifications.</small>
         </span>
-        <span class="option-arrow" aria-hidden="true">›</span>
+        <span class="option-arrow" aria-hidden="true"><i class="fa-solid fa-chevron-right"></i></span>
       </button>
     </div>
 

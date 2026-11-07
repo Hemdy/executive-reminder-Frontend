@@ -188,7 +188,7 @@
             aria-label="Close role details"
             (click)="closeRoleDetails()"
           >
-            ×
+            <i class="fa-solid fa-xmark" aria-hidden="true"></i>
           </button>
         </header>
 
@@ -199,7 +199,10 @@
                 <h3>{{ group.label }}</h3>
                 <ul>
                   @for (permission of group.permissions; track permission) {
-                    <li>{{ permissionLabel(permission) }}</li>
+                    <li>
+                      <i class="fa-solid fa-check" aria-hidden="true"></i>
+                      {{ permissionLabel(permission) }}
+                    </li>
                   }
                 </ul>
               </section>

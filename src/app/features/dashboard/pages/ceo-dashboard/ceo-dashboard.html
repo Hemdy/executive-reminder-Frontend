@@ -42,7 +42,8 @@
     </div>
 
     <button class="primary-button" routerLink="/tasks/new">
-      + Create Task
+      <i class="fa-solid fa-plus" aria-hidden="true"></i>
+      Create Task
     </button>
 
   </div>
@@ -52,307 +53,377 @@
 
     @for (item of summary(); track item.label) {
 
-      <article class="summary-card">
-        <span class="summary-icon" aria-hidden="true">
-          @switch (item.label) {
-            @case ('Pending') { ◷ }
-            @case ('Overdue') { ! }
-            @case ('Today') { ▣ }
-            @case ('Completed') { ✓ }
-            @default { ◉ }
-          }
-        </span>
-        <div class="summary-copy">
-          <div class="summary-label">{{ item.label }}</div>
-          <div class="summary-value">{{ item.value }}</div>
-          <div class="summary-description">{{ item.description }}</div>
-        </div>
-      </article>
+  <article class="summary-card">
+  <span class="summary-icon" aria-hidden="true">
+    @switch (item.label) {
+          @case ('Today') {
+        <i class="fa-regular fa-calendar"></i>
+      }
+      @case ('Pending') {
+        <i class="fa-regular fa-hourglass-half"></i>
+      }
+      @case ('Overdue') {
+        <i class="fa-solid fa-circle-exclamation"></i>
+      }
+  
+      @case ('Completed') {
+        <i class="fa-solid fa-circle-check"></i>
+      }
+      @default {
+        <i class="fa-solid fa-circle"></i>
+      }
+    }
+  </span>
+
+  <div class="summary-copy">
+    <div class="summary-label">{{ item.label }}</div>
+    <div class="summary-value">{{ item.value }}</div>
+    <div class="summary-description">{{ item.description }}</div>
+  </div>
+</article>
 
     }
 
   </section>
+<section class="dashboard-grid">
 
+  <!-- Today's Schedule -->
+  <article class="dashboard-card">
 
-  <section class="dashboard-grid">
+    <div class="card-header">
+      <div class="card-heading">
+        <span class="card-icon" aria-hidden="true">
+          <i class="fa-solid fa-calendar-day"></i>
+        </span>
+        <div>
+          <h2>Today's Schedule</h2>
+          <span>Live data from your workspace</span>
+        </div>
+      </div>
 
-    <article class="dashboard-card">
+      <a routerLink="/calendar">
+        View calendar
+      </a>
+    </div>
 
-      <div class="card-header">
-        <div class="card-heading">
-          <span class="card-icon" aria-hidden="true">▣</span>
-          <div>
-            <h2>Today's Schedule</h2>
-            <span>Live data from your workspace</span>
+    <div class="schedule-list">
+
+      @for (item of schedule(); track item.time + item.title) {
+
+        <div class="schedule-item">
+          <time>{{ item.time }}</time>
+          <div class="schedule-marker"></div>
+
+          <div class="schedule-content">
+            <strong>{{ item.title }}</strong>
+            <span>{{ item.type }}</span>
           </div>
         </div>
 
-        <a routerLink="/calendar">
-          View calendar
+      } @empty {
+        <div class="empty-placeholder empty-placeholder--illustrated">
+          <span class="empty-icon" aria-hidden="true">
+            <i class="fa-regular fa-calendar-xmark"></i>
+          </span>
+          <div>
+            <strong>No scheduled events for today</strong>
+            <span>Enjoy your day!</span>
+          </div>
+        </div>
+      }
+
+    </div>
+
+  </article>
+
+
+  <!-- Needs Attention -->
+  <article class="dashboard-card">
+
+    <div class="card-header">
+      <div class="card-heading">
+        <span class="card-icon card-icon--danger" aria-hidden="true">
+          <i class="fa-solid fa-circle-exclamation"></i>
+        </span>
+        <div>
+          <h2>Needs Attention</h2>
+          <span>Items requiring your action</span>
+        </div>
+      </div>
+
+      <span class="attention-count">
+        {{ attentionItems().length }}
+      </span>
+    </div>
+
+    <div class="attention-list">
+
+      @for (item of attentionItems(); track item.title) {
+
+        <div class="attention-item">
+          <div class="priority-indicator"></div>
+
+          <div>
+            <strong>{{ item.title }}</strong>
+            <span>{{ item.type }}</span>
+          </div>
+
+          <span class="priority">
+            {{ item.priority }}
+          </span>
+        </div>
+
+      } @empty {
+        <div class="empty-placeholder">
+          Nothing needs your attention right now.
+        </div>
+      }
+
+    </div>
+
+  </article>
+
+
+  <!-- Pending Tasks -->
+  <article class="dashboard-card">
+
+    <div class="card-header">
+      <div class="card-heading">
+        <span class="card-icon" aria-hidden="true">
+          <i class="fa-solid fa-list-check"></i>
+        </span>
+        <div>
+          <h2>Pending Tasks</h2>
+          <span>Assigned to you or included as a participant</span>
+        </div>
+      </div>
+
+      <a routerLink="/tasks">View tasks</a>
+    </div>
+
+    <div class="schedule-list">
+
+      @for (task of pendingTasks(); track task.id) {
+
+        <a class="schedule-item" [routerLink]="['/tasks', task.id]">
+          <time>{{ task.dueDate | date:'mediumDate' }}</time>
+          <div class="schedule-marker"></div>
+
+          <div class="schedule-content">
+            <strong>{{ task.title }}</strong>
+            <span>{{ task.createdBy.firstName }} {{ task.createdBy.lastName }}</span>
+          </div>
         </a>
 
-      </div>
+      } @empty {
+        <div class="empty-placeholder">No pending tasks.</div>
+      }
 
-      <div class="schedule-list">
+    </div>
 
-        @for (item of schedule(); track item.time + item.title) {
-
-          <div class="schedule-item">
-
-            <time>
-              {{ item.time }}
-            </time>
-
-            <div class="schedule-marker"></div>
-
-            <div class="schedule-content">
-
-              <strong>
-                {{ item.title }}
-              </strong>
-
-              <span>
-                {{ item.type }}
-              </span>
-
-            </div>
-
-          </div>
-
-        } @empty {
-          <div class="empty-placeholder empty-placeholder--illustrated">
-            <span class="empty-icon" aria-hidden="true">▦</span>
-            <div>
-              <strong>No scheduled events for today</strong>
-              <span>Enjoy your day!</span>
-            </div>
-          </div>
-        }
-
-      </div>
-
-    </article>
+  </article>
 
 
-    <article class="dashboard-card">
+  <!-- Upcoming Reminders -->
+  <article class="dashboard-card">
 
-      <div class="card-header">
-        <div class="card-heading">
-          <span class="card-icon card-icon--danger" aria-hidden="true">!</span>
-          <div>
-            <h2>Needs Attention</h2>
-            <span>Items requiring your action</span>
-          </div>
-        </div>
-
-        <span class="attention-count">
-          {{ attentionItems().length }}
+    <div class="card-header">
+      <div class="card-heading">
+        <span class="card-icon" aria-hidden="true">
+          <i class="fa-regular fa-clock"></i>
         </span>
-
-      </div>
-
-      <div class="attention-list">
-
-        @for (item of attentionItems(); track item.title) {
-
-          <div class="attention-item">
-
-            <div class="priority-indicator"></div>
-
-            <div>
-
-              <strong>
-                {{ item.title }}
-              </strong>
-
-              <span>
-                {{ item.type }}
-              </span>
-
-            </div>
-
-            <span class="priority">
-              {{ item.priority }}
-            </span>
-
-          </div>
-
-        } @empty {
-          <div class="empty-placeholder">Nothing needs your attention right now.</div>
-        }
-
-      </div>
-
-    </article>
-
-    <article class="dashboard-card">
-      <div class="card-header">
-        <div class="card-heading">
-          <span class="card-icon" aria-hidden="true">☷</span>
-          <div>
-            <h2>Pending Tasks</h2>
-            <span>Assigned to you or included as a participant</span>
-          </div>
-        </div>
-        <a routerLink="/tasks">View tasks</a>
-      </div>
-      <div class="schedule-list">
-        @for (task of pendingTasks(); track task.id) {
-          <a class="schedule-item" [routerLink]="['/tasks', task.id]">
-            <time>{{ task.dueDate | date:'mediumDate' }}</time>
-            <div class="schedule-marker"></div>
-            <div class="schedule-content">
-              <strong>{{ task.title }}</strong>
-              <span>{{ task.createdBy.firstName }} {{ task.createdBy.lastName }}</span>
-            </div>
-          </a>
-        } @empty {
-          <div class="empty-placeholder">No pending tasks.</div>
-        }
-      </div>
-    </article>
-
-    <article class="dashboard-card">
-      <div class="card-header">
-        <div class="card-heading">
-          <span class="card-icon" aria-hidden="true">◷</span>
-          <div>
-            <h2>Upcoming Reminders</h2>
-            <span>Assigned to you or included as a participant</span>
-          </div>
-        </div>
-        <a routerLink="/reminders">View reminders</a>
-      </div>
-      <div class="schedule-list">
-        @for (reminder of upcomingReminders(); track reminder.id) {
-          <a class="schedule-item" [routerLink]="['/reminders', reminder.id]">
-            <time>{{ reminder.reminderDate | date:'mediumDate' }}</time>
-            <div class="schedule-marker"></div>
-            <div class="schedule-content">
-              <strong>{{ reminder.title }}</strong>
-              <span>{{ reminder.createdBy.firstName }} {{ reminder.createdBy.lastName }}</span>
-            </div>
-          </a>
-        } @empty {
-          <div class="empty-placeholder">No upcoming reminders.</div>
-        }
-      </div>
-    </article>
-
-    <article class="dashboard-card">
-      <div class="card-header">
-        <div class="card-heading">
-          <span class="card-icon" aria-hidden="true">↗</span>
-          <div>
-            <h2>In Progress</h2>
-            <span>Tasks, reminders, requests, and meetings in progress</span>
-          </div>
-        </div>
-        <span class="status-count" [attr.aria-label]="inProgressItems().length + ' items in progress'">
-          {{ inProgressItems().length }}
-        </span>
-      </div>
-      <div class="schedule-list">
-        @for (item of inProgressItems(); track item.type + item.id) {
-          <a class="schedule-item dashboard-status-item" [routerLink]="item.route">
-            <time>{{ item.date | date:'mediumDate' }}</time>
-            <div class="schedule-marker"></div>
-            <div class="schedule-content">
-              <strong>{{ item.title }}</strong>
-              <span>{{ item.type }} · {{ item.owner }}</span>
-            </div>
-          </a>
-        } @empty {
-          <div class="empty-placeholder">No items in progress.</div>
-        }
-      </div>
-    </article>
-
-    <article class="dashboard-card">
-      <div class="card-header">
-        <div class="card-heading">
-          <span class="card-icon card-icon--success" aria-hidden="true">✓</span>
-          <div>
-            <h2>Completed</h2>
-            <span>Completed tasks, reminders, requests, and meetings</span>
-          </div>
-        </div>
-        <span class="status-count" [attr.aria-label]="completedItems().length + ' completed items'">
-          {{ completedItems().length }}
-        </span>
-      </div>
-      <div class="schedule-list">
-        @for (item of completedItems(); track item.type + item.id) {
-          <a class="schedule-item dashboard-status-item" [routerLink]="item.route">
-            <time>{{ item.date | date:'mediumDate' }}</time>
-            <div class="schedule-marker"></div>
-            <div class="schedule-content">
-              <strong>{{ item.title }}</strong>
-              <span>{{ item.type }} · {{ item.owner }}</span>
-            </div>
-          </a>
-        } @empty {
-          <div class="empty-placeholder">No completed items.</div>
-        }
-      </div>
-    </article>
-
-  </section>
-
-
-  <section class="dashboard-grid">
-
-    <article class="dashboard-card">
-
-      <div class="card-header">
-        <div class="card-heading">
-          <span class="card-icon" aria-hidden="true">◷</span>
-          <div>
-            <h2>Upcoming</h2>
-            <span>Next 7 days</span>
-          </div>
-        </div>
-      </div>
-
-      <div class="schedule-list">
-        @for (item of schedule(); track item.time + item.title) {
-          <div class="schedule-item">
-            <time>{{ item.time }}</time>
-            <div class="schedule-marker"></div>
-            <div class="schedule-content"><strong>{{ item.title }}</strong><span>{{ item.type }}</span></div>
-          </div>
-        } @empty {
-          <div class="empty-placeholder">No upcoming meetings.</div>
-        }
-      </div>
-
-    </article>
-
-
-    <article class="dashboard-card">
-
-      <div class="card-header">
-        <div class="card-heading">
-          <span class="card-icon" aria-hidden="true">ϟ</span>
-          <div>
-            <h2>Recent Activity</h2>
-            <span>Your notification activity</span>
-          </div>
-        </div>
-      </div>
-
-      <div class="activity-list">
-
         <div>
-          <strong>{{ notifications.unreadCount() }} unread notifications</strong>
-          <!-- <span>Loaded from the backend</span> -->
+          <h2>Upcoming Reminders</h2>
+          <span>Assigned to you or included as a participant</span>
         </div>
-
       </div>
 
-    </article>
+      <a routerLink="/reminders">View reminders</a>
+    </div>
 
-  </section>
+    <div class="schedule-list">
+
+      @for (reminder of upcomingReminders(); track reminder.id) {
+
+        <a class="schedule-item" [routerLink]="['/reminders', reminder.id]">
+          <time>{{ reminder.reminderDate | date:'mediumDate' }}</time>
+          <div class="schedule-marker"></div>
+
+          <div class="schedule-content">
+            <strong>{{ reminder.title }}</strong>
+            <span>{{ reminder.createdBy.firstName }} {{ reminder.createdBy.lastName }}</span>
+          </div>
+        </a>
+
+      } @empty {
+        <div class="empty-placeholder">No upcoming reminders.</div>
+      }
+
+    </div>
+
+  </article>
+
+
+  <!-- In Progress -->
+  <article class="dashboard-card">
+
+    <div class="card-header">
+      <div class="card-heading">
+        <span class="card-icon" aria-hidden="true">
+          <i class="fa-solid fa-hourglass-half"></i>
+        </span>
+        <div>
+          <h2>In Progress</h2>
+          <span>Tasks, reminders, requests, and meetings in progress</span>
+        </div>
+      </div>
+
+      <span class="status-count"
+        [attr.aria-label]="inProgressItems().length + ' items in progress'">
+        {{ inProgressItems().length }}
+      </span>
+    </div>
+
+    <div class="schedule-list">
+
+      @for (item of inProgressItems(); track item.type + item.id) {
+
+        <a class="schedule-item dashboard-status-item" [routerLink]="item.route">
+          <time>{{ item.date | date:'mediumDate' }}</time>
+          <div class="schedule-marker"></div>
+
+          <div class="schedule-content">
+            <strong>{{ item.title }}</strong>
+            <span>{{ item.type }} · {{ item.owner }}</span>
+          </div>
+        </a>
+
+      } @empty {
+        <div class="empty-placeholder">No items in progress.</div>
+      }
+
+    </div>
+
+  </article>
+
+
+  <!-- Completed -->
+  <article class="dashboard-card">
+
+    <div class="card-header">
+      <div class="card-heading">
+        <span class="card-icon card-icon--success" aria-hidden="true">
+          <i class="fa-solid fa-circle-check"></i>
+        </span>
+        <div>
+          <h2>Completed</h2>
+          <span>Completed tasks, reminders, requests, and meetings</span>
+        </div>
+      </div>
+
+      <span class="status-count"
+        [attr.aria-label]="completedItems().length + ' completed items'">
+        {{ completedItems().length }}
+      </span>
+    </div>
+
+    <div class="schedule-list">
+
+      @for (item of completedItems(); track item.type + item.id) {
+
+        <a class="schedule-item dashboard-status-item" [routerLink]="item.route">
+          <time>{{ item.date | date:'mediumDate' }}</time>
+          <div class="schedule-marker"></div>
+
+          <div class="schedule-content">
+            <strong>{{ item.title }}</strong>
+            <span>{{ item.type }} · {{ item.owner }}</span>
+          </div>
+        </a>
+
+      } @empty {
+        <div class="empty-placeholder">No completed items.</div>
+      }
+
+    </div>
+
+  </article>
+
+</section>
+
+
+<!-- SECOND DASHBOARD GRID -->
+
+<section class="dashboard-grid">
+
+  <!-- Upcoming -->
+  <article class="dashboard-card">
+
+    <div class="card-header">
+      <div class="card-heading">
+        <span class="card-icon" aria-hidden="true">
+          <i class="fa-solid fa-calendar-week"></i>
+        </span>
+        <div>
+          <h2>Upcoming</h2>
+          <span>Next 7 days</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="schedule-list">
+
+      @for (item of schedule(); track item.time + item.title) {
+
+        <div class="schedule-item">
+          <time>{{ item.time }}</time>
+          <div class="schedule-marker"></div>
+
+          <div class="schedule-content">
+            <strong>{{ item.title }}</strong>
+            <span>{{ item.type }}</span>
+          </div>
+        </div>
+
+      } @empty {
+        <div class="empty-placeholder">No upcoming meetings.</div>
+      }
+
+    </div>
+
+  </article>
+
+
+  <!-- Recent Activity -->
+  <article class="dashboard-card">
+
+    <div class="card-header">
+      <div class="card-heading">
+        <span class="card-icon" aria-hidden="true">
+          <i class="fa-solid fa-bolt"></i>
+        </span>
+        <div>
+          <h2>Recent Activity</h2>
+          <span>Your notification activity</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="activity-list">
+
+      <div>
+        <strong>
+          <i class="fa-solid fa-bell" aria-hidden="true"></i>
+          {{ notifications.unreadCount() }} unread notifications
+        </strong>
+      </div>
+
+    </div>
+
+  </article>
+
+</section>
+
 
   }
 

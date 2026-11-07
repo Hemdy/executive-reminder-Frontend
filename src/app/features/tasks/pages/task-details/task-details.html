@@ -18,7 +18,8 @@
           routerLink="/tasks"
           class="back-link"
         >
-          ← Back to Tasks
+          <i class="fa-solid fa-arrow-left" aria-hidden="true"></i>
+          Back to Tasks
         </a>
 
         <div class="header-category">
@@ -214,7 +215,7 @@
             <div class="task-attachments">
               @for (attachment of attachments(); track attachment.id) {
                 <div class="task-attachment">
-                  <span class="attachment-icon" aria-hidden="true">📎</span>
+                  <span class="attachment-icon" aria-hidden="true"><i class="fa-solid fa-paperclip"></i></span>
                   <div class="attachment-details">
                     <strong>{{ attachment.fileName }}</strong>
                     <span>{{ formatFileSize(attachment.size) }} · {{ attachment.uploader.firstName }} {{ attachment.uploader.lastName }}</span>

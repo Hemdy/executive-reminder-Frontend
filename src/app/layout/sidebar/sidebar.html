@@ -22,11 +22,16 @@
     <button
       class="sidebar-collapse-toggle"
       type="button"
-      aria-label="Collapse sidebar"
+      [attr.aria-label]="collapsed ? 'Expand sidebar' : 'Collapse sidebar'"
       [attr.aria-expanded]="!collapsed"
       (click)="toggleSidebar.emit()"
     >
-      <span aria-hidden="true">{{ collapsed ? '»' : '«' }}</span>
+      <i
+        class="fa-solid"
+        [class.fa-angles-right]="collapsed"
+        [class.fa-angles-left]="!collapsed"
+        aria-hidden="true"
+      ></i>
     </button>
 
     <button
@@ -35,7 +40,7 @@
       aria-label="Close navigation"
       (click)="closeMobile.emit()"
     >
-      ×
+      <i class="fa-solid fa-xmark" aria-hidden="true"></i>
     </button>
 
 
@@ -43,70 +48,73 @@
 
   <nav>
 
-    <div class="nav-section">
+  <div class="nav-section">
+
+    <span class="nav-label">
+      Workspace
+    </span>
+
+    @for (item of navigation; track item.route) {
+
+      @if (isVisible(item)) {
+
+        <a
+          [routerLink]="item.route"
+          routerLinkActive="active"
+          [routerLinkActiveOptions]="{ exact: item.route === '/dashboard' }"
+          class="nav-item"
+          (click)="closeMobile.emit()"
+        >
+          <span class="nav-icon">
+            <i [class]="item.icon" aria-hidden="true"></i>
+          </span>
+
+          <span class="nav-text">
+            {{ item.label }}
+          </span>
+        </a>
+
+      }
+
+    }
+
+  </div>
+
+  @if (isAdministrationVisible()) {
+
+    <div class="nav-section admin-section">
 
       <span class="nav-label">
-        Workspace
+        Administration
       </span>
 
-      @for (item of navigation; track item.route) {
+      @for (item of adminNavigation; track item.route) {
 
         @if (isVisible(item)) {
-
           <a
             [routerLink]="item.route"
             routerLinkActive="active"
-            [routerLinkActiveOptions]="{ exact: item.route === '/dashboard' }"
             class="nav-item"
             (click)="closeMobile.emit()"
           >
             <span class="nav-icon">
-              {{ item.icon }}
+              <i [class]="item.icon" aria-hidden="true"></i>
             </span>
 
             <span class="nav-text">
               {{ item.label }}
             </span>
           </a>
-
         }
 
       }
 
     </div>
 
-    @if (isAdministrationVisible()) {
+  }
 
-      <div class="nav-section admin-section">
+</nav>
 
-        <span class="nav-label">
-          Administration
-        </span>
-
-        @for (item of adminNavigation; track item.route) {
-
-          @if (isVisible(item)) {
-            <a
-              [routerLink]="item.route"
-              routerLinkActive="active"
-              class="nav-item"
-              (click)="closeMobile.emit()"
-            >
-              <span class="nav-icon">
-                {{ item.icon }}
-              </span>
-
-              <span class="nav-text">{{ item.label }}</span>
-            </a>
-          }
-
-        }
-
-      </div>
-
-    }
-
-  </nav>
 
   <div class="sidebar-footer">
 
