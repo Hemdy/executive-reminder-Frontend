@@ -184,6 +184,16 @@ describe('TaskDetails', () => {
     expect(component.canConfirmTask()).toBe(true);
   });
 
+  it('applies the responsive task-details component layout styles', () => {
+    const host = fixture.nativeElement as HTMLElement;
+    const page = host.querySelector('.task-details-page') as HTMLElement;
+    const card = host.querySelector('.content-card') as HTMLElement;
+
+    expect(getComputedStyle(host).display).toBe('block');
+    expect(getComputedStyle(page).maxWidth).toBe('920px');
+    expect(getComputedStyle(card).borderRadius).toBe('12px');
+  });
+
   it('intercepts comment form submission and posts without a browser document navigation', () => {
     component.commentText.set('Started reviewing the report.');
     fixture.detectChanges();
@@ -212,15 +222,32 @@ describe('TaskDetails', () => {
     expect(component.attachments()[0].fileName).toBe('brief.pdf');
   });
 
-  it('rejects unsupported task attachment types in the UI', () => {
-    const file = new File(['image'], 'diagram.png', { type: 'image/png' });
+  it('accepts image attachments and rejects unsupported file types', () => {
+    const image = new File(['image'], 'diagram.png', { type: 'image/png' });
+    const imageInput = document.createElement('input');
+    Object.defineProperty(imageInput, 'files', { value: [image] });
+
+    component.uploadAttachments({ target: imageInput } as unknown as Event);
+    expect(taskServiceMock.uploadAttachment).toHaveBeenCalledWith('task-1', image);
+
+    taskServiceMock.uploadAttachment.mockClear();
+    const file = new File(['binary'], 'program.exe', { type: 'application/octet-stream' });
     const input = document.createElement('input');
     Object.defineProperty(input, 'files', { value: [file] });
 
     component.uploadAttachments({ target: input } as unknown as Event);
 
     expect(taskServiceMock.uploadAttachment).not.toHaveBeenCalled();
-    expect(component.activityError()).toContain('Only PDF and Word documents are allowed');
+    expect(component.activityError()).toContain('Choose PDF, Word, Excel, CSV, or image files');
+  });
+
+  it('advertises the expanded file types and uses type-specific Font Awesome icons', () => {
+    const input = fixture.nativeElement.querySelector('.attachment-upload input') as HTMLInputElement;
+    expect(input.accept).toContain('.xlsx');
+    expect(input.accept).toContain('.webp');
+    expect(component.attachmentIcon('budget.xlsx')).toContain('fa-file-excel');
+    expect(component.attachmentIcon('diagram.svg')).toContain('fa-file-image');
+    expect(component.attachmentIcon('brief.pdf')).toContain('fa-file-pdf');
   });
 
   it('updates an authored comment in place and reports success', () => {

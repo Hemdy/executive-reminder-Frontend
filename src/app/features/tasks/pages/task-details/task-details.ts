@@ -4,6 +4,7 @@ import {
   Component,
   computed,
   inject,
+  OnDestroy,
   OnInit,
   signal
 } from '@angular/core';
@@ -24,6 +25,13 @@ import { ContentSkeleton } from '../../../../core/components/content-skeleton/co
 import { LoadingService } from '../../../../core/services/loading.service';
 import { ToastService } from '../../../../core/services/toast.service';
 import { AttachmentTransferService } from '../../../../core/services/attachment-transfer.service';
+import {
+  isImageTaskAttachment,
+  isSupportedTaskAttachment,
+  MAX_TASK_ATTACHMENT_SIZE,
+  TASK_ATTACHMENT_ACCEPT,
+  taskAttachmentIcon
+} from '../../utils/task-attachments';
 
 @Component({
   selector: 'app-task-details',
@@ -35,7 +43,7 @@ import { AttachmentTransferService } from '../../../../core/services/attachment-
 })
 
 
-export class TaskDetails implements OnInit {
+export class TaskDetails implements OnInit, OnDestroy {
 
 
 
@@ -51,6 +59,10 @@ export class TaskDetails implements OnInit {
   readonly comments = signal<TaskComment[]>([]);
   readonly highlightedCommentId = signal<string | null>(null);
   readonly attachments = signal<TaskAttachment[]>([]);
+  readonly previewUrls = signal<Record<string, string>>({});
+  readonly attachmentAccept = TASK_ATTACHMENT_ACCEPT;
+  private readonly previewingAttachmentIds = new Set<string>();
+  private destroyed = false;
   readonly commentText = signal('');
   readonly editingCommentId = signal<string | null>(null);
   readonly editCommentText = signal('');
@@ -121,6 +133,14 @@ export class TaskDetails implements OnInit {
       this.loadTaskRecord(id);
     } else {
       this.recordLoading.set(false);
+    }
+  }
+
+  ngOnDestroy(): void {
+    this.destroyed = true;
+    const view = this.document.defaultView;
+    if (view) {
+      Object.values(this.previewUrls()).forEach(url => view.URL.revokeObjectURL(url));
     }
   }
 
@@ -302,16 +322,16 @@ export class TaskDetails implements OnInit {
     const files = Array.from(input.files ?? []);
     input.value = '';
 
-    const unsupportedFiles = files.filter(file => !this.isSupportedAttachment(file));
+    const unsupportedFiles = files.filter(file => !isSupportedTaskAttachment(file));
     const oversizedFiles = files.filter(file =>
-      this.isSupportedAttachment(file) && file.size > 4 * 1024 * 1024
+      isSupportedTaskAttachment(file) && file.size > MAX_TASK_ATTACHMENT_SIZE
     );
     const validFiles = files.filter(file =>
-      this.isSupportedAttachment(file) && file.size <= 4 * 1024 * 1024
+      isSupportedTaskAttachment(file) && file.size <= MAX_TASK_ATTACHMENT_SIZE
     );
     const validationErrors = [
       ...(unsupportedFiles.length
-        ? [`Unsupported file type: ${unsupportedFiles.map(file => file.name).join(', ')}. Only PDF and Word documents are allowed.`]
+        ? [`Unsupported file type: ${unsupportedFiles.map(file => file.name).join(', ')}. Choose PDF, Word, Excel, CSV, or image files.`]
         : []),
       ...(oversizedFiles.length
         ? [`Files over 4 MB: ${oversizedFiles.map(file => file.name).join(', ')}.`]
@@ -347,6 +367,7 @@ export class TaskDetails implements OnInit {
           'failedFile' in result ? [result.failedFile] : []
         );
         this.attachments.update(attachments => [...attachments, ...uploaded]);
+        this.loadImagePreviews(uploaded);
         this.uploadingAttachments.set(false);
         const uploadErrors = [
           ...validationErrors,
@@ -413,6 +434,7 @@ export class TaskDetails implements OnInit {
     this.deletingAttachmentId.set(attachment.id);
     this.taskService.deleteAttachment(task.id, attachment.id).subscribe({
       next: () => {
+        this.releasePreviewUrl(attachment.id);
         this.attachments.update(attachments =>
           attachments.filter(existing => existing.id !== attachment.id)
         );
@@ -444,9 +466,44 @@ export class TaskDetails implements OnInit {
     return `${(size / (1024 * 1024)).toFixed(1)} MB`;
   }
 
-  private isSupportedAttachment(file: File): boolean {
-    const extension = file.name.slice(file.name.lastIndexOf('.')).toLowerCase();
-    return ['.pdf', '.doc', '.docx'].includes(extension);
+  isImageAttachment(attachment: TaskAttachment): boolean {
+    return isImageTaskAttachment(attachment);
+  }
+
+  attachmentIcon(fileName: string): string {
+    return taskAttachmentIcon(fileName);
+  }
+
+  private loadImagePreviews(attachments: TaskAttachment[]): void {
+    const view = this.document.defaultView;
+    const task = this.task();
+    if (!view || !task) return;
+
+    for (const attachment of attachments) {
+      if (!isImageTaskAttachment(attachment) || this.previewingAttachmentIds.has(attachment.id)) {
+        continue;
+      }
+      this.previewingAttachmentIds.add(attachment.id);
+      this.taskService.downloadAttachment(task.id, attachment.id).subscribe({
+        next: blob => {
+          this.previewingAttachmentIds.delete(attachment.id);
+          if (this.destroyed || !this.attachments().some(item => item.id === attachment.id)) return;
+          const url = view.URL.createObjectURL(blob);
+          this.previewUrls.update(urls => ({ ...urls, [attachment.id]: url }));
+        },
+        error: () => this.previewingAttachmentIds.delete(attachment.id)
+      });
+    }
+  }
+
+  private releasePreviewUrl(attachmentId: string): void {
+    const url = this.previewUrls()[attachmentId];
+    if (!url) return;
+    this.document.defaultView?.URL.revokeObjectURL(url);
+    this.previewUrls.update(urls => {
+      const { [attachmentId]: _removed, ...remaining } = urls;
+      return remaining;
+    });
   }
 
   deleteTask(): void {
@@ -524,6 +581,7 @@ export class TaskDetails implements OnInit {
       next: activity => {
         this.comments.set(activity.comments);
         this.attachments.set(activity.attachments);
+        this.loadImagePreviews(activity.attachments);
         this.loadingActivity.set(false);
         const commentId = this.route.snapshot.queryParamMap.get('comment');
         if (commentId && activity.comments.some(comment => comment.id === commentId)) {

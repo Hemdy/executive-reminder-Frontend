@@ -1,95 +1,82 @@
 <section class="task-form-page">
-
   <header class="page-header">
     <div>
       <a routerLink="/tasks" class="back-link">
-        <i class="fa-solid fa-arrow-left" aria-hidden="true"></i>
-        Back to Tasks
+        <i class="fa-solid fa-circle-chevron-left"></i>
       </a>
-
       <p class="eyebrow">Task Management</p>
-
       <h1>{{ pageTitle() }}</h1>
-
       <p class="page-description">
-        {{
-          isEditMode()
-            ? 'Update the task details and assignment.'
-            : 'Create and assign a new task.'
-        }}
+        {{ isEditMode() ? 'Update the task details and assignment.' : 'Create and assign a new task.' }}
       </p>
+    </div>
+    <div class="page-art" aria-hidden="true">
+      <span class="page-art-halo"></span>
+      <i class="fa-solid fa-clipboard-check"></i>
+      <span class="page-art-plus"><i class="fa-solid fa-plus"></i></span>
     </div>
   </header>
 
   @if (errorMessage()) {
-    <div class="error-banner">
-      {{ errorMessage() }}
-    </div>
+    <div class="error-banner" role="alert">{{ errorMessage() }}</div>
   }
 
   @if (isEditMode() && employeesLoading()) {
     <app-content-skeleton kind="form" />
   } @else {
-  <form
-    class="task-form-card"
-    [formGroup]="taskForm"
-    (ngSubmit)="save()"
-  >
-
-    <div class="form-section">
-
-      <div class="section-heading">
-        <h2>Task Information</h2>
-        <p>Define what needs to be completed.</p>
-      </div>
-
-      <div class="form-grid">
-
-        <div class="form-field full-width">
-          <label for="title">
-            Task Title
-            <span>*</span>
-          </label>
-
-          <input
-            id="title"
-            type="text"
-            formControlName="title"
-            placeholder="e.g. Review Q3 Financial Report"
-          />
-
-          @if (
-            titleControl.invalid &&
-            titleControl.touched
-          ) {
-            <small class="field-error">
-              Task title is required.
-            </small>
-          }
+    <form class="task-form-card" [formGroup]="taskForm" (ngSubmit)="save()">
+      <section class="form-section task-information">
+        <div class="section-heading">
+          <span class="section-icon" aria-hidden="true"><i class="fa-solid fa-clipboard-list"></i></span>
+          <div>
+            <h2>Task Information</h2>
+            <p>Define what needs to be completed.</p>
+          </div>
         </div>
 
-        <div class="form-field full-width">
-          <label for="description">
-            Description
-          </label>
+        <div class="form-grid">
+          <div class="form-field full-width">
+            <label for="title">Task Title <span>*</span></label>
+            <div class="input-with-count">
+              <input
+                id="title"
+                type="text"
+                maxlength="200"
+                formControlName="title"
+                placeholder="e.g. Review Q3 Financial Report"
+              />
+              <span class="character-count" aria-hidden="true">{{ taskForm.controls.title.value.length }}/200</span>
+            </div>
+            @if (titleControl.invalid && titleControl.touched) {
+              <small class="field-error">Task title is required.</small>
+            }
+          </div>
 
-          <textarea
-            id="description"
-            rows="5"
-            formControlName="description"
-            placeholder="Describe the task, expected outcome and any relevant instructions..."
-          ></textarea>
-
-          <small class="field-hint">
-            Provide enough context for the assignee to complete the task.
-          </small>
+          <div class="form-field full-width">
+            <label for="description">Description</label>
+            <div class="input-with-count description-input">
+              <textarea
+                id="description"
+                rows="4"
+                maxlength="2000"
+                formControlName="description"
+                placeholder="Describe the task, expected outcome and any relevant instructions..."
+              ></textarea>
+              <span class="character-count" aria-hidden="true">{{ taskForm.controls.description.value.length }}/2000</span>
+            </div>
+          </div>
         </div>
+      </section>
 
-        <div class="form-field">
-          <label for="assignedTo">
-            Assigned To
-            <span>*</span>
-          </label>
+      <div class="assignment-grid">
+        <section class="form-section assignment-section">
+          <div class="section-heading">
+            <span class="section-icon" aria-hidden="true"><i class="fa-solid fa-users"></i></span>
+            <div>
+              <h2>Assignees <span class="required-mark">*</span></h2>
+              <p>Select people to assign this task.</p>
+            </div>
+          </div>
 
           <div
             class="participant-list"
@@ -122,12 +109,7 @@
                   </span>
                   <span class="participant-info">
                     <strong>{{ employee.firstName }} {{ employee.lastName }}</strong>
-                    <small>
-                      {{ employee.role }}
-                      @if (employee.department) {
-                        · {{ employee.department }}
-                      }
-                    </small>
+                    <small>{{ employee.role }}@if (employee.department) { · {{ employee.department }} }</small>
                   </span>
                 </label>
               } @empty {
@@ -135,150 +117,155 @@
               }
             }
           </div>
-
-          @if (
-            assignedToControl.invalid &&
-            assignedToControl.touched
-          ) {
-            <small class="field-error">
-              Please select an assignee.
-            </small>
+          @if (assignedToControl.invalid && assignedToControl.touched) {
+            <small class="field-error">Please select an assignee.</small>
           }
-        </div>
+        </section>
 
-        <div class="form-field">
-          <label for="category">
-            Category
-            <span>*</span>
-          </label>
-
-          <select
-            id="category"
-            formControlName="category"
-          >
-            @for (category of categories; track category) {
-              <option [value]="category">
-                {{ category }}
-              </option>
-            }
-          </select>
-        </div>
-
-        <div class="form-field">
-          <label for="priority">
-            Priority
-            <span>*</span>
-          </label>
-
-          <select
-            id="priority"
-            formControlName="priority"
-          >
-            @for (priority of priorities; track priority) {
-              <option [value]="priority">
-                {{ priority.replace('_', ' ') }}
-              </option>
-            }
-          </select>
-        </div>
-
-        <!-- <div class="form-field">
-          <label for="status">
-            Status
-          </label>
-
-          <select
-            id="status"
-            formControlName="status"
-          >
-            @for (status of statuses; track status) {
-              <option [value]="status">
-                {{ status.replace('_', ' ') }}
-              </option>
-            }
-          </select>
-        </div> -->
-
+        <section class="form-section category-section">
+          <div class="section-heading">
+            <span class="section-icon" aria-hidden="true"><i class="fa-solid fa-folder"></i></span>
+            <div>
+              <h2>Category <span class="required-mark">*</span></h2>
+              <p>Choose a category for this task.</p>
+            </div>
+          </div>
+          <div class="form-field">
+            <label class="visually-hidden" for="category">Task category</label>
+            <div class="select-with-icon">
+              <i class="fa-solid fa-grip" aria-hidden="true"></i>
+              <select id="category" formControlName="category">
+                @for (category of categories; track category) {
+                  <option [value]="category">{{ category }}</option>
+                }
+              </select>
+            </div>
+          </div>
+          <p class="category-selection">
+            <i class="fa-solid fa-circle" [style.--indicator-color]="categoryColor(taskForm.controls.category.value)" aria-hidden="true"></i>
+            {{ taskForm.controls.category.value }}
+          </p>
+        </section>
       </div>
 
-    </div>
-
-    <div class="form-section">
-
-      <div class="section-heading">
-        <h2>Deadline</h2>
-        <p>Set when this task should be completed.</p>
-      </div>
-
-      <div class="form-grid deadline-grid">
-
+      <section class="form-section priority-section">
+        <div class="section-heading">
+          <span class="section-icon" aria-hidden="true"><i class="fa-solid fa-bolt"></i></span>
+          <div>
+            <h2>Priority</h2>
+            <p>Set the priority level.</p>
+          </div>
+        </div>
         <div class="form-field">
-          <label for="dueDate">
-            Due Date
-            <span>*</span>
-          </label>
+          <label class="visually-hidden" for="priority">Task priority</label>
+          <div class="select-with-icon">
+            <i class="fa-solid fa-circle" [style.--indicator-color]="priorityColor()" aria-hidden="true"></i>
+            <select id="priority" formControlName="priority">
+              @for (priority of priorities; track priority) {
+                <option [value]="priority">{{ priority.replace('_', ' ') }}</option>
+              }
+            </select>
+          </div>
+        </div>
+      </section>
 
-          <input
-            id="dueDate"
-            type="date"
-            formControlName="dueDate"
-          />
-
-          @if (
-            dueDateControl.invalid &&
-            dueDateControl.touched
-          ) {
-            <small class="field-error">
-              Due date is required.
+      <section class="form-section deadline-section">
+        <div class="section-heading">
+          <span class="section-icon" aria-hidden="true"><i class="fa-solid fa-calendar-days"></i></span>
+          <div>
+            <h2>Deadline</h2>
+            <p>Set when this task should be completed.</p>
+          </div>
+        </div>
+        <div class="form-grid deadline-grid">
+          <div class="form-field">
+            <label for="dueDate">Due Date <span>*</span></label>
+            <input id="dueDate" type="date" formControlName="dueDate" />
+            @if (dueDateControl.invalid && dueDateControl.touched) {
+              <small class="field-error">Due date is required.</small>
+            }
+          </div>
+          <div class="form-field">
+            <label for="dueTime">Due Time</label>
+            <input id="dueTime" type="time" formControlName="dueTime" />
+            <small class="field-hint">
+              <i class="fa-solid fa-circle-info" aria-hidden="true"></i>
+              Leave blank if there is no specific time.
             </small>
-          }
+          </div>
+        </div>
+      </section>
+
+      <section class="form-section attachments-section">
+        <div class="section-heading">
+          <span class="section-icon" aria-hidden="true"><i class="fa-solid fa-paperclip"></i></span>
+          <div>
+            <h2>Attachments</h2>
+            <p>Optionally add files to this task. Maximum 4 MB per file.</p>
+          </div>
         </div>
 
-        <div class="form-field">
-          <label for="dueTime">
-            Due Time
-          </label>
-
+        <label
+          class="attachment-dropzone"
+          [class.attachment-dropzone--active]="isDraggingAttachments()"
+          [class.attachment-dropzone--disabled]="isSaving()"
+          (dragover)="onAttachmentDragOver($event)"
+          (dragleave)="onAttachmentDragLeave($event)"
+          (drop)="onAttachmentDrop($event)"
+        >
           <input
-            id="dueTime"
-            type="time"
-            formControlName="dueTime"
+            type="file"
+            multiple
+            [disabled]="isSaving()"
+            [attr.accept]="attachmentAccept"
+            (change)="selectAttachments($event)"
           />
+          <i class="fa-solid fa-cloud-arrow-up" aria-hidden="true"></i>
+          <span class="dropzone-title">
+            {{ isSaving() ? 'Saving task...' : 'Drag and drop files here or click to browse' }}
+          </span>
+          <small>PDF, DOC, DOCX, XLS, XLSX, CSV, JPG, PNG, GIF, WEBP, SVG · 4 MB max per file</small>
+        </label>
 
-          <small class="field-hint">
-            Leave blank if the task is due by the end of the day.
-          </small>
-        </div>
-
-      </div>
-
-    </div>
-
-    <footer class="form-footer">
-
-      <button
-        type="button"
-        class="secondary-button"
-        (click)="cancel()"
-      >
-        Cancel
-      </button>
-
-      <button
-        type="submit"
-        class="primary-button"
-        [disabled]="isSaving()"
-      >
-        @if (isSaving()) {
-          {{ isEditMode() ? 'Updating task...' : 'Creating task...' }}
-        } @else {
-          {{ isEditMode() ? 'Save Changes' : 'Create Task' }}
+        @if (attachmentError()) {
+          <small class="field-error attachment-error" role="alert">{{ attachmentError() }}</small>
         }
-      </button>
+        @if (selectedAttachments().length) {
+          <ul class="selected-attachments" aria-label="Files to upload">
+            @for (file of selectedAttachments(); track $index; let index = $index) {
+              <li class="selected-attachment">
+                <i class="attachment-file-icon" [class]="fileIcon(file.name)" aria-hidden="true"></i>
+                <span class="selected-attachment-name">{{ file.name }}</span>
+                <small>{{ formatFileSize(file.size) }}</small>
+                <button
+                  type="button"
+                  class="remove-attachment"
+                  [disabled]="isSaving()"
+                  [attr.aria-label]="'Remove ' + file.name"
+                  (click)="removeSelectedAttachment(index)"
+                >
+                  <i class="fa-solid fa-xmark" aria-hidden="true"></i>
+                </button>
+              </li>
+            }
+          </ul>
+        }
+      </section>
 
-    </footer>
-
-  </form>
+      <footer class="form-footer">
+        <button type="button" class="secondary-button" [disabled]="isSaving()" (click)="cancel()">
+          Cancel
+        </button>
+        <button type="submit" class="primary-button" [disabled]="isSaving()">
+          @if (isSaving()) {
+            <i class="fa-solid fa-spinner fa-spin" aria-hidden="true"></i>
+            {{ isEditMode() ? 'Updating task...' : 'Creating task...' }}
+          } @else {
+            <i class="fa-solid fa-check" aria-hidden="true"></i>
+            {{ isEditMode() ? 'Save Changes' : 'Create Task' }}
+          }
+        </button>
+      </footer>
+    </form>
   }
-
 </section>

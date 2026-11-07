@@ -517,3 +517,14 @@ app-request-details :where(.back-button, .secondary-button, .approve-button, .ac
     gap: 5px;
   }
 }
+
+
+.fa-circle-chevron-right {
+  font-size: 18px;
+  color: var(--primary);
+}
+
+.fa-circle-chevron-left {
+  font-size: 18px;
+  color: var(--primary);
+}

@@ -28,7 +28,8 @@ describe('TaskForm', () => {
   let createResponse: Subject<{ id: string }>;
   const taskService = {
     getTask: () => undefined,
-    createTask: vi.fn()
+    createTask: vi.fn(),
+    uploadAttachment: vi.fn(() => of({ id: 'attachment-1' }))
   };
 
   beforeEach(async () => {
@@ -38,6 +39,7 @@ describe('TaskForm', () => {
     employeesLoading.set(true);
     createResponse = new Subject<{ id: string }>();
     taskService.createTask.mockReturnValue(createResponse);
+    taskService.uploadAttachment.mockClear();
     await TestBed.configureTestingModule({
       imports: [TaskForm],
       providers: [
@@ -134,5 +136,43 @@ describe('TaskForm', () => {
       message: 'Task could not be created'
     });
     toast.dismiss();
+  });
+
+  it('accepts supported spreadsheet and image formats for task attachments', () => {
+    const input = fixture.nativeElement.querySelector('.attachment-dropzone input') as HTMLInputElement;
+    expect(input.accept).toContain('.xlsx');
+    expect(input.accept).toContain('.svg');
+
+    const files = [
+      new File(['sheet'], 'budget.xlsx', { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' }),
+      new File(['image'], 'diagram.png', { type: 'image/png' })
+    ];
+    const fileInput = document.createElement('input');
+    Object.defineProperty(fileInput, 'files', { value: files });
+    component.selectAttachments({ target: fileInput } as unknown as Event);
+
+    expect(component.selectedAttachments()).toEqual(files);
+    expect(component.attachmentError()).toBe('');
+  });
+
+  it('uploads selected attachments after creating a task', () => {
+    const router = TestBed.inject(Router);
+    vi.spyOn(router, 'navigate').mockResolvedValue(true);
+    component.taskForm.patchValue({
+      title: 'Prepare report',
+      assignedToId: 'user-1',
+      participantIds: ['user-1'],
+      dueDate: '2026-11-01'
+    });
+    const file = new File(['sheet'], 'budget.csv', { type: 'text/csv' });
+    const fileInput = document.createElement('input');
+    Object.defineProperty(fileInput, 'files', { value: [file] });
+    component.selectAttachments({ target: fileInput } as unknown as Event);
+
+    component.save();
+    createResponse.next({ id: 'task-1' });
+    createResponse.complete();
+
+    expect(taskService.uploadAttachment).toHaveBeenCalledWith('task-1', file);
   });
 });

@@ -20,6 +20,10 @@
         }}
       </p>
     </div>
+    <div class="page-art" aria-hidden="true">
+      <span class="page-art-halo"></span>
+      <i class="fa-regular fa-file-lines"></i>
+    </div>
   </div>
 
   @if (isEditMode() && usersLoading()) {
@@ -29,8 +33,11 @@
 
     <div class="form-section">
       <div class="section-heading">
-        <h2>Request Information</h2>
-        <p>Provide the basic information about this request.</p>
+        <span class="section-icon" aria-hidden="true"><i class="fa-regular fa-file-lines"></i></span>
+        <div>
+          <h2>Request Information</h2>
+          <p>Provide the basic information about this request.</p>
+        </div>
       </div>
 
       <div class="field full">
@@ -133,8 +140,11 @@
       <div class="form-section">
 
         <div class="section-heading">
-          <h2>Workflow Status</h2>
-          <p>Update the current state of this request.</p>
+          <span class="section-icon" aria-hidden="true"><i class="fa-solid fa-list-check"></i></span>
+          <div>
+            <h2>Workflow Status</h2>
+            <p>Update the current state of this request.</p>
+          </div>
         </div>
 
         <div class="field">

@@ -18,6 +18,7 @@
           type="button"
           (click)="editRequest()"
         >
+          <i class="fa-solid fa-pen" aria-hidden="true"></i>
           Edit Request
         </button>
       }
@@ -90,6 +91,7 @@
         <div class="content-card">
 
           <div class="card-header">
+            <i class="section-icon fa-solid fa-align-left" aria-hidden="true"></i>
             <h2>Description</h2>
           </div>
 
@@ -106,6 +108,7 @@
         <div class="content-card">
           <div class="card-header">
             <div>
+              <i class="section-icon fa-regular fa-comments" aria-hidden="true"></i>
               <h2>Comments</h2>
               <span>{{ comments().length }} comments</span>
             </div>
@@ -165,6 +168,7 @@
         <div class="content-card" [attr.aria-busy]="uploadingAttachments() || downloadingAttachmentId() !== null">
           <div class="card-header">
             <div>
+              <i class="section-icon fa-solid fa-paperclip" aria-hidden="true"></i>
               <h2>Attachments</h2>
               <span>{{ attachments().length }} files</span>
             </div>
@@ -224,6 +228,7 @@
         <div class="content-card">
 
           <div class="card-header">
+            <i class="section-icon fa-solid fa-circle-info" aria-hidden="true"></i>
             <h2>Request Details</h2>
           </div>
 
@@ -282,6 +287,7 @@
         <div class="content-card">
 
           <div class="card-header">
+            <i class="section-icon fa-solid fa-user" aria-hidden="true"></i>
             <h2>Requester</h2>
           </div>
 
@@ -314,6 +320,7 @@
         <div class="content-card">
 
           <div class="card-header">
+            <i class="section-icon fa-solid fa-user-check" aria-hidden="true"></i>
             <h2>Assigned To</h2>
           </div>
 
@@ -356,6 +363,7 @@
           <div class="content-card">
 
             <div class="card-header">
+              <i class="section-icon fa-solid fa-bolt" aria-hidden="true"></i>
               <h2>Workflow Actions</h2>
             </div>
 

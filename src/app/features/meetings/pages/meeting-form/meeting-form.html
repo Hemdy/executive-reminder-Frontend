@@ -25,9 +25,12 @@
             : 'Schedule a meeting with your team or executives.'
         }}
       </p>
-
     </div>
 
+    <div class="page-art" aria-hidden="true">
+      <span class="page-art-halo"></span>
+      <i class="fa-regular fa-calendar-check"></i>
+    </div>
   </div>
 
   @if (isEditMode() && usersLoading()) {
@@ -42,8 +45,11 @@
     <div class="form-section">
 
       <div class="section-heading">
-        <h2>Meeting Information</h2>
-        <p>Provide the basic information about this meeting.</p>
+        <span class="section-icon" aria-hidden="true"><i class="fa-regular fa-calendar-check"></i></span>
+        <div>
+          <h2>Meeting Information</h2>
+          <p>Provide the basic information about this meeting.</p>
+        </div>
       </div>
 
       <div class="field full">
@@ -146,13 +152,11 @@
     <div class="form-section">
 
       <div class="section-heading">
-
-        <h2>Schedule</h2>
-
-        <p>
-          Choose the date and duration of the meeting.
-        </p>
-
+        <span class="section-icon" aria-hidden="true"><i class="fa-regular fa-clock"></i></span>
+        <div>
+          <h2>Schedule</h2>
+          <p>Choose the date and duration of the meeting.</p>
+        </div>
       </div>
 
       <div class="form-grid">
@@ -206,13 +210,11 @@
     <div class="form-section">
 
       <div class="section-heading">
-
-        <h2>Participants</h2>
-
-        <p>
-          Select the people who should attend this meeting.
-        </p>
-
+        <span class="section-icon" aria-hidden="true"><i class="fa-solid fa-users"></i></span>
+        <div>
+          <h2>Participants</h2>
+          <p>Select the people who should attend this meeting.</p>
+        </div>
       </div>
 
       <div class="participant-list">
@@ -267,13 +269,11 @@
       <div class="form-section">
 
         <div class="section-heading">
-
-          <h2>Status</h2>
-
-          <p>
-            Update the current meeting status.
-          </p>
-
+          <span class="section-icon" aria-hidden="true"><i class="fa-solid fa-list-check"></i></span>
+          <div>
+            <h2>Status</h2>
+            <p>Update the current meeting status.</p>
+          </div>
         </div>
 
         <div class="field">

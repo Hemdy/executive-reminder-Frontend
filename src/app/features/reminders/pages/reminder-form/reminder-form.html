@@ -7,8 +7,7 @@
         routerLink="/reminders"
         class="back-link"
       >
-        <i class="fa-solid fa-arrow-left" aria-hidden="true"></i>
-        Back to Reminders
+     <i class="fa-solid fa-circle-chevron-left"></i>x
       </a>
 
       <p class="eyebrow">Reminder Management</p>
@@ -23,7 +22,10 @@
         }}
       </p>
     </div>
-
+    <div class="page-art" aria-hidden="true">
+      <span class="page-art-halo"></span>
+      <i class="fa-regular fa-bell"></i>
+    </div>
   </header>
 
   @if (errorMessage()) {
@@ -44,8 +46,11 @@
     <section class="form-section">
 
       <div class="section-heading">
-        <h2>Reminder Information</h2>
-        <p>Describe what needs to be remembered.</p>
+        <span class="section-icon" aria-hidden="true"><i class="fa-regular fa-bell"></i></span>
+        <div>
+          <h2>Reminder Information</h2>
+          <p>Describe what needs to be remembered.</p>
+        </div>
       </div>
 
       <div class="form-grid">
@@ -232,8 +237,11 @@
     <section class="form-section">
 
       <div class="section-heading">
-        <h2>Schedule</h2>
-        <p>Choose when the reminder should trigger.</p>
+        <span class="section-icon" aria-hidden="true"><i class="fa-regular fa-calendar"></i></span>
+        <div>
+          <h2>Schedule</h2>
+          <p>Choose when the reminder should trigger.</p>
+        </div>
       </div>
 
       <div class="form-grid">

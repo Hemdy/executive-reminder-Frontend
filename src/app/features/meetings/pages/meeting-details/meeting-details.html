@@ -19,6 +19,7 @@
           type="button"
           (click)="editMeeting()"
         >
+          <i class="fa-solid fa-pen" aria-hidden="true"></i>
           Edit Meeting
         </button>
       }
@@ -128,6 +129,7 @@
         <div class="content-card">
 
           <div class="card-header">
+            <i class="section-icon fa-solid fa-align-left" aria-hidden="true"></i>
             <h2>Description</h2>
           </div>
 
@@ -148,6 +150,7 @@
         <div class="content-card">
 
           <div class="card-header">
+            <i class="section-icon fa-solid fa-list-check" aria-hidden="true"></i>
             <h2>Agenda</h2>
           </div>
 
@@ -170,6 +173,7 @@
           <div class="card-header">
 
             <div>
+              <i class="section-icon fa-solid fa-users" aria-hidden="true"></i>
               <h2>Participants</h2>
               <span>
                 {{ meeting.participants.length }} attendees
@@ -225,6 +229,7 @@
 
           <div class="card-header">
             <div>
+              <i class="section-icon fa-regular fa-comments" aria-hidden="true"></i>
               <h2>Comments</h2>
               <span>
                 {{ comments().length }} comments
@@ -306,6 +311,7 @@
 
           <div class="card-header">
             <div>
+              <i class="section-icon fa-solid fa-paperclip" aria-hidden="true"></i>
               <h2>Attachments</h2>
               <span>{{ attachments().length }} files</span>
             </div>
@@ -366,6 +372,7 @@
         <div class="content-card">
 
           <div class="card-header">
+            <i class="section-icon fa-solid fa-circle-info" aria-hidden="true"></i>
             <h2>Meeting Details</h2>
           </div>
 
@@ -427,6 +434,7 @@
         <div class="content-card">
 
           <div class="card-header">
+            <i class="section-icon fa-solid fa-user-tie" aria-hidden="true"></i>
             <h2>Organizer</h2>
           </div>
 
@@ -464,6 +472,7 @@
           <div class="content-card">
 
             <div class="card-header">
+              <i class="section-icon fa-solid fa-bolt" aria-hidden="true"></i>
               <h2>Actions</h2>
           </div>
 

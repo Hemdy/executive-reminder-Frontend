@@ -12,76 +12,56 @@
     }
 
     <header class="page-header">
-
       <div>
-        <a
-          routerLink="/tasks"
-          class="back-link"
-        >
-          <i class="fa-solid fa-arrow-left" aria-hidden="true"></i>
-          Back to Tasks
+        <a routerLink="/tasks" class="back-link">
+        <i class="fa-solid fa-circle-chevron-left"></i>
         </a>
 
+        <p class="eyebrow">Task Management</p>
         <div class="header-category">
+          <i class="fa-solid fa-folder" aria-hidden="true"></i>
           {{ currentTask.category }}
         </div>
-
         <h1>{{ currentTask.title }}</h1>
-
         <p class="created-info">
+          <i class="fa-regular fa-user" aria-hidden="true"></i>
           Created by
           <strong>
             {{ currentTask.createdBy.firstName }}
             {{ currentTask.createdBy.lastName }}
           </strong>
-          · {{ currentTask.createdAt | date:'MMM d, yyyy' }}
+          <span aria-hidden="true">·</span>
+          <i class="fa-regular fa-calendar" aria-hidden="true"></i>
+          {{ currentTask.createdAt | date:'MMM d, yyyy' }}
         </p>
       </div>
 
-      <div class="header-actions">
-
+      <div class="header-actions" aria-label="Task controls">
         @if (canManageTask()) {
-          <button
-            type="button"
-            class="secondary-button"
-            (click)="editTask()"
-          >
+          <button type="button" class="secondary-button" (click)="editTask()">
+            <i class="fa-solid fa-pen" aria-hidden="true"></i>
             Edit Task
           </button>
         }
-
         @if (canUpdateTaskStatus() && currentTask.status === 'PENDING') {
-          <button
-            type="button"
-            class="primary-button"
-            (click)="startTask()"
-          >
+          <button type="button" class="primary-button" (click)="startTask()">
+            <i class="fa-solid fa-play" aria-hidden="true"></i>
             Start Task
           </button>
         }
-
         @if (canUpdateTaskStatus() && currentTask.status === 'IN_PROGRESS') {
-          <button
-            type="button"
-            class="primary-button"
-            (click)="completeTask()"
-          >
+          <button type="button" class="primary-button" (click)="completeTask()">
+            <i class="fa-solid fa-check" aria-hidden="true"></i>
             Complete Task
           </button>
         }
-
         @if (canConfirmTask()) {
-          <button
-            type="button"
-            class="primary-button"
-            (click)="confirmTask()"
-          >
+          <button type="button" class="primary-button" (click)="confirmTask()">
+            <i class="fa-solid fa-check-double" aria-hidden="true"></i>
             Confirm &amp; Close Task
           </button>
         }
-
       </div>
-
     </header>
 
     @if (activityError()) {
@@ -92,15 +72,15 @@
     }
 
     <div class="details-layout">
-
       <main>
-
-        <section class="content-card">
-
-          <div class="card-heading">
-            <h2>Description</h2>
+        <section class="content-card description-card">
+          <div class="card-heading section-heading">
+            <span class="section-icon" aria-hidden="true"><i class="fa-solid fa-align-left"></i></span>
+            <div>
+              <h2>Description</h2>
+              <p>Task scope and instructions</p>
+            </div>
           </div>
-
           <div class="description">
             @if (currentTask.description) {
               <p>{{ currentTask.description }}</p>
@@ -114,11 +94,12 @@
         </section>
 
         <section class="content-card">
-
-          <div class="card-heading">
+          <div class="card-heading section-heading">
+            <span class="section-icon" aria-hidden="true"><i class="fa-regular fa-comments"></i></span>
             <div>
               <h2>Comments</h2>
               <span>{{ currentTask.commentsCount }}</span>
+              <p>Updates and discussion</p>
             </div>
           </div>
 
@@ -201,11 +182,12 @@
         </section>
 
         <section class="content-card" [attr.aria-busy]="uploadingAttachments() || downloadingAttachmentId() !== null">
-
-          <div class="card-heading">
+          <div class="card-heading section-heading">
+            <span class="section-icon" aria-hidden="true"><i class="fa-solid fa-paperclip"></i></span>
             <div>
               <h2>Attachments</h2>
               <span>{{ currentTask.attachmentsCount }}</span>
+              <p>Files shared with this task</p>
             </div>
           </div>
 
@@ -215,7 +197,17 @@
             <div class="task-attachments">
               @for (attachment of attachments(); track attachment.id) {
                 <div class="task-attachment">
-                  <span class="attachment-icon" aria-hidden="true"><i class="fa-solid fa-paperclip"></i></span>
+                  @if (isImageAttachment(attachment) && previewUrls()[attachment.id]) {
+                    <img
+                      class="attachment-preview"
+                      [src]="previewUrls()[attachment.id]"
+                      [alt]="'Preview of ' + attachment.fileName"
+                    >
+                  } @else {
+                    <span class="attachment-icon" aria-hidden="true">
+                      <i [class]="attachmentIcon(attachment.fileName)"></i>
+                    </span>
+                  }
                   <div class="attachment-details">
                     <strong>{{ attachment.fileName }}</strong>
                     <span>{{ formatFileSize(attachment.size) }} · {{ attachment.uploader.firstName }} {{ attachment.uploader.lastName }}</span>
@@ -247,12 +239,15 @@
 
           @if (canUseTaskActivity()) {
             <label class="attachment-upload">
-              <span>{{ uploadingAttachments() ? 'Uploading...' : 'Add files' }}</span>
-              <small>PDF and Word documents (.pdf, .doc, .docx) · 4 MB max per file</small>
+              <i class="fa-solid fa-cloud-arrow-up" aria-hidden="true"></i>
+              <span class="dropzone-title">
+                {{ uploadingAttachments() ? 'Uploading files...' : 'Add attachments' }}
+              </span>
+              <small>PDF, DOC, DOCX, XLS, XLSX, CSV, JPG, PNG, GIF, WEBP, SVG · 4 MB max per file</small>
               <input
                 type="file"
                 multiple
-                accept=".pdf,.doc,.docx,application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+                [attr.accept]="attachmentAccept"
                 [disabled]="uploadingAttachments()"
                 (change)="uploadAttachments($event)"
               >
@@ -264,17 +259,17 @@
       </main>
 
       <aside>
-
         <section class="content-card">
-
-          <div class="card-heading">
-            <h2>Task Details</h2>
+          <div class="card-heading section-heading">
+            <span class="section-icon" aria-hidden="true"><i class="fa-solid fa-list-check"></i></span>
+            <div>
+              <h2>Task Details</h2>
+              <p>Status, priority and deadline</p>
+            </div>
           </div>
-
           <div class="detail-list">
-
             <div class="detail-item">
-              <span>Status</span>
+              <span><i class="fa-solid fa-circle-dot" aria-hidden="true"></i>Status</span>
 
               <strong
                 class="status-badge"
@@ -283,12 +278,13 @@
                 [class.status-completed]="currentTask.status === 'COMPLETED' || currentTask.status === 'CLOSED'"
                 [class.status-cancelled]="currentTask.status === 'CANCELLED'"
               >
+                <i class="fa-solid fa-circle" aria-hidden="true"></i>
                 {{ getStatusLabel(currentTask.status) }}
               </strong>
             </div>
 
             <div class="detail-item">
-              <span>Priority</span>
+              <span><i class="fa-solid fa-bolt" aria-hidden="true"></i>Priority</span>
 
               <strong
                 class="priority-badge"
@@ -297,17 +293,18 @@
                 [class.priority-high]="currentTask.priority === 'HIGH'"
                 [class.priority-urgent]="currentTask.priority === 'URGENT'"
               >
+                <i class="fa-solid fa-circle" aria-hidden="true"></i>
                 {{ getPriorityLabel(currentTask.priority) }}
               </strong>
             </div>
 
             <div class="detail-item">
-              <span>Category</span>
+              <span><i class="fa-solid fa-folder" aria-hidden="true"></i>Category</span>
               <strong>{{ currentTask.category }}</strong>
             </div>
 
             <div class="detail-item">
-              <span>Due Date</span>
+              <span><i class="fa-regular fa-calendar" aria-hidden="true"></i>Due Date</span>
 
               <strong
                 [class.danger-text]="isOverdue()"
@@ -336,13 +333,14 @@
         </section>
 
         <section class="content-card">
-
-          <div class="card-heading">
-            <h2>Assigned To</h2>
+          <div class="card-heading section-heading">
+            <span class="section-icon" aria-hidden="true"><i class="fa-solid fa-user-check"></i></span>
+            <div>
+              <h2>Assigned To</h2>
+              <p>Task owner</p>
+            </div>
           </div>
-
           <div class="person">
-
             <div class="person-avatar">
               {{
                 getInitials(
@@ -371,15 +369,16 @@
             </div>
 
           </div>
-
         </section>
 
         <section class="content-card">
-
-          <div class="card-heading">
-            <h2>Actions</h2>
+          <div class="card-heading section-heading">
+            <span class="section-icon" aria-hidden="true"><i class="fa-solid fa-sliders"></i></span>
+            <div>
+              <h2>Actions</h2>
+              <p>Manage task progress</p>
+            </div>
           </div>
-
           <div class="action-list">
 
             @if (canUpdateTaskStatus() && currentTask.status === 'PENDING') {
@@ -387,6 +386,7 @@
                 type="button"
                 (click)="startTask()"
               >
+                <i class="fa-solid fa-play" aria-hidden="true"></i>
                 Start Task
               </button>
             }
@@ -396,6 +396,7 @@
                 type="button"
                 (click)="completeTask()"
               >
+                <i class="fa-solid fa-check" aria-hidden="true"></i>
                 Mark Completed
               </button>
             }
@@ -405,6 +406,7 @@
                 type="button"
                 (click)="confirmTask()"
               >
+                <i class="fa-solid fa-check-double" aria-hidden="true"></i>
                 Confirm &amp; Close Task
               </button>
             }
@@ -418,6 +420,7 @@
                 type="button"
                 (click)="cancelTask()"
               >
+                <i class="fa-solid fa-ban" aria-hidden="true"></i>
                 Cancel Task
               </button>
             }
@@ -432,6 +435,7 @@
                 type="button"
                 (click)="reopenTask()"
               >
+                <i class="fa-solid fa-rotate-left" aria-hidden="true"></i>
                 Reopen Task
               </button>
             }
@@ -443,23 +447,21 @@
                 [disabled]="isDeleting()"
                 (click)="deleteTask()"
               >
+                <i class="fa-solid fa-trash" aria-hidden="true"></i>
                 {{ isDeleting() ? 'Deleting task...' : 'Delete Task' }}
               </button>
             }
 
           </div>
-
         </section>
-
       </aside>
-
     </div>
 
   } @else {
 
     <section class="not-found">
 
-      <div class="not-found-icon">?</div>
+      <div class="not-found-icon"><i class="fa-solid fa-file-circle-question" aria-hidden="true"></i></div>
 
       <h1>Task Not Found</h1>
 
@@ -472,7 +474,7 @@
         class="primary-button"
         (click)="backToTasks()"
       >
-        Back to Tasks
+       <i class="fa-solid fa-circle-chevron-left"></i>
       </button>
 
     </section>

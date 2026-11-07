@@ -66,11 +66,11 @@ readonly navigation: NavigationItem[] = [
     icon: 'fa-solid fa-calendar-days',
     route: '/calendar'
   },
-  {
-    label: 'Notifications',
-    icon: 'fa-solid fa-bell',
-    route: '/notifications'
-  },
+  // {
+  //   label: 'Notifications',
+  //   icon: 'fa-solid fa-bell',
+  //   route: '/notifications'
+  // },
   {
     label: 'Settings',
     icon: 'fa-solid fa-gear',

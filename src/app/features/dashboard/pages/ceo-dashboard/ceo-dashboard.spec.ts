@@ -220,6 +220,45 @@ describe('CeoDashboard', () => {
     expect(component.summary().find(item => item.label === 'Today')?.value).toBe(2);
   });
 
+  it('shows an upcoming meetings summary card that scrolls to the upcoming meetings section', () => {
+    const taskService = TestBed.inject(TaskService);
+    const reminderService = TestBed.inject(ReminderService);
+    const requestService = TestBed.inject(RequestService);
+    const meetingService = TestBed.inject(MeetingService);
+    const notificationService = TestBed.inject(NotificationService);
+    const firstMeeting = makeMeeting('first-upcoming', 'current-user', []);
+    const secondMeeting = makeMeeting('second-upcoming', 'another-user', ['current-user']);
+
+    vi.spyOn(meetingService, 'meetings').mockReturnValue([
+      firstMeeting,
+      secondMeeting,
+      makeMeeting('unrelated-meeting', 'another-user', [])
+    ]);
+    vi.spyOn(meetingService, 'upcomingMeetings').mockReturnValue([
+      firstMeeting,
+      secondMeeting,
+      makeMeeting('unrelated-upcoming', 'another-user', [])
+    ]);
+    for (const service of [taskService, reminderService, requestService, meetingService, notificationService]) {
+      service.listLoading.set(false);
+      service.listError.set('');
+    }
+    currentUserSignal.set(currentUser);
+    const scrollToSection = vi.spyOn(component, 'scrollToSection').mockImplementation(() => {});
+    fixture.detectChanges();
+
+    expect(component.summary().find(item => item.label === 'Upcoming Meetings')?.value).toBe(2);
+    const upcomingCard = Array.from(
+      (fixture.nativeElement as HTMLElement).querySelectorAll<HTMLButtonElement>('.summary-card')
+    ).find(card => card.textContent?.includes('Upcoming Meetings'));
+
+    expect(upcomingCard).toBeDefined();
+    upcomingCard?.click();
+    expect(scrollToSection).toHaveBeenCalledWith('upcoming-meetings');
+    expect(fixture.nativeElement.querySelector('#upcoming-meetings h2')?.textContent?.trim())
+      .toBe('Upcoming Meetings');
+  });
+
   it('aggregates only in-progress and completed items across all modules with detail links', () => {
     const taskService = TestBed.inject(TaskService);
     const reminderService = TestBed.inject(ReminderService);

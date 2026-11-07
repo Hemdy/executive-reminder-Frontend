@@ -32,10 +32,11 @@ type DashboardSectionId =
   | 'needs-attention'
   | 'pending-tasks'
   | 'in-progress-items'
-  | 'completed-items';
+  | 'completed-items'
+  | 'upcoming-meetings';
 
 interface DashboardSummaryItem {
-  label: 'Today' | 'Pending' | 'Overdue' | 'In Progress' | 'Completed';
+  label: 'Today' | 'Pending' | 'Overdue' | 'In Progress' | 'Completed' | 'Upcoming Meetings';
   value: number;
   description: string;
   targetId: DashboardSectionId;
@@ -215,20 +216,30 @@ export class CeoDashboard implements OnInit, OnDestroy {
         this.assignedMeetings().filter(meeting => meeting.status === 'COMPLETED').length,
       description: 'Completed items',
       targetId: 'completed-items'
+    },
+    {
+      label: 'Upcoming Meetings',
+      value: this.upcomingMeetings().length,
+      description: 'Scheduled ahead',
+      targetId: 'upcoming-meetings'
     }
   ]);
 
-  readonly schedule = computed(() => {
+  readonly upcomingMeetings = computed(() => {
     const assignedIds = new Set(this.assignedMeetings().map(meeting => meeting.id));
     return this.meetings.upcomingMeetings()
-      .filter(meeting => assignedIds.has(meeting.id))
+      .filter(meeting => assignedIds.has(meeting.id));
+  });
+
+  readonly schedule = computed(() =>
+    this.upcomingMeetings()
       .slice(0, 5)
       .map(meeting => ({
         time: this.meetings.formatTime(meeting.startTime),
         title: meeting.title,
         type: this.meetings.meetingTypeLabel(meeting.meetingType)
-      }));
-  });
+      }))
+  );
 
   readonly attentionItems = computed(() => [
     ...this.assignedTasks().filter(task => this.tasks.isOverdue(task)).map(task => ({ title: task.title, type: 'Overdue Task', priority: task.priority })),
