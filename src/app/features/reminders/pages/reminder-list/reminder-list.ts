@@ -10,6 +10,7 @@ import { ContentSkeleton } from '../../../../core/components/content-skeleton/co
 import { AuthService } from '../../../../core/services/auth.service';
 import { ReminderService } from '../../../../core/services/reminder.service';
 import { LoadingService } from '../../../../core/services/loading.service';
+import { ToastService } from '../../../../core/services/toast.service';
 import { catchError, from, map, mergeMap, of, toArray } from 'rxjs';
 import {
   Reminder,
@@ -46,7 +47,10 @@ export class ReminderList {
   private readonly authService = inject(AuthService);
   private readonly router = inject(Router);
   private readonly loading = inject(LoadingService);
+  private readonly toast = inject(ToastService);
 
+  readonly selectionDeniedMessage =
+    'You cannot select or delete this item because you are not its creator.';
   readonly searchTerm = signal('');
   readonly statusFilter =
     signal<'ALL' | ReminderStatus>('ALL');
@@ -117,6 +121,14 @@ export class ReminderList {
 
   canDeleteReminder(reminder: Reminder): boolean {
     return reminder.createdBy.id === this.currentUser()?.id;
+  }
+
+  onSelectionClick(event: MouseEvent, canSelect: boolean): void {
+    event.stopPropagation();
+    if (!canSelect) {
+      event.preventDefault();
+      this.toast.error(this.selectionDeniedMessage);
+    }
   }
 
   createReminder(): void {

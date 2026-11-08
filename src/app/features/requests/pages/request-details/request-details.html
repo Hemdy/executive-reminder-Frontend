@@ -1,41 +1,4 @@
-<section class="details-page">
-
-  <div class="top-navigation">
-    <button
-      class="back-button"
-      type="button"
-      (click)="backToRequests()"
-    >
-     <i class="fa-solid fa-circle-chevron-left"></i>
-      Back to Requests
-    </button>
-
-    <div class="top-actions">
-
-      @if (canManageRequest()) {
-        <button
-          class="secondary-button"
-          type="button"
-          (click)="editRequest()"
-        >
-          <i class="fa-solid fa-pen" aria-hidden="true"></i>
-          Edit Request
-        </button>
-      }
-
-      @if (canApprove()) {
-        <button
-          class="approve-button"
-          type="button"
-          (click)="approveRequest()"
-        >
-          <i class="fa-solid fa-check" aria-hidden="true"></i>
-          Approve
-        </button>
-      }
-
-    </div>
-  </div>
+<section class="task-details-page">
 
   @if (recordLoading()) {
     <app-content-skeleton kind="table" />
@@ -44,10 +7,12 @@
     <button type="button" class="secondary-button" (click)="retryLoadRecord()">Retry</button>
   } @else if (request(); as request) {
 
-    <div class="request-header">
-
-      <div class="header-main">
-
+    <header class="page-header">
+      <div>
+        <button class="back-link" type="button" (click)="backToRequests()">
+          <i class="fa-solid fa-circle-chevron-left" aria-hidden="true"></i>
+          <span class="eyebrow">Request Management</span>
+        </button>
         <div class="header-meta">
           <span class="type-badge">
             {{ typeLabel(request.type) }}
@@ -71,59 +36,78 @@
         <h1>{{ request.title }}</h1>
 
         <p class="created-info">
+          <i class="fa-regular fa-user" aria-hidden="true"></i>
           Created by
           <strong>
             {{ request.requester.firstName }}
             {{ request.requester.lastName }}
           </strong>
-          on
+          <span aria-hidden="true">·</span>
+          <i class="fa-regular fa-calendar" aria-hidden="true"></i>
           {{ request.createdAt | date:'MMM d, y' }}
         </p>
-
       </div>
 
-    </div>
+      <div class="header-actions" aria-label="Request controls">
+        @if (canManageRequest()) {
+          <button class="secondary-button" type="button" (click)="editRequest()">
+            <i class="fa-solid fa-pen" aria-hidden="true"></i>
+            Edit Request
+          </button>
+        }
+        @if (canApprove()) {
+          <button class="primary-button" type="button" (click)="approveRequest()">
+            <i class="fa-solid fa-check" aria-hidden="true"></i>
+            Approve
+          </button>
+        }
+      </div>
+    </header>
 
-    <div class="content-grid">
+    @if (activityError()) {
+      <p class="task-error" role="alert">{{ activityError() }}</p>
+    }
+    @if (activityMessage()) {
+      <p class="activity-success" role="status">{{ activityMessage() }}</p>
+    }
 
-      <div class="main-column">
+    <div class="details-layout">
+      <main>
 
-        <div class="content-card">
-
-          <div class="card-header">
-            <i class="section-icon fa-solid fa-align-left" aria-hidden="true"></i>
-            <h2>Description</h2>
+        <section class="content-card">
+          <div class="card-heading section-heading">
+            <span class="section-icon" aria-hidden="true"><i class="fa-solid fa-align-left"></i></span>
+            <div>
+              <h2>Description</h2>
+              <p>Request details and context</p>
+            </div>
           </div>
-
-          <div class="card-body description">
+          <div class="description">
             @if (request.description) {
               <p>{{ request.description }}</p>
             } @else {
-              <p class="muted">No description provided.</p>
+              <p class="empty-text">No description provided.</p>
             }
           </div>
+        </section>
 
-        </div>
-
-        <div class="content-card">
-          <div class="card-header">
+        <section class="content-card">
+          <div class="card-heading section-heading">
+            <span class="section-icon" aria-hidden="true"><i class="fa-regular fa-comments"></i></span>
             <div>
-              <i class="section-icon fa-regular fa-comments" aria-hidden="true"></i>
               <h2>Comments</h2>
-              <span>{{ comments().length }} comments</span>
+              <span>{{ comments().length }}</span>
+              <p>Updates and discussion</p>
             </div>
           </div>
-          <div class="card-body meeting-comments">
-            @if (activityError()) {
-              <p class="meeting-comment-error" role="alert">{{ activityError() }}</p>
-            }
+          <div class="reminder-comments">
             @if (loadingActivity()) {
-              <p class="muted">Loading comments...</p>
+              <p class="activity-empty">Loading comments...</p>
             } @else if (comments().length) {
-              <div class="meeting-comment-list">
+              <div class="activity-list">
                 @for (comment of comments(); track comment.id) {
-                  <article class="meeting-comment" [class.highlighted-comment]="highlightedCommentId() === comment.id" [id]="'request-comment-' + comment.id" tabindex="-1">
-                    <div class="meeting-comment-meta">
+                  <article class="task-comment" [class.highlighted-comment]="highlightedCommentId() === comment.id" [id]="'request-comment-' + comment.id" tabindex="-1">
+                    <div class="comment-meta">
                       <strong>{{ comment.author.title }} {{ comment.author.firstName }} {{ comment.author.lastName }}</strong>
                       <time>{{ comment.createdAt | date:'MMM d, y · h:mm a' }}</time>
                     </div>
@@ -153,9 +137,9 @@
                 }
               </div>
             } @else {
-              <p class="muted">No comments yet.</p>
+              <p class="activity-empty">No comments yet.</p>
             }
-            <form class="meeting-comment-form" (ngSubmit)="submitComment()">
+            <form class="task-comment-form" (ngSubmit)="submitComment()">
               <label for="request-comment">Add a comment</label>
               <textarea id="request-comment" rows="3" maxlength="5000" placeholder="Write a comment..." [attr.data-update-guard]="commentText().trim() ? 'pending' : null" [value]="commentText()" (input)="updateCommentText($event)"></textarea>
               <button class="primary-button" type="submit" [disabled]="submittingComment() || !commentText().trim()">
@@ -163,34 +147,40 @@
               </button>
             </form>
           </div>
-        </div>
+        </section>
 
-        <div class="content-card" [attr.aria-busy]="uploadingAttachments() || downloadingAttachmentId() !== null">
-          <div class="card-header">
+        <section class="content-card" [attr.aria-busy]="uploadingAttachments() || downloadingAttachmentId() !== null">
+          <div class="card-heading section-heading">
+            <span class="section-icon" aria-hidden="true"><i class="fa-solid fa-paperclip"></i></span>
             <div>
-              <i class="section-icon fa-solid fa-paperclip" aria-hidden="true"></i>
               <h2>Attachments</h2>
-              <span>{{ attachments().length }} files</span>
+              <span>{{ attachments().length }}</span>
+              <p>Files shared with this request</p>
             </div>
           </div>
-          <div class="card-body meeting-comments">
-            @if (activityError()) {
-              <p class="meeting-comment-error" role="alert">{{ activityError() }}</p>
-            }
-            @if (activityMessage()) {
-              <p class="success-message">{{ activityMessage() }}</p>
-            }
+          <div>
             @if (attachments().length) {
               <div class="task-attachments">
                 @for (attachment of attachments(); track attachment.id) {
-                  <div class="task-attachment-item">
+                  <div class="task-attachment">
+                    <span class="attachment-icon" aria-hidden="true">
+                      <i class="fa-regular fa-file-lines"></i>
+                    </span>
+                    <div class="attachment-details">
+                      <strong>{{ attachment.fileName }}</strong>
+                      <span>
+                        {{ formatFileSize(attachment.size) }} ·
+                        {{ attachment.uploader.firstName }} {{ attachment.uploader.lastName }}
+                      </span>
+                    </div>
                     <button
                       type="button"
-                      class="attachment-name"
+                      class="text-button"
                       [disabled]="downloadingAttachmentId() !== null"
                       (click)="downloadAttachment(attachment)"
                     >
-                      {{ downloadingAttachmentId() === attachment.id ? 'Preparing file...' : attachment.fileName }}
+                      <i class="fa-solid fa-download" aria-hidden="true"></i>
+                      {{ downloadingAttachmentId() === attachment.id ? 'Preparing file...' : 'Download' }}
                     </button>
                     <small>{{ formatFileSize(attachment.size) }}</small>
                     @if (canDeleteAttachment(attachment)) {
@@ -205,9 +195,14 @@
                 }
               </div>
             } @else {
-              <p class="muted">No attachments yet.</p>
+              <p class="activity-empty">No files attached yet.</p>
             }
-            <label class="upload-control">
+            <label class="attachment-upload">
+              <i class="fa-solid fa-cloud-arrow-up" aria-hidden="true"></i>
+              <span class="dropzone-title">
+                {{ uploadingAttachments() ? 'Uploading files...' : 'Add attachments' }}
+              </span>
+              <small>PDF, DOC, and DOCX · 4 MB max per file</small>
               <input
                 type="file"
                 multiple
@@ -215,29 +210,31 @@
                 (change)="uploadAttachments($event)"
                 [disabled]="uploadingAttachments()"
               />
-              <span>{{ uploadingAttachments() ? 'Uploading...' : 'Upload attachment' }}</span>
             </label>
 
           </div>
-        </div>
+        </section>
 
-      </div>
+      </main>
 
-      <aside class="side-column">
+      <aside>
 
         <div class="content-card">
 
-          <div class="card-header">
-            <i class="section-icon fa-solid fa-circle-info" aria-hidden="true"></i>
-            <h2>Request Details</h2>
+          <div class="card-heading section-heading">
+            <span class="section-icon" aria-hidden="true"><i class="fa-solid fa-list-check"></i></span>
+            <div>
+              <h2>Request Details</h2>
+              <p>Status, priority and due date</p>
+            </div>
           </div>
 
-          <div class="details-list">
+          <div class="detail-list">
 
-            <div class="detail-row">
-              <span>Status</span>
+            <div class="detail-item">
+              <span><i class="fa-solid fa-circle-dot" aria-hidden="true"></i>Status</span>
 
-              <span
+              <strong
                 class="status-badge"
                 [class.pending]="request.status === 'PENDING'"
                 [class.in-review]="request.status === 'IN_REVIEW'"
@@ -247,22 +244,32 @@
                 [class.completed]="request.status === 'COMPLETED'"
                 [class.cancelled]="request.status === 'CANCELLED'"
               >
+                <i class="fa-solid fa-circle" aria-hidden="true"></i>
                 {{ statusLabel(request.status) }}
-              </span>
+              </strong>
             </div>
 
-            <div class="detail-row">
-              <span>Type</span>
+            <div class="detail-item">
+              <span><i class="fa-solid fa-tag" aria-hidden="true"></i>Type</span>
               <strong>{{ typeLabel(request.type) }}</strong>
             </div>
 
-            <div class="detail-row">
-              <span>Priority</span>
-              <strong>{{ request.priority }}</strong>
+            <div class="detail-item">
+              <span><i class="fa-solid fa-bolt" aria-hidden="true"></i>Priority</span>
+              <strong
+                class="priority-badge"
+                [class.priority-low]="request.priority === 'LOW'"
+                [class.priority-medium]="request.priority === 'MEDIUM'"
+                [class.priority-high]="request.priority === 'HIGH'"
+                [class.priority-urgent]="request.priority === 'URGENT'"
+              >
+                <i class="fa-solid fa-circle" aria-hidden="true"></i>
+                {{ request.priority }}
+              </strong>
             </div>
 
-            <div class="detail-row">
-              <span>Due Date</span>
+            <div class="detail-item">
+              <span><i class="fa-regular fa-calendar" aria-hidden="true"></i>Due Date</span>
 
               <strong [class.danger-text]="isOverdue()">
                 @if (request.dueDate) {
@@ -273,8 +280,8 @@
               </strong>
             </div>
 
-            <div class="detail-row">
-              <span>Last Updated</span>
+            <div class="detail-item">
+              <span><i class="fa-regular fa-clock" aria-hidden="true"></i>Last Updated</span>
               <strong>
                 {{ request.updatedAt | date:'MMM d, y, h:mm a' }}
               </strong>
@@ -286,14 +293,17 @@
 
         <div class="content-card">
 
-          <div class="card-header">
-            <i class="section-icon fa-solid fa-user" aria-hidden="true"></i>
-            <h2>Requester</h2>
+          <div class="card-heading section-heading">
+            <span class="section-icon" aria-hidden="true"><i class="fa-solid fa-user-check"></i></span>
+            <div>
+              <h2>Requester</h2>
+              <p>Request submitter</p>
+            </div>
           </div>
 
-          <div class="person-card">
+          <div class="person">
 
-            <div class="large-avatar">
+            <div class="person-avatar">
               {{ initials(
                 request.requester.firstName,
                 request.requester.lastName
@@ -319,14 +329,17 @@
 
         <div class="content-card">
 
-          <div class="card-header">
-            <i class="section-icon fa-solid fa-user-check" aria-hidden="true"></i>
-            <h2>Assigned To</h2>
+          <div class="card-heading section-heading">
+            <span class="section-icon" aria-hidden="true"><i class="fa-solid fa-user"></i></span>
+            <div>
+              <h2>Assigned To</h2>
+              <p>Request owner</p>
+            </div>
           </div>
 
-          <div class="person-card">
+          <div class="person">
 
-            <div class="large-avatar">
+            <div class="person-avatar">
               {{ initials(
                 request.assignedTo.firstName,
                 request.assignedTo.lastName
@@ -362,16 +375,19 @@
 
           <div class="content-card">
 
-            <div class="card-header">
-              <i class="section-icon fa-solid fa-bolt" aria-hidden="true"></i>
-              <h2>Workflow Actions</h2>
+            <div class="card-heading section-heading">
+              <span class="section-icon" aria-hidden="true"><i class="fa-solid fa-sliders"></i></span>
+              <div>
+                <h2>Workflow Actions</h2>
+                <p>Process this request</p>
+              </div>
             </div>
 
-            <div class="workflow-actions">
+            <div class="action-list">
 
               @if (canApprove()) {
                 <button
-                  class="action-button approve"
+                  class="approve-action"
                   type="button"
                   (click)="approveRequest()"
                 >
@@ -382,27 +398,29 @@
 
               @if (canReject()) {
                 <button
-                  class="action-button reject"
+                  class="reject-action"
                   type="button"
                   (click)="rejectRequest()"
                 >
-                  ✕ Reject Request
+                  <i class="fa-solid fa-xmark" aria-hidden="true"></i>
+                  Reject Request
                 </button>
               }
 
               @if (canRequestInformation()) {
                 <button
-                  class="action-button information"
+                  class="information-action"
                   type="button"
                   (click)="requestMoreInformation()"
                 >
-                  ? Request More Information
+                  <i class="fa-solid fa-circle-question" aria-hidden="true"></i>
+                  Request More Information
                 </button>
               }
 
               @if (canComplete()) {
                 <button
-                  class="action-button complete"
+                  class="complete-action"
                   type="button"
                   (click)="completeRequest()"
                 >
@@ -413,11 +431,12 @@
 
               @if (canReopen()) {
                 <button
-                  class="action-button reopen"
+                  class="reopen-action"
                   type="button"
                   (click)="reopenRequest()"
                 >
-                  ↻ Reopen Request
+                  <i class="fa-solid fa-rotate-left" aria-hidden="true"></i>
+                  Reopen Request
                 </button>
               }
 
@@ -427,21 +446,23 @@
                 request.status !== 'CANCELLED'
               ) {
                 <button
-                  class="action-button cancel"
+                  class="cancel-action"
                   type="button"
                   (click)="cancelRequest()"
                 >
+                  <i class="fa-solid fa-ban" aria-hidden="true"></i>
                   Cancel Request
                 </button>
               }
 
               @if (canManageRequest()) {
                 <button
-                  class="action-button delete"
+                  class="danger-action"
                   type="button"
                   [disabled]="isDeleting()"
                   (click)="deleteRequest()"
                 >
+                  <i class="fa-solid fa-trash" aria-hidden="true"></i>
                   {{ isDeleting() ? 'Deleting request...' : 'Delete Request' }}
                 </button>
               }

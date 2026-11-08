@@ -15,24 +15,25 @@
           routerLink="/reminders"
           class="back-link"
         >
-          <i class="fa-solid fa-circle-chevron-left"></i>
-         
+          <i class="fa-solid fa-circle-chevron-left" aria-hidden="true"></i>
+          <p class="eyebrow">Reminder Management</p>
         </a>
 
-        <div class="header-category">
+        <!-- <div class="header-category">
           <i class="fa-solid fa-folder" aria-hidden="true"></i>
           {{ currentReminder.category }}
-        </div>
+        </div> -->
 
         <h1>{{ currentReminder.title }}</h1>
 
         <p class="created-info">
+          <i class="fa-regular fa-user" aria-hidden="true"></i>
           Created by
           <strong>
             {{ getFullName(currentReminder.createdBy) }}
           </strong>
-
-          ·
+          <span aria-hidden="true">·</span>
+          <i class="fa-regular fa-calendar" aria-hidden="true"></i>
           {{ currentReminder.createdAt | date:'MMM d, yyyy' }}
         </p>
 
@@ -77,16 +78,24 @@
 
     </header>
 
-   
+    @if (activityError()) {
+      <p class="activity-error" role="alert">{{ activityError() }}</p>
+    }
+    @if (activityMessage()) {
+      <p class="activity-success" role="status">{{ activityMessage() }}</p>
+    }
 
-      <div class="details-layout">
+    <div class="details-layout">
       <main>
 
-        <section class="content-card" [attr.aria-busy]="uploadingAttachments() || downloadingAttachmentId() !== null">
+        <section class="content-card">
 
-          <div class="card-heading">
-            <i class="section-icon fa-solid fa-align-left" aria-hidden="true"></i>
-            <h2>Description</h2>
+          <div class="card-heading section-heading">
+            <span class="section-icon" aria-hidden="true"><i class="fa-solid fa-align-left"></i></span>
+            <div>
+              <h2>Description</h2>
+              <p>Reminder details and instructions</p>
+            </div>
           </div>
 
           <div class="description">
@@ -106,24 +115,22 @@
         </section>
 
         <section class="content-card">
-          <div class="card-heading">
+          <div class="card-heading section-heading">
+            <span class="section-icon" aria-hidden="true"><i class="fa-regular fa-comments"></i></span>
             <div>
-              <i class="section-icon fa-regular fa-comments" aria-hidden="true"></i>
               <h2>Comments</h2>
               <span>{{ comments().length }}</span>
+              <p>Updates and discussion</p>
             </div>
           </div>
-          <div class="card-body meeting-comments">
-            @if (activityError()) {
-              <p class="meeting-comment-error" role="alert">{{ activityError() }}</p>
-            }
+          <div class="reminder-comments">
             @if (loadingActivity()) {
-              <p class="muted">Loading comments...</p>
+              <p class="activity-empty">Loading comments...</p>
             } @else if (comments().length) {
-              <div class="meeting-comment-list">
+              <div class="reminder-comment-list">
                 @for (comment of comments(); track comment.id) {
-                  <article class="meeting-comment" [class.highlighted-comment]="highlightedCommentId() === comment.id" [id]="'reminder-comment-' + comment.id" tabindex="-1">
-                    <div class="meeting-comment-meta">
+                  <article class="reminder-comment" [class.highlighted-comment]="highlightedCommentId() === comment.id" [id]="'reminder-comment-' + comment.id" tabindex="-1">
+                    <div class="comment-meta">
                       <strong>{{ getFullName(comment.author) }}</strong>
                       <time>{{ comment.createdAt | date:'MMM d, y · h:mm a' }}</time>
                     </div>
@@ -153,9 +160,9 @@
                 }
               </div>
             } @else {
-              <p class="muted">No comments yet.</p>
+              <p class="activity-empty">No comments yet.</p>
             }
-            <form class="meeting-comment-form" (ngSubmit)="submitComment()">
+            <form class="reminder-comment-form" (ngSubmit)="submitComment()">
               <label for="reminder-comment">Add a comment</label>
               <textarea id="reminder-comment" rows="3" maxlength="5000" placeholder="Write a comment..." [attr.data-update-guard]="commentText().trim() ? 'pending' : null" [value]="commentText()" (input)="updateCommentText($event)"></textarea>
               <button class="primary-button" type="submit" [disabled]="submittingComment() || !commentText().trim()">
@@ -165,34 +172,41 @@
           </div>
         </section>
 
-        <section class="content-card">
-          <div class="card-heading">
+        <section class="content-card" [attr.aria-busy]="uploadingAttachments() || downloadingAttachmentId() !== null">
+          <div class="card-heading section-heading">
+            <span class="section-icon" aria-hidden="true"><i class="fa-solid fa-paperclip"></i></span>
             <div>
-              <i class="section-icon fa-solid fa-paperclip" aria-hidden="true"></i>
               <h2>Attachments</h2>
               <span>{{ attachments().length }}</span>
+              <p>Files shared with this reminder</p>
             </div>
           </div>
-          <div class="card-body meeting-comments">
-            @if (activityError()) {
-              <p class="meeting-comment-error" role="alert">{{ activityError() }}</p>
-            }
-            @if (activityMessage()) {
-              <p class="success-message">{{ activityMessage() }}</p>
-            }
-            @if (attachments().length) {
+          <div>
+            @if (loadingActivity()) {
+              <p class="activity-empty">Loading attachments...</p>
+            } @else if (attachments().length) {
               <div class="task-attachments">
                 @for (attachment of attachments(); track attachment.id) {
-                  <div class="task-attachment-item">
+                  <div class="task-attachment">
+                    <span class="attachment-icon" aria-hidden="true">
+                      <i class="fa-regular fa-file-lines"></i>
+                    </span>
+                    <div class="attachment-details">
+                      <strong>{{ attachment.fileName }}</strong>
+                      <span>
+                        {{ formatFileSize(attachment.size) }} ·
+                        {{ attachment.uploader.firstName }} {{ attachment.uploader.lastName }}
+                      </span>
+                    </div>
                     <button
                       type="button"
-                      class="attachment-name"
+                      class="text-button"
                       [disabled]="downloadingAttachmentId() !== null"
                       (click)="downloadAttachment(attachment)"
                     >
-                      {{ downloadingAttachmentId() === attachment.id ? 'Preparing file...' : attachment.fileName }}
+                      <i class="fa-solid fa-download" aria-hidden="true"></i>
+                      {{ downloadingAttachmentId() === attachment.id ? 'Preparing file...' : 'Download' }}
                     </button>
-                    <small>{{ formatFileSize(attachment.size) }}</small>
                     @if (canDeleteAttachment(attachment)) {
                       <button
                         type="button"
@@ -205,9 +219,14 @@
                 }
               </div>
             } @else {
-              <p class="muted">No attachments yet.</p>
+              <p class="activity-empty">No files attached yet.</p>
             }
-            <label class="upload-control">
+            <label class="attachment-upload">
+              <i class="fa-solid fa-cloud-arrow-up" aria-hidden="true"></i>
+              <span class="dropzone-title">
+                {{ uploadingAttachments() ? 'Uploading files...' : 'Add attachments' }}
+              </span>
+              <small>PDF, DOC, and DOCX · 4 MB max per file</small>
               <input
                 type="file"
                 multiple
@@ -215,7 +234,6 @@
                 (change)="uploadAttachments($event)"
                 [disabled]="uploadingAttachments()"
               />
-              <span>{{ uploadingAttachments() ? 'Uploading...' : 'Upload attachment' }}</span>
             </label>
           </div>
         </section>
@@ -226,16 +244,19 @@
 
         <section class="content-card">
 
-          <div class="card-heading">
-            <i class="section-icon fa-solid fa-circle-info" aria-hidden="true"></i>
-            <h2>Reminder Details</h2>
+          <div class="card-heading section-heading">
+            <span class="section-icon" aria-hidden="true"><i class="fa-solid fa-list-check"></i></span>
+            <div>
+              <h2>Reminder Details</h2>
+              <p>Status, priority and schedule</p>
+            </div>
           </div>
 
           <div class="detail-list">
 
             <div class="detail-item">
 
-              <span>Status</span>
+              <span><i class="fa-solid fa-circle-dot" aria-hidden="true"></i>Status</span>
 
               <strong
                 class="status-badge"
@@ -245,6 +266,7 @@
                 [class.status-dismissed]="currentReminder.status === 'DISMISSED'"
                 [class.status-cancelled]="currentReminder.status === 'CANCELLED'"
               >
+                <i class="fa-solid fa-circle" aria-hidden="true"></i>
                 {{ getStatusLabel(currentReminder.status) }}
               </strong>
 
@@ -252,7 +274,7 @@
 
             <div class="detail-item">
 
-              <span>Priority</span>
+              <span><i class="fa-solid fa-bolt" aria-hidden="true"></i>Priority</span>
 
               <strong
                 class="priority-badge"
@@ -261,34 +283,35 @@
                 [class.priority-high]="currentReminder.priority === 'HIGH'"
                 [class.priority-urgent]="currentReminder.priority === 'URGENT'"
               >
+                <i class="fa-solid fa-circle" aria-hidden="true"></i>
                 {{ getPriorityLabel(currentReminder.priority) }}
               </strong>
 
             </div>
 
             <div class="detail-item">
-              <span>Category</span>
+              <span><i class="fa-solid fa-folder" aria-hidden="true"></i>Category</span>
               <strong>
                 {{ currentReminder.category }}
               </strong>
             </div>
 
             <div class="detail-item">
-              <span>Reminder Date</span>
+              <span><i class="fa-regular fa-calendar" aria-hidden="true"></i>Reminder Date</span>
               <strong>
                 {{ currentReminder.reminderDate }}
               </strong>
             </div>
 
             <div class="detail-item">
-              <span>Reminder Time</span>
+              <span><i class="fa-regular fa-clock" aria-hidden="true"></i>Reminder Time</span>
               <strong>
                 {{ currentReminder.reminderTime }}
               </strong>
             </div>
 
             <div class="detail-item">
-              <span>Recurrence</span>
+              <span><i class="fa-solid fa-repeat" aria-hidden="true"></i>Recurrence</span>
               <strong>
                 {{ formatRecurrence(currentReminder.recurrence) }}
               </strong>
@@ -296,6 +319,7 @@
 
             @if (isOverdue()) {
               <div class="overdue-alert">
+                <i class="fa-solid fa-triangle-exclamation" aria-hidden="true"></i>
                 <strong>Overdue</strong>
 
                 <span>
@@ -310,49 +334,50 @@
 
         <section class="content-card">
 
-          <div class="card-heading">
-            <i class="section-icon fa-solid fa-user" aria-hidden="true"></i>
-            <h2>Recipient</h2>
+          <div class="card-heading section-heading">
+            <span class="section-icon" aria-hidden="true"><i class="fa-solid fa-user-check"></i></span>
+            <div>
+              <h2>Recipient</h2>
+              <p>Reminder recipient</p>
+            </div>
           </div>
 
           <div class="person">
-
             <div class="person-avatar">
               {{
                 getInitials(
-                  currentReminder.recipient.firstName ,
+                  currentReminder.recipient.firstName,
                   currentReminder.recipient.lastName
                 )
               }}
             </div>
-
             <div>
-
               <strong>
                 {{ getFullName(currentReminder.recipient) }}
               </strong>
 
               @if (currentReminder.recipient.department) {
                 <span>
-                  {{ currentReminder.recipient.department}}
+                  {{ currentReminder.recipient.department }}
                 </span>
               }
 
               <small>
                 {{ getRecipientEmail(currentReminder.recipient) }}
               </small>
-
             </div>
-
           </div>
 
         </section>
 
         <section class="content-card">
 
-          <div class="card-heading">
-            <i class="section-icon fa-solid fa-bolt" aria-hidden="true"></i>
-            <h2>Actions</h2>
+          <div class="card-heading section-heading">
+            <span class="section-icon" aria-hidden="true"><i class="fa-solid fa-sliders"></i></span>
+            <div>
+              <h2>Actions</h2>
+              <p>Manage reminder progress</p>
+            </div>
           </div>
 
           <div class="action-list">
@@ -365,6 +390,7 @@
                 type="button"
                 (click)="acknowledgeReminder()"
               >
+                <i class="fa-solid fa-play" aria-hidden="true"></i>
                 Acknowledge Reminder
               </button>
             }
@@ -377,6 +403,7 @@
                 type="button"
                 (click)="completeReminder()"
               >
+                <i class="fa-solid fa-check" aria-hidden="true"></i>
                 Mark Completed
               </button>
 
@@ -385,6 +412,7 @@
                   type="button"
                   (click)="dismissReminder()"
                 >
+                  <i class="fa-solid fa-eye-slash" aria-hidden="true"></i>
                   Dismiss Reminder
                 </button>
               }
@@ -400,6 +428,7 @@
                 type="button"
                 (click)="cancelReminder()"
               >
+                <i class="fa-solid fa-ban" aria-hidden="true"></i>
                 Cancel Reminder
               </button>
             }
@@ -414,6 +443,7 @@
                 type="button"
                 (click)="reopenReminder()"
               >
+                <i class="fa-solid fa-rotate-left" aria-hidden="true"></i>
                 Reopen Reminder
               </button>
             }
@@ -425,24 +455,23 @@
                 [disabled]="isDeleting()"
                 (click)="deleteReminder()"
               >
+                <i class="fa-solid fa-trash" aria-hidden="true"></i>
                 {{ isDeleting() ? 'Deleting reminder...' : 'Delete Reminder' }}
               </button>
             }
 
           </div>
-
         </section>
 
       </aside>
 
-      </div>
- 
+    </div>
 
   } @else {
 
     <section class="not-found">
 
-      <div class="not-found-icon">?</div>
+      <div class="not-found-icon"><i class="fa-solid fa-bell" aria-hidden="true"></i></div>
 
       <h1>Reminder Not Found</h1>
 
@@ -455,7 +484,7 @@
         class="primary-button"
         (click)="backToReminders()"
       >
-    <i class="fa-solid fa-circle-chevron-left"></i>
+        <i class="fa-solid fa-circle-chevron-left" aria-hidden="true"></i>
       </button>
 
     </section>

@@ -15,6 +15,7 @@ import {
 } from '../../../../core/models/task.model';
 import { TaskService } from '../../../../core/services/task.service';
 import { LoadingService } from '../../../../core/services/loading.service';
+import { ToastService } from '../../../../core/services/toast.service';
 import { catchError, from, map, mergeMap, of, toArray } from 'rxjs';
 
 @Component({
@@ -41,7 +42,10 @@ export class TaskList {
   private readonly authService = inject(AuthService);
   private readonly router = inject(Router);
   private readonly loading = inject(LoadingService);
+  private readonly toast = inject(ToastService);
 
+  readonly selectionDeniedMessage =
+    'You cannot select or delete this item because you are not its creator.';
   readonly searchTerm = signal('');
   readonly statusFilter = signal<'ALL' | TaskStatus>('ALL');
   readonly priorityFilter = signal<'ALL' | TaskPriority>('ALL');
@@ -105,6 +109,14 @@ export class TaskList {
 
   canDeleteTask(task: Task): boolean {
     return task.createdBy.id === this.currentUser()?.id;
+  }
+
+  onSelectionClick(event: MouseEvent, canSelect: boolean): void {
+    event.stopPropagation();
+    if (!canSelect) {
+      event.preventDefault();
+      this.toast.error(this.selectionDeniedMessage);
+    }
   }
 
   isSelected(id: string): boolean {

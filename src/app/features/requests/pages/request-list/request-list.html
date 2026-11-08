@@ -168,24 +168,22 @@
 
           <thead>
             <tr>
-              @if (manageableRequests().length > 0) {
-                <th class="selection-column">
-                  <label class="select-all-label">
-                    <input
-                      type="checkbox"
-                      class="selection-checkbox"
-                      aria-label="Select all visible requests"
-                      [checked]="allVisibleSelected()"
-                      [indeterminate]="someVisibleSelected()"
-                      [disabled]="deletingSelected()"
-                      (change)="toggleAllSelection($any($event.target).checked)"
-                    />
-                  </label>
-                </th>
-              }
+              <th class="selection-column">
+                <label class="select-all-label">
+                  <input
+                    type="checkbox"
+                    class="selection-checkbox"
+                    aria-label="Select all visible requests you created"
+                    [checked]="allVisibleSelected()"
+                    [indeterminate]="someVisibleSelected()"
+                    [disabled]="deletingSelected()"
+                    (change)="toggleAllSelection($any($event.target).checked)"
+                  />
+                </label>
+              </th>
               <th>Request</th>
               <th>Type</th>
-              <th>Requester</th>
+              <th>Assigned By</th>
               <th>Assigned To</th>
               <th>Priority</th>
               <th>Due Date</th>
@@ -204,19 +202,18 @@
                 (click)="viewRequest(request.id)"
               >
 
-                @if (canDeleteRequest(request)) {
-                  <td class="selection-column">
-                    <input
-                      type="checkbox"
-                      class="selection-checkbox"
-                      [attr.aria-label]="'Select request ' + request.title"
-                      [checked]="isSelected(request.id)"
-                      [disabled]="deletingSelected()"
-                      (click)="$event.stopPropagation()"
-                      (change)="toggleSelection(request.id, $any($event.target).checked)"
-                    />
-                  </td>
-                }
+                <td class="selection-column">
+                  <input
+                    type="checkbox"
+                    class="selection-checkbox"
+                    [attr.aria-label]="canDeleteRequest(request) ? 'Select request ' + request.title : selectionDeniedMessage"
+                    [attr.title]="canDeleteRequest(request) ? null : selectionDeniedMessage"
+                    [checked]="isSelected(request.id)"
+                    [disabled]="deletingSelected()"
+                    (click)="onSelectionClick($event, canDeleteRequest(request))"
+                    (change)="toggleSelection(request.id, $any($event.target).checked)"
+                  />
+                </td>
 
                 <td>
                   <div class="request-cell">

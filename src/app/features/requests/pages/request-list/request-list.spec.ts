@@ -4,6 +4,7 @@ import { signal } from '@angular/core';
 import { RequestList } from './request-list';
 import { AuthService } from '../../../../core/services/auth.service';
 import { RequestService } from '../../../../core/services/request.service';
+import { ToastService } from '../../../../core/services/toast.service';
 import { Request } from '../../../../core/models/request.model';
 import { User } from '../../../../core/models/user.model';
 import { of } from 'rxjs';
@@ -100,5 +101,18 @@ describe('RequestList', () => {
 
     expect(component.requests().map(request => request.id)).toEqual(['assigned', 'created']);
     expect(component.totalCount()).toBe(2);
+  });
+
+  it('prevents selecting another requester’s item and explains why', () => {
+    const event = new MouseEvent('click', { cancelable: true });
+    const toast = TestBed.inject(ToastService);
+
+    component.onSelectionClick(event, false);
+
+    expect(event.defaultPrevented).toBe(true);
+    expect(toast.current()?.message).toBe(
+      'You cannot select or delete this item because you are not its creator.'
+    );
+    toast.dismiss();
   });
 });

@@ -4,6 +4,7 @@ import { signal } from '@angular/core';
 import { ReminderList } from './reminder-list';
 import { AuthService } from '../../../../core/services/auth.service';
 import { ReminderService } from '../../../../core/services/reminder.service';
+import { ToastService } from '../../../../core/services/toast.service';
 import { Reminder } from '../../../../core/models/reminder.model';
 import { User } from '../../../../core/models/user.model';
 import { of } from 'rxjs';
@@ -113,5 +114,18 @@ describe('ReminderList', () => {
       'participant',
       'created'
     ]);
+  });
+
+  it('prevents selecting another creator’s reminder and explains why', () => {
+    const event = new MouseEvent('click', { cancelable: true });
+    const toast = TestBed.inject(ToastService);
+
+    component.onSelectionClick(event, false);
+
+    expect(event.defaultPrevented).toBe(true);
+    expect(toast.current()?.message).toBe(
+      'You cannot select or delete this item because you are not its creator.'
+    );
+    toast.dismiss();
   });
 });

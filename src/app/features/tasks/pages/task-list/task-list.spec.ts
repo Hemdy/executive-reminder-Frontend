@@ -4,6 +4,7 @@ import { signal } from '@angular/core';
 import { TaskList } from './task-list';
 import { AuthService } from '../../../../core/services/auth.service';
 import { TaskService } from '../../../../core/services/task.service';
+import { ToastService } from '../../../../core/services/toast.service';
 import { Task } from '../../../../core/models/task.model';
 import { User } from '../../../../core/models/user.model';
 import { of } from 'rxjs';
@@ -123,5 +124,19 @@ describe('TaskList', () => {
 
     expect(deleteTask).not.toHaveBeenCalled();
     expect(component.selectedCount()).toBe(0);
+  });
+
+  it('prevents selecting another creator’s task and explains why', () => {
+    const event = new MouseEvent('click', { cancelable: true });
+    const toast = TestBed.inject(ToastService);
+
+    component.onSelectionClick(event, false);
+
+    expect(event.defaultPrevented).toBe(true);
+    expect(toast.current()?.message).toBe(component.selectionDeniedMessage);
+    expect(component.selectionDeniedMessage).toBe(
+      'You cannot select or delete this item because you are not its creator.'
+    );
+    toast.dismiss();
   });
 });

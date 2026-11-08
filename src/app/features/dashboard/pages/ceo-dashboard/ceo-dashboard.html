@@ -112,7 +112,7 @@
       </div>
 
       <a routerLink="/calendar">
-       <i class="fa-solid fa-circle-chevron-right"></i>
+       <i class="fa-solid fa-chevron-right"></i>
       </a>
     </div>
 
@@ -122,8 +122,6 @@
 
         <div class="schedule-item">
           <time>{{ item.time }}</time>
-          <div class="schedule-marker"></div>
-
           <div class="schedule-content">
             <strong>{{ item.title }}</strong>
             <span>{{ item.type }}</span>
@@ -171,8 +169,6 @@
       @for (item of attentionItems(); track item.title) {
 
         <div class="attention-item">
-          <div class="priority-indicator"></div>
-
           <div>
             <strong>{{ item.title }}</strong>
             <span>{{ item.type }}</span>
@@ -208,7 +204,7 @@
         </div>
       </div>
 
-      <a routerLink="/tasks"><i class="fa-solid fa-circle-chevron-right"></i></a>
+      <a routerLink="/tasks"><i class="fa-solid fa-chevron-right"></i></a>
     </div>
 
     <div class="schedule-list">
@@ -216,13 +212,10 @@
       @for (task of pendingTasks(); track task.id) {
 
         <a class="schedule-item" [routerLink]="['/tasks', task.id]">
-          
-          
           <div class="schedule">
-                      <time>{{ task.dueDate | date:'mediumDate' }}</time>
-          <i class="fa-solid fa-circle-chevron-right"></i>
-        </div>
-          <div class="schedule-marker"></div>
+            <time>{{ task.dueDate | date:'mediumDate' }}</time>
+            <i class="fa-solid fa-circle-chevron-right"></i>
+          </div>
 
           <div class="schedule-content">
             <strong>{{ task.title }}</strong>
@@ -253,7 +246,7 @@
         </div>
       </div>
 
-      <a routerLink="/reminders"><i class="fa-solid fa-circle-chevron-right"></i></a>
+      <a routerLink="/reminders"><i class="fa-solid fa-chevron-right"></i></a>
     </div>
 
     <div class="schedule-list">
@@ -261,13 +254,10 @@
       @for (reminder of upcomingReminders(); track reminder.id) {
 
         <a class="schedule-item" [routerLink]="['/reminders', reminder.id]">
-          
           <div class="schedule">
             <time>{{ reminder.reminderDate | date:'mediumDate' }}</time>
-          <i class="fa-solid fa-circle-chevron-right"></i>
-        </div>
-
-          <div class="schedule-marker"></div>
+            <i class="fa-solid fa-circle-chevron-right"></i>
+          </div>
 
           <div class="schedule-content">
             <strong>{{ reminder.title }}</strong>
@@ -310,18 +300,14 @@
 
         <a class="schedule-item dashboard-status-item" [routerLink]="item.route">
           <div class="schedule">
-          <time>{{ item.date | date:'mediumDate' }} </time>
-          <i class="fa-solid fa-circle-chevron-right"></i>
-        </div>
-
-
-          <div class="schedule-marker"></div>
+            <time>{{ item.date | date:'mediumDate' }}</time>
+            <i class="fa-solid fa-circle-chevron-right"></i>
+          </div>
 
           <div class="schedule-content">
             <strong>{{ item.title }}</strong>
             <span>{{ item.type }} · {{ item.owner }}</span>
           </div>
-          
         </a>
 
       } @empty {
@@ -359,12 +345,9 @@
 
         <a class="schedule-item dashboard-status-item" [routerLink]="item.route">
           <div class="schedule">
-          <time>{{ item.date | date:'mediumDate' }} </time>
-          <i class="fa-solid fa-circle-chevron-right"></i>
-        </div>          <div class="schedule-marker"></div>
-
-
-          
+            <time>{{ item.date | date:'mediumDate' }}</time>
+            <i class="fa-solid fa-circle-chevron-right"></i>
+          </div>
 
           <div class="schedule-content">
             <strong>{{ item.title }}</strong>
@@ -408,8 +391,6 @@
 
         <div class="schedule-item">
           <time>{{ item.time }}</time>
-          <div class="schedule-marker"></div>
-
           <div class="schedule-content">
             <strong>{{ item.title }}</strong>
             <span>{{ item.type }}</span>

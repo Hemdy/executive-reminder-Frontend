@@ -253,21 +253,19 @@
           <thead>
             <tr>
 
-              @if (manageableTasks().length > 0) {
-                <th class="selection-column">
-                  <label class="select-all-label">
-                    <input
-                      type="checkbox"
-                      class="selection-checkbox"
-                      aria-label="Select all visible tasks"
-                      [checked]="allVisibleSelected()"
-                      [indeterminate]="someVisibleSelected()"
-                      [disabled]="deletingSelected()"
-                      (change)="toggleAllSelection($any($event.target).checked)"
-                    />
-                  </label>
-                </th>
-              }
+              <th class="selection-column">
+                <label class="select-all-label">
+                  <input
+                    type="checkbox"
+                    class="selection-checkbox"
+                    aria-label="Select all visible tasks you created"
+                    [checked]="allVisibleSelected()"
+                    [indeterminate]="someVisibleSelected()"
+                    [disabled]="deletingSelected()"
+                    (change)="toggleAllSelection($any($event.target).checked)"
+                  />
+                </label>
+              </th>
 
               <th>
                 <i class="fa-solid fa-list-check" aria-hidden="true"></i>
@@ -276,7 +274,7 @@
 
               <th>
                 <i class="fa-solid fa-user" aria-hidden="true"></i>
-                Assignee
+                Assigned By
               </th>
 
               <th>
@@ -300,7 +298,7 @@
               </th>
 
               <th>
-                <span class="sr-only">Actions</span>
+                <span class="fa-solid ">Actions</span>
               </th>
 
             </tr>
@@ -316,19 +314,18 @@
                 (click)="viewTask(task)"
               >
 
-                @if (canDeleteTask(task)) {
-                  <td class="selection-column">
-                    <input
-                      type="checkbox"
-                      class="selection-checkbox"
-                      [attr.aria-label]="'Select task ' + task.title"
-                      [checked]="isSelected(task.id)"
-                      [disabled]="deletingSelected()"
-                      (click)="$event.stopPropagation()"
-                      (change)="toggleSelection(task.id, $any($event.target).checked)"
-                    />
-                  </td>
-                }
+                <td class="selection-column">
+                  <input
+                    type="checkbox"
+                    class="selection-checkbox"
+                    [attr.aria-label]="canDeleteTask(task) ? 'Select task ' + task.title : selectionDeniedMessage"
+                    [attr.title]="canDeleteTask(task) ? null : selectionDeniedMessage"
+                    [checked]="isSelected(task.id)"
+                    [disabled]="deletingSelected()"
+                    (click)="onSelectionClick($event, canDeleteTask(task))"
+                    (change)="toggleSelection(task.id, $any($event.target).checked)"
+                  />
+                </td>
 
                 <!-- Task Details -->
                 <td>
@@ -350,30 +347,30 @@
 
                 </td>
 
-                <!-- Assignee -->
+                <!-- Assigned By -->
                 <td>
 
                   <div class="assignee">
 
                     <div class="avatar">
                       {{
-                        task.assignedTo.firstName.charAt(0)
+                        task.createdBy.firstName.charAt(0)
                       }}{{
-                        task.assignedTo.lastName.charAt(0)
+                        task.createdBy.lastName.charAt(0)
                       }}
                     </div>
 
                     <div>
 
                       <strong>
-                        {{ task.assignedTo.firstName }}
-                        {{ task.assignedTo.lastName }}
+                        {{ task.createdBy.firstName }}
+                        {{ task.createdBy.lastName }}
                       </strong>
 
-                      @if (task.assignedTo.department) {
+                      @if (task.createdBy.department) {
                         <small>
                           <i class="fa-solid fa-building" aria-hidden="true"></i>
-                          {{ task.assignedTo.department }}
+                          {{ task.createdBy.department }}
                         </small>
                       }
 

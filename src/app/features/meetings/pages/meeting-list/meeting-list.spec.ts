@@ -4,6 +4,7 @@ import { signal } from '@angular/core';
 import { MeetingList } from './meeting-list';
 import { AuthService } from '../../../../core/services/auth.service';
 import { MeetingService } from '../../../../core/services/meeting.service';
+import { ToastService } from '../../../../core/services/toast.service';
 import { Meeting } from '../../../../core/models/meeting.model';
 import { User } from '../../../../core/models/user.model';
 import { of } from 'rxjs';
@@ -117,5 +118,18 @@ describe('MeetingList', () => {
 
     expect(deleteMeeting).not.toHaveBeenCalled();
     expect(component.selectedCount()).toBe(0);
+  });
+
+  it('prevents selecting another organizer’s meeting and explains why', () => {
+    const event = new MouseEvent('click', { cancelable: true });
+    const toast = TestBed.inject(ToastService);
+
+    component.onSelectionClick(event, false);
+
+    expect(event.defaultPrevented).toBe(true);
+    expect(toast.current()?.message).toBe(
+      'You cannot select or delete this item because you are not its creator.'
+    );
+    toast.dismiss();
   });
 });

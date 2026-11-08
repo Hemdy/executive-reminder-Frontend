@@ -1,46 +1,4 @@
-<section class="details-page">
-
-  <div class="top-navigation">
-
-    <button
-      class="back-button"
-      type="button"
-      (click)="backToMeetings()"
-    >
-      <i class="fa-solid fa-arrow-left" aria-hidden="true"></i>
-      Back to Meetings
-    </button>
-
-    <div class="top-actions">
-
-      @if (canManageMeeting()) {
-        <button
-          class="secondary-button"
-          type="button"
-          (click)="editMeeting()"
-        >
-          <i class="fa-solid fa-pen" aria-hidden="true"></i>
-          Edit Meeting
-        </button>
-      }
-
-      @if (
-        canManageMeeting() &&
-        (meeting()?.status === 'SCHEDULED' || meeting()?.status === 'RESCHEDULED')
-      ) {
-        <button
-          class="complete-button"
-          type="button"
-          (click)="markCompleted()"
-        >
-          <i class="fa-solid fa-circle-check" aria-hidden="true"></i>
-          Mark Completed
-        </button>
-      }
-
-    </div>
-
-  </div>
+<section class="task-details-page">
 
   @if (recordLoading()) {
     <app-content-skeleton kind="table" />
@@ -49,12 +7,13 @@
     <button type="button" class="secondary-button" (click)="retryLoadRecord()">Retry</button>
   } @else if (meeting(); as meeting) {
 
-    <div class="meeting-header">
-
-      <div class="header-main">
-
+    <header class="page-header">
+      <div>
+        <button class="back-link" type="button" (click)="backToMeetings()">
+          <i class="fa-solid fa-circle-chevron-left" aria-hidden="true"></i>
+          <span class="eyebrow">Meeting Management</span>
+        </button>
         <div class="header-meta">
-
           <span class="type-badge">
             {{ typeLabel(meeting.meetingType) }}
           </span>
@@ -70,41 +29,60 @@
           </span>
 
           @if (isPast()) {
-            <span class="past-badge">
-              PAST
-            </span>
+            <span class="past-badge">PAST</span>
           }
-
         </div>
 
         <h1>{{ meeting.title }}</h1>
 
         <p class="created-info">
+          <i class="fa-regular fa-user" aria-hidden="true"></i>
           Organized by
           <strong>
             {{ meeting.organizer.firstName }}
             {{ meeting.organizer.lastName }}
           </strong>
-          · Created
+          <span aria-hidden="true">·</span>
+          <i class="fa-regular fa-calendar" aria-hidden="true"></i>
           {{ meeting.createdAt | date:'MMM d, y' }}
         </p>
-
       </div>
 
-    </div>
+      <div class="header-actions" aria-label="Meeting controls">
+        @if (canManageMeeting()) {
+          <button class="secondary-button" type="button" (click)="editMeeting()">
+            <i class="fa-solid fa-pen" aria-hidden="true"></i>
+            Edit Meeting
+          </button>
+        }
+        @if (canManageMeeting() && (meeting.status === 'SCHEDULED' || meeting.status === 'RESCHEDULED')) {
+          <button class="primary-button" type="button" (click)="markCompleted()">
+            <i class="fa-solid fa-check" aria-hidden="true"></i>
+            Mark Completed
+          </button>
+        }
+      </div>
+    </header>
 
-    <div class="content-grid">
+    @if (activityError() || commentsError()) {
+      <p class="task-error" role="alert">{{ activityError() || commentsError() }}</p>
+    }
+    @if (activityMessage()) {
+      <p class="activity-success" role="status">{{ activityMessage() }}</p>
+    }
 
-      <div class="main-column">
+    <div class="details-layout">
+      <main>
 
-        <div class="schedule-card">
-
-          <div class="schedule-icon" aria-hidden="true">
-            <i class="fa-solid fa-calendar-days"></i>
+        <section class="content-card schedule-card">
+          <div class="card-heading section-heading">
+            <span class="section-icon" aria-hidden="true"><i class="fa-solid fa-calendar-days"></i></span>
+            <div>
+              <h2>Meeting Schedule</h2>
+              <p>Date, time and location</p>
+            </div>
           </div>
-
           <div class="schedule-content">
-
             <div class="schedule-date">
               {{ meeting.meetingDate | date:'EEEE, MMMM d, y' }}
             </div>
@@ -121,65 +99,51 @@
                 {{ meeting.location }}
               </div>
             }
-
           </div>
+        </section>
 
-        </div>
-
-        <div class="content-card">
-
-          <div class="card-header">
-            <i class="section-icon fa-solid fa-align-left" aria-hidden="true"></i>
-            <h2>Description</h2>
+        <section class="content-card">
+          <div class="card-heading section-heading">
+            <span class="section-icon" aria-hidden="true"><i class="fa-solid fa-align-left"></i></span>
+            <div>
+              <h2>Description</h2>
+              <p>Meeting overview</p>
+            </div>
           </div>
-
-          <div class="card-body description">
-
+          <div class="description">
             @if (meeting.description) {
               <p>{{ meeting.description }}</p>
             } @else {
-              <p class="muted">
-                No description provided.
-              </p>
+              <p class="empty-text">No description provided.</p>
             }
-
           </div>
+        </section>
 
-        </div>
-
-        <div class="content-card">
-
-          <div class="card-header">
-            <i class="section-icon fa-solid fa-list-check" aria-hidden="true"></i>
-            <h2>Agenda</h2>
-          </div>
-
-          <div class="card-body agenda">
-
-            @if (meeting.agenda) {
-              <pre>{{ meeting.agenda }}</pre>
-            } @else {
-              <p class="muted">
-                No agenda provided.
-              </p>
-            }
-
-          </div>
-
-        </div>
-
-        <div class="content-card">
-
-          <div class="card-header">
-
+        <section class="content-card">
+          <div class="card-heading section-heading">
+            <span class="section-icon" aria-hidden="true"><i class="fa-solid fa-list-check"></i></span>
             <div>
-              <i class="section-icon fa-solid fa-users" aria-hidden="true"></i>
-              <h2>Participants</h2>
-              <span>
-                {{ meeting.participants.length }} attendees
-              </span>
+              <h2>Agenda</h2>
+              <p>Topics to discuss</p>
             </div>
+          </div>
+          <div class="agenda">
+            @if (meeting.agenda) {
+              <p>{{ meeting.agenda }}</p>
+            } @else {
+              <p class="empty-text">No agenda provided.</p>
+            }
+          </div>
+        </section>
 
+        <section class="content-card">
+          <div class="card-heading section-heading">
+            <span class="section-icon" aria-hidden="true"><i class="fa-solid fa-users"></i></span>
+            <div>
+              <h2>Participants</h2>
+              <span>{{ meeting.participants.length }}</span>
+              <p>People invited to this meeting</p>
+            </div>
           </div>
 
           <div class="participants-grid">
@@ -191,7 +155,7 @@
 
               <div class="participant-card">
 
-                <div class="large-avatar">
+                <div class="person-avatar">
                   {{ initials(
                     participant.firstName,
                     participant.lastName
@@ -219,40 +183,37 @@
 
               </div>
 
+            } @empty {
+              <p class="activity-empty">No participants have been added.</p>
             }
 
           </div>
 
-        </div>
+        </section>
 
-        <div class="content-card">
-
-          <div class="card-header">
+        <section class="content-card">
+          <div class="card-heading section-heading">
+            <span class="section-icon" aria-hidden="true"><i class="fa-regular fa-comments"></i></span>
             <div>
-              <i class="section-icon fa-regular fa-comments" aria-hidden="true"></i>
               <h2>Comments</h2>
-              <span>
-                {{ comments().length }} comments
-              </span>
+              <span>{{ comments().length }}</span>
+              <p>Updates and discussion</p>
             </div>
           </div>
 
-          <div class="card-body meeting-comments">
-            @if (commentsError() || activityError()) {
-              <p class="meeting-comment-error" role="alert">{{ commentsError() || activityError() }}</p>
-            }
+          <div class="meeting-comments">
             @if (commentsLoading()) {
-              <p class="muted">Loading comments...</p>
+              <p class="activity-empty">Loading comments...</p>
             } @else if (comments().length) {
-              <div class="meeting-comment-list">
+              <div class="activity-list">
                 @for (comment of comments(); track comment.id) {
                   <article
-                    class="meeting-comment"
+                    class="task-comment"
                     [class.highlighted-comment]="highlightedCommentId() === comment.id"
                     [id]="'meeting-comment-' + comment.id"
                     tabindex="-1"
                   >
-                    <div class="meeting-comment-meta">
+                    <div class="comment-meta">
                       <strong>{{ comment.author.title }} {{ comment.author.firstName }} {{ comment.author.lastName }}</strong>
                       <time>{{ comment.createdAt | date:'MMM d, y · h:mm a' }}</time>
                     </div>
@@ -282,9 +243,9 @@
                 }
               </div>
             } @else {
-              <p class="muted">No comments yet.</p>
+              <p class="activity-empty">No comments yet.</p>
             }
-            <form class="meeting-comment-form" (ngSubmit)="submitComment()">
+            <form class="task-comment-form" (ngSubmit)="submitComment()">
               <label for="meeting-comment">Add a comment</label>
               <textarea
                 id="meeting-comment"
@@ -305,38 +266,43 @@
             </form>
           </div>
 
-        </div>
+        </section>
 
         <div class="content-card" [attr.aria-busy]="uploadingAttachments() || downloadingAttachmentId() !== null">
 
-          <div class="card-header">
+          <div class="card-heading section-heading">
+            <span class="section-icon" aria-hidden="true"><i class="fa-solid fa-paperclip"></i></span>
             <div>
-              <i class="section-icon fa-solid fa-paperclip" aria-hidden="true"></i>
               <h2>Attachments</h2>
-              <span>{{ attachments().length }} files</span>
+              <span>{{ attachments().length }}</span>
+              <p>Files shared with this meeting</p>
             </div>
           </div>
 
-          <div class="card-body meeting-comments">
-            @if (activityError()) {
-              <p class="meeting-comment-error" role="alert">{{ activityError() }}</p>
-            }
-            @if (activityMessage()) {
-              <p class="success-message">{{ activityMessage() }}</p>
-            }
+          <div>
             @if (attachments().length) {
               <div class="task-attachments">
                 @for (attachment of attachments(); track attachment.id) {
-                  <div class="task-attachment-item">
+                  <div class="task-attachment">
+                    <span class="attachment-icon" aria-hidden="true">
+                      <i class="fa-regular fa-file-lines"></i>
+                    </span>
+                    <div class="attachment-details">
+                      <strong>{{ attachment.fileName }}</strong>
+                      <span>
+                        {{ formatFileSize(attachment.size) }} ·
+                        {{ attachment.uploader.firstName }} {{ attachment.uploader.lastName }}
+                      </span>
+                    </div>
                     <button
                       type="button"
-                      class="attachment-name"
+                      class="text-button"
                       [disabled]="downloadingAttachmentId() !== null"
                       (click)="downloadAttachment(attachment)"
                     >
-                      {{ downloadingAttachmentId() === attachment.id ? 'Preparing file...' : attachment.fileName }}
+                      <i class="fa-solid fa-download" aria-hidden="true"></i>
+                      {{ downloadingAttachmentId() === attachment.id ? 'Preparing file...' : 'Download' }}
                     </button>
-                    <small>{{ formatFileSize(attachment.size) }}</small>
                     @if (canDeleteAttachment(attachment)) {
                       <button
                         type="button"
@@ -349,9 +315,14 @@
                 }
               </div>
             } @else {
-              <p class="muted">No attachments yet.</p>
+              <p class="activity-empty">No files attached yet.</p>
             }
-            <label class="upload-control">
+            <label class="attachment-upload">
+              <i class="fa-solid fa-cloud-arrow-up" aria-hidden="true"></i>
+              <span class="dropzone-title">
+                {{ uploadingAttachments() ? 'Uploading files...' : 'Add attachments' }}
+              </span>
+              <small>PDF, DOC, and DOCX · 4 MB max per file</small>
               <input
                 type="file"
                 multiple
@@ -359,69 +330,72 @@
                 (change)="uploadAttachments($event)"
                 [disabled]="uploadingAttachments()"
               />
-              <span>{{ uploadingAttachments() ? 'Uploading...' : 'Upload attachment' }}</span>
             </label>
           </div>
 
         </div>
 
-      </div>
+      </main>
 
-      <aside class="side-column">
+      <aside>
 
         <div class="content-card">
 
-          <div class="card-header">
-            <i class="section-icon fa-solid fa-circle-info" aria-hidden="true"></i>
-            <h2>Meeting Details</h2>
+          <div class="card-heading section-heading">
+            <span class="section-icon" aria-hidden="true"><i class="fa-solid fa-list-check"></i></span>
+            <div>
+              <h2>Meeting Details</h2>
+              <p>Status, type and schedule</p>
+            </div>
           </div>
 
-          <div class="details-list">
+          <div class="detail-list">
 
-            <div class="detail-row">
-              <span>Status</span>
+            <div class="detail-item">
+              <span><i class="fa-solid fa-circle-dot" aria-hidden="true"></i>Status</span>
 
-              <span
+              <strong
                 class="status-badge"
                 [class.scheduled]="meeting.status === 'SCHEDULED'"
                 [class.rescheduled]="meeting.status === 'RESCHEDULED'"
                 [class.completed]="meeting.status === 'COMPLETED'"
                 [class.cancelled]="meeting.status === 'CANCELLED'"
               >
+                <i class="fa-solid fa-circle" aria-hidden="true"></i>
                 {{ statusLabel(meeting.status) }}
-              </span>
+              </strong>
             </div>
 
-            <div class="detail-row">
-              <span>Meeting Type</span>
+            <div class="detail-item">
+              <span><i class="fa-solid fa-tag" aria-hidden="true"></i>Meeting Type</span>
               <strong>
                 {{ typeLabel(meeting.meetingType) }}
               </strong>
             </div>
 
-            <div class="detail-row">
-              <span>Date</span>
+            <div class="detail-item">
+              <span><i class="fa-regular fa-calendar" aria-hidden="true"></i>Date</span>
               <strong>
                 {{ meeting.meetingDate | date:'MMM d, y' }}
               </strong>
             </div>
 
-            <div class="detail-row">
-              <span>Start</span>
+            <div class="detail-item">
+              <span><i class="fa-regular fa-clock" aria-hidden="true"></i>Start</span>
               <strong>
                 {{ formatTime(meeting.startTime) }}
               </strong>
             </div>
 
-            <div class="detail-row">
-              <span>End</span>
+            <div class="detail-item">
+              <span><i class="fa-regular fa-clock" aria-hidden="true"></i>End</span>
               <strong>
                 {{ formatTime(meeting.endTime) }}
               </strong>
             </div>
 
-            <div class="detail-row">
-              <span>Location</span>
+            <div class="detail-item">
+              <span><i class="fa-solid fa-location-dot" aria-hidden="true"></i>Location</span>
               <strong>
                 {{ meeting.location || 'Not specified' }}
               </strong>
@@ -433,14 +407,18 @@
 
         <div class="content-card">
 
-          <div class="card-header">
-            <i class="section-icon fa-solid fa-user-tie" aria-hidden="true"></i>
-            <h2>Organizer</h2>
+          <div class="card-heading section-heading">
+            <span class="section-icon" aria-hidden="true"><i class="fa-solid fa-user-check"></i></span>
+            <div>
+              <h2>Organizer</h2>
+              <p>                {{ meeting.organizer.role }}
+</p>
+            </div>
           </div>
 
-          <div class="person-card">
+          <div class="person">
 
-            <div class="large-avatar">
+            <div class="person-avatar">
               {{ initials(
                 meeting.organizer.firstName,
                 meeting.organizer.lastName
@@ -458,9 +436,9 @@
                 {{ meeting.organizer.email }}
               </span>
 
-              <span>
+              <!-- <span>
                 {{ meeting.organizer.role }}
-              </span>
+              </span> -->
 
             </div>
 
@@ -471,12 +449,15 @@
         @if (canManageMeeting()) {
           <div class="content-card">
 
-            <div class="card-header">
-              <i class="section-icon fa-solid fa-bolt" aria-hidden="true"></i>
-              <h2>Actions</h2>
-          </div>
+            <div class="card-heading section-heading">
+              <span class="section-icon" aria-hidden="true"><i class="fa-solid fa-sliders"></i></span>
+              <div>
+                <h2>Actions</h2>
+                <p>Manage meeting status</p>
+              </div>
+            </div>
 
-          <div class="workflow-actions">
+          <div class="action-list">
 
             @if (
               meeting.status === 'SCHEDULED' ||
@@ -484,7 +465,7 @@
             ) {
 
               <button
-                class="action-button complete"
+                class="complete-action"
                 type="button"
                 (click)="markCompleted()"
               >
@@ -493,18 +474,19 @@
               </button>
 
               <button
-                class="action-button reschedule"
                 type="button"
                 (click)="reschedule()"
               >
-                ↻ Mark Rescheduled
+                <i class="fa-solid fa-calendar-days" aria-hidden="true"></i>
+                Mark Rescheduled
               </button>
 
               <button
-                class="action-button cancel"
+                class="cancel-action"
                 type="button"
                 (click)="cancelMeeting()"
               >
+                <i class="fa-solid fa-ban" aria-hidden="true"></i>
                 Cancel Meeting
               </button>
 
@@ -513,11 +495,11 @@
             @if (meeting.status === 'CANCELLED') {
 
               <button
-                class="action-button restore"
                 type="button"
                 (click)="restoreMeeting()"
               >
-                ↻ Restore Meeting
+                <i class="fa-solid fa-rotate-left" aria-hidden="true"></i>
+                Restore Meeting
               </button>
 
             }
@@ -525,21 +507,22 @@
             @if (meeting.status === 'COMPLETED') {
 
               <button
-                class="action-button restore"
                 type="button"
                 (click)="restoreMeeting()"
               >
-                ↻ Reopen Meeting
+                <i class="fa-solid fa-rotate-left" aria-hidden="true"></i>
+                Reopen Meeting
               </button>
 
             }
 
             <button
-              class="action-button delete"
+              class="danger-action"
               type="button"
               [disabled]="isDeleting()"
               (click)="deleteMeeting()"
             >
+              <i class="fa-solid fa-trash" aria-hidden="true"></i>
               {{ isDeleting() ? 'Deleting meeting...' : 'Delete Meeting' }}
             </button>
 
