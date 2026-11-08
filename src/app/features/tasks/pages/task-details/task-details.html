@@ -339,7 +339,7 @@
             <span class="section-icon" aria-hidden="true"><i class="fa-solid fa-user-check"></i></span>
             <div>
               <h2>Assigned To</h2>
-              <!-- <p>Task owner</p> -->
+              <p> {{ currentTask.assignedTo.role }}</p>
             </div>
           </div>
           <div class="person">
@@ -359,11 +359,11 @@
                 {{ currentTask.assignedTo.lastName }}
               </strong>
 
-              @if (currentTask.assignedTo.department) {
+              <!-- @if (currentTask.assignedTo.department) {
                 <span>
                   {{ currentTask.assignedTo.department }}
                 </span>
-              }
+              } -->
 
               <small>
                 {{ currentTask.assignedTo.email }}

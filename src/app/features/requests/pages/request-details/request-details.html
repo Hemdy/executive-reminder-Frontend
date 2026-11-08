@@ -297,7 +297,7 @@
             <span class="section-icon" aria-hidden="true"><i class="fa-solid fa-user-check"></i></span>
             <div>
               <h2>Requester</h2>
-              <p>Request submitter</p>
+              <p>{{ request.requester.role }}</p>
             </div>
           </div>
 
@@ -318,9 +318,9 @@
 
               <span>{{ request.requester.email }}</span>
 
-              @if (request.requester.department) {
+              <!-- @if (request.requester.department) {
                 <span>{{ request.requester.department }}</span>
-              }
+              } -->
             </div>
 
           </div>

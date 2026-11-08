@@ -338,8 +338,9 @@
             <span class="section-icon" aria-hidden="true"><i class="fa-solid fa-user-check"></i></span>
             <div>
               <h2>Recipient</h2>
-              <!-- <p>Reminder recipient
-              </p> -->
+               <p>
+                  {{ currentReminder.recipient.role }}
+            </p>
             </div>
           </div>
 
@@ -357,11 +358,11 @@
                 {{ getFullName(currentReminder.recipient) }}
               </strong>
 
-              @if (currentReminder.recipient.department) {
+              <!-- @if (currentReminder.recipient.role) {
                 <span>
-                  {{ currentReminder.recipient.department }}
+                  {{ currentReminder.recipient.role }}
                 </span>
-              }
+              } -->
 
               <small>
                 {{ getRecipientEmail(currentReminder.recipient) }}
