@@ -10,6 +10,7 @@ import { AppSelect, SelectOption } from '../../../../core/components/app-select/
 import { ContentSkeleton } from '../../../../core/components/content-skeleton/content-skeleton';
 import { AuthService } from '../../../../core/services/auth.service';
 import { ReminderService } from '../../../../core/services/reminder.service';
+import { sortRemindersDesc } from '../../../../core/utils/date-sort';
 import { LoadingService } from '../../../../core/services/loading.service';
 import { ToastService } from '../../../../core/services/toast.service';
 import { catchError, from, map, mergeMap, of, toArray } from 'rxjs';
@@ -84,7 +85,7 @@ export class ReminderList {
     const priority = this.priorityFilter();
     const userId = this.currentUser()?.id;
 
-    return this.reminderService.reminders().filter(reminder => {
+    return sortRemindersDesc(this.reminderService.reminders().filter(reminder => {
       const isAssignedToUser =
         userId !== undefined &&
         (reminder.createdBy.id === userId ||
@@ -116,7 +117,7 @@ export class ReminderList {
         matchesStatus &&
         matchesPriority
       );
-    });
+    }));
 
   });
 

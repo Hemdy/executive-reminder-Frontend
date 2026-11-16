@@ -1,6 +1,7 @@
 import { signal } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { provideRouter } from '@angular/router';
+import { User } from '../../core/models/user.model';
 import { AuthService } from '../../core/services/auth.service';
 import { NotificationService } from '../../core/services/notification.service';
 import { PwaDetectionService } from '../../core/services/pwa-detection.service';
@@ -11,10 +12,18 @@ describe('MainLayout', () => {
   let fixture: ComponentFixture<MainLayout>;
   let isStandaloneSignal: ReturnType<typeof signal<boolean>>;
   let isCompactViewportSignal: ReturnType<typeof signal<boolean>>;
+  let currentUserSignal: ReturnType<typeof signal<User | null>>;
 
   beforeEach(async () => {
     isStandaloneSignal = signal(false);
     isCompactViewportSignal = signal(false);
+    currentUserSignal = signal<User | null>({
+      id: 'user-1',
+      firstName: 'Ada',
+      lastName: 'Lovelace',
+      email: 'ada@example.com',
+      role: 'CEO',
+    });
 
     await TestBed.configureTestingModule({
       imports: [MainLayout],
@@ -25,8 +34,8 @@ describe('MainLayout', () => {
           useValue: {
             hasRole: () => false,
             hasPermission: () => false,
-            currentUser: () => null,
-            getInitials: () => '',
+            currentUser: currentUserSignal.asReadonly(),
+            getInitials: (u: User) => `${u.firstName[0]}${u.lastName[0]}`.toUpperCase(),
             logout: () => undefined,
           },
         },
@@ -67,6 +76,7 @@ describe('MainLayout', () => {
     const el = fixture.nativeElement as HTMLElement;
     expect(el.querySelector('app-mobile-bottom-nav')).toBeNull();
     expect(el.querySelector('.app-shell')?.classList.contains('has-bottom-nav')).toBe(false);
+    expect(el.querySelector('app-topbar .mobile-menu-button')).toBeTruthy();
   });
 
   it('hides mobile bottom navigation on wide desktop even when installed as a PWA', () => {
@@ -76,9 +86,10 @@ describe('MainLayout', () => {
 
     const el = fixture.nativeElement as HTMLElement;
     expect(el.querySelector('app-mobile-bottom-nav')).toBeNull();
+    expect(el.querySelector('app-topbar .mobile-menu-button')).toBeTruthy();
   });
 
-  it('shows mobile bottom navigation when running as an installed PWA at mobile or tablet widths', () => {
+  it('shows mobile bottom navigation and swaps the topbar menu button for the initials avatar in installed mobile/tablet PWAs', () => {
     isStandaloneSignal.set(true);
     isCompactViewportSignal.set(true);
     fixture.detectChanges();
@@ -87,5 +98,7 @@ describe('MainLayout', () => {
     expect(el.querySelector('app-mobile-bottom-nav')).toBeTruthy();
     expect(el.querySelector('.app-shell')?.classList.contains('has-bottom-nav')).toBe(true);
     expect(el.querySelector('app-topbar .notification-button')).toBeTruthy();
+    expect(el.querySelector('app-topbar .mobile-menu-button')).toBeNull();
+    expect(el.querySelector('app-topbar .topbar.has-bottom-nav .avatar')?.textContent?.trim()).toBe('AL');
   });
 });

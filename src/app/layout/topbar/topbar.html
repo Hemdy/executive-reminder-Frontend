@@ -1,50 +1,50 @@
-<header class="topbar">
-
-<div class="mobile-brand">
-  
-        <img src="../../../favicon.ico" alt="ExecTrack Logo" width="40" height="30" routerLink="/home"/>
-
-</div>
+<header class="topbar" [class.has-bottom-nav]="hasBottomNav">
+  <div class="mobile-brand">
+    <img src="../../../favicon.ico" alt="ExecTrack Logo" width="40" height="30" routerLink="/dashboard" />
+  </div>
 
   <div class="topbar-actions">
+    <a
+      routerLink="/notifications"
+      class="notification-button"
+      aria-label="Notifications"
+      (click)="closeProfileMenu()"
+    >
+      <span class="notification-icon">
+        <i class="fa-solid fa-bell" aria-hidden="true"></i>
+      </span>
 
-<a
-  routerLink="/notifications"
-  class="notification-button"
-  aria-label="Notifications"
->
-  <span class="notification-icon"> <i class="fa-solid fa-bell" aria-hidden="true"></i>
-</span>
-
-  @if (unreadNotificationCount() > 0) {
-    <span class="notification-badge">
-      {{ unreadNotificationCount() > 99 ? '99+' : unreadNotificationCount() }}
-    </span>
-  }
-</a>
-
+      @if (unreadNotificationCount() > 0) {
+        <span class="notification-badge">
+          {{ unreadNotificationCount() > 99 ? '99+' : unreadNotificationCount() }}
+        </span>
+      }
+    </a>
 
     @if (authService.currentUser(); as user) {
-      <div class="profile-menu">
+      <div #profileMenu class="profile-menu">
         <button
           class="avatar-button"
           type="button"
           aria-label="Open profile menu"
+          aria-haspopup="menu"
           [attr.aria-expanded]="profileOpen"
-          (click)="profileOpen = !profileOpen"
+          (click)="toggleProfileMenu()"
         >
           <span class="avatar">{{ authService.getInitials(user) }}</span>
         </button>
 
         @if (profileOpen) {
-          <div class="profile-dropdown">
-            <strong>{{user.title}} {{ user.firstName }} {{user.middleName}} {{ user.lastName }}</strong>
+          <div class="profile-dropdown" role="menu" aria-label="Account menu">
+            <strong>{{ user.title }} {{ user.firstName }} {{ user.middleName }} {{ user.lastName }}</strong>
             <span>{{ user.role }}</span>
             <button
               class="logout-button"
               type="button"
+              role="menuitem"
               (click)="logout()"
             >
+              <i class="fa-solid fa-right-from-bracket" aria-hidden="true"></i>
               Logout
             </button>
           </div>
@@ -52,17 +52,17 @@
       </div>
     }
 
-    <button
-      class="mobile-menu-button"
-      type="button"
-      aria-label="Toggle navigation"
-      aria-controls="main-navigation"
-      [attr.aria-expanded]="mobileSidebarOpen"
-      (click)="toggleMobileSidebar.emit()"
-    >
-      <i class="fa-solid fa-bars" aria-hidden="true"></i>
-    </button>
-
+    @if (!hasBottomNav) {
+      <button
+        class="mobile-menu-button"
+        type="button"
+        aria-label="Toggle navigation"
+        aria-controls="main-navigation"
+        [attr.aria-expanded]="mobileSidebarOpen"
+        (click)="toggleMobileSidebar.emit()"
+      >
+        <i class="fa-solid fa-bars" aria-hidden="true"></i>
+      </button>
+    }
   </div>
-
 </header>

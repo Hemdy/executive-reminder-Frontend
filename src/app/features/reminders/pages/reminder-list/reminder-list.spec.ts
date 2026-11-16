@@ -116,6 +116,22 @@ describe('ReminderList', () => {
     ]);
   });
 
+  it('displays reminders in descending chronological order by reminder date and time', () => {
+    const reminderService = TestBed.inject(ReminderService);
+    vi.spyOn(reminderService, 'reminders').mockReturnValue([
+      { ...makeReminder('older', 'current-user'), reminderDate: '2026-05-01', reminderTime: '09:00' },
+      { ...makeReminder('newest', 'current-user'), reminderDate: '2026-11-20', reminderTime: '16:00' },
+      { ...makeReminder('same-day-early', 'current-user'), reminderDate: '2026-11-20', reminderTime: '08:00' },
+    ]);
+    currentUserSignal.set({ ...currentUser });
+
+    expect(component.reminders().map(reminder => reminder.id)).toEqual([
+      'newest',
+      'same-day-early',
+      'older',
+    ]);
+  });
+
   it('prevents selecting another creator’s reminder and explains why', () => {
     const event = new MouseEvent('click', { cancelable: true });
     const toast = TestBed.inject(ToastService);

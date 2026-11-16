@@ -15,6 +15,7 @@ import {
   TaskStatus
 } from '../../../../core/models/task.model';
 import { TaskService } from '../../../../core/services/task.service';
+import { sortTasksDesc } from '../../../../core/utils/date-sort';
 import { LoadingService } from '../../../../core/services/loading.service';
 import { ToastService } from '../../../../core/services/toast.service';
 import { catchError, from, map, mergeMap, of, toArray } from 'rxjs';
@@ -75,7 +76,7 @@ export class TaskList {
     const priority = this.priorityFilter();
     const userId = this.currentUser()?.id;
 
-    return this.taskService.tasks().filter(task => {
+    return sortTasksDesc(this.taskService.tasks().filter(task => {
       const isAssignedToUser =
         userId !== undefined &&
         (task.createdBy.id === userId ||
@@ -96,7 +97,7 @@ export class TaskList {
         priority === 'ALL' || task.priority === priority;
 
       return isAssignedToUser && matchesSearch && matchesStatus && matchesPriority;
-    });
+    }));
 
   });
 

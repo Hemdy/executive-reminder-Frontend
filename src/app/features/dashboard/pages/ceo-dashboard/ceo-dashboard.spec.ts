@@ -239,11 +239,12 @@ describe('CeoDashboard', () => {
       secondMeeting,
       makeMeeting('unrelated-upcoming', 'another-user', [])
     ]);
+    currentUserSignal.set(currentUser);
+    TestBed.flushEffects();
     for (const service of [taskService, reminderService, requestService, meetingService, notificationService]) {
       service.listLoading.set(false);
       service.listError.set('');
     }
-    currentUserSignal.set(currentUser);
     const scrollToSection = vi.spyOn(component, 'scrollToSection').mockImplementation(() => {});
     fixture.detectChanges();
 
@@ -287,11 +288,12 @@ describe('CeoDashboard', () => {
       makeMeeting('completed-meeting', 'another-user', ['current-user'], 'COMPLETED'),
       makeMeeting('cancelled-meeting', 'current-user', [], 'CANCELLED')
     ]);
+    currentUserSignal.set(currentUser);
+    TestBed.flushEffects();
     for (const service of [taskService, reminderService, requestService, meetingService, notificationService]) {
       service.listLoading.set(false);
       service.listError.set('');
     }
-    currentUserSignal.set(currentUser);
     const scrollToSection = vi.spyOn(component, 'scrollToSection').mockImplementation(() => {});
     fixture.detectChanges();
 
@@ -343,6 +345,49 @@ describe('CeoDashboard', () => {
       '/reminders/completed-reminder',
       '/requests/completed-request',
       '/meetings/completed-meeting'
+    ]);
+  });
+
+  it('sorts Pending Tasks, Needs Attention, Upcoming Reminders, and Completed in descending chronological order', () => {
+    const taskService = TestBed.inject(TaskService);
+    const reminderService = TestBed.inject(ReminderService);
+    const requestService = TestBed.inject(RequestService);
+    const meetingService = TestBed.inject(MeetingService);
+
+    vi.spyOn(taskService, 'tasks').mockReturnValue([
+      { ...makeTask('pending-old', 'current-user', 'PENDING'), dueDate: '2099-01-05' },
+      { ...makeTask('pending-new', 'current-user', 'PENDING'), dueDate: '2099-02-10' },
+      { ...makeTask('overdue-task', 'current-user', 'PENDING'), dueDate: '2020-03-01' },
+      { ...makeTask('done-task', 'current-user', 'COMPLETED'), updatedAt: '2026-05-01T10:00:00Z' },
+    ]);
+    vi.spyOn(reminderService, 'reminders').mockReturnValue([
+      { ...makeReminder('rem-early', 'current-user', 'PENDING'), reminderDate: '2099-01-15', reminderTime: '09:00' },
+      { ...makeReminder('rem-latest', 'current-user', 'PENDING'), reminderDate: '2099-04-01', reminderTime: '14:00' },
+      { ...makeReminder('overdue-rem', 'current-user', 'PENDING'), reminderDate: '2021-07-01', reminderTime: '09:00' },
+      { ...makeReminder('done-rem', 'current-user', 'COMPLETED'), updatedAt: '2026-09-01T10:00:00Z' },
+    ]);
+    vi.spyOn(requestService, 'requests').mockReturnValue([
+      { ...makeRequest('urgent-req', 'current-user', 'URGENT'), createdAt: '2025-01-01T10:00:00Z' },
+      { ...makeRequest('done-req', 'current-user', 'MEDIUM', 'requester', 'COMPLETED'), updatedAt: '2026-07-01T10:00:00Z' },
+    ]);
+    vi.spyOn(meetingService, 'meetings').mockReturnValue([
+      { ...makeMeeting('done-meeting', 'current-user', [], 'COMPLETED'), updatedAt: '2026-08-01T10:00:00Z' },
+    ]);
+
+    currentUserSignal.set(currentUser);
+
+    expect(component.pendingTasks().map(t => t.id)).toEqual(['pending-new', 'pending-old', 'overdue-task']);
+    expect(component.upcomingReminders().map(r => r.id)).toEqual(['rem-latest', 'rem-early']);
+    expect(component.attentionItems().map(a => a.title)).toEqual([
+      'urgent-req',
+      'overdue-rem',
+      'overdue-task',
+    ]);
+    expect(component.completedItems().map(c => c.id)).toEqual([
+      'done-rem',
+      'done-meeting',
+      'done-req',
+      'done-task',
     ]);
   });
 });

@@ -13,8 +13,14 @@ import {
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { Router } from '@angular/router';
 import { SwPush } from '@angular/service-worker';
-import { catchError, EMPTY, finalize, firstValueFrom, from, of, take, timeout } from 'rxjs';
+import { catchError, EMPTY, finalize, firstValueFrom, from, of, take, takeUntil, timeout } from 'rxjs';
 import { API_BASE_URL } from '../config/api.config';
+import {
+  bindAuthSessionLifecycle,
+  currentAuthSessionVersion,
+  isSameAuthSession,
+  sessionEndedStream,
+} from '../utils/session-scope';
 import { AuthService } from './auth.service';
 import { NotificationService } from './notification.service';
 import { PwaDetectionService } from './pwa-detection.service';
@@ -144,21 +150,20 @@ export class PushNotificationsService {
         }
       });
 
-    effect(() => {
-      const userId = this.auth.currentUser()?.id ?? null;
-      if (userId === this.registeredUserId) {
-        return;
-      }
-      this.registeredUserId = userId;
-      this.isRegistered.set(false);
-      if (!userId) {
-        this.preferences.set({ tasks: true, reminders: true, requests: true, meetings: true });
-        this.preferencesError.set('');
-        this.preferencesMessage.set('');
-        return;
-      }
-      this.loadPreferences(userId);
-      void this.registerExistingSubscription(userId);
+    bindAuthSessionLifecycle(this.auth, this.destroyRef, {
+      onClear: () => {
+        this.registeredUserId = null;
+        this.resetSessionState();
+      },
+      onUserChange: userId => {
+        this.registeredUserId = userId;
+        this.resetSessionState();
+        if (!userId) {
+          return;
+        }
+        this.loadPreferences(userId);
+        void this.registerExistingSubscription(userId);
+      },
     });
   }
 
@@ -372,20 +377,24 @@ export class PushNotificationsService {
   }
 
   private saveSubscription(subscription: PushSubscription, userId: string): void {
+    const expectedSession = currentAuthSessionVersion(this.auth);
     this.http
       .post<void>(`${this.apiUrl}/subscription`, this.serializeSubscription(subscription))
       .pipe(
+        takeUntil(sessionEndedStream(this.auth)),
         catchError(error => {
-          console.error('Unable to refresh push subscription', error);
-          this.statusError.set(
-            'Unable to register this device for push notifications. Please try again.',
-          );
+          if (isSameAuthSession(this.auth, userId, expectedSession)) {
+            console.error('Unable to refresh push subscription', error);
+            this.statusError.set(
+              'Unable to register this device for push notifications. Please try again.',
+            );
+          }
           return EMPTY;
         }),
         takeUntilDestroyed(this.destroyRef),
       )
       .subscribe(() => {
-        if (this.auth.currentUser()?.id === userId) {
+        if (isSameAuthSession(this.auth, userId, expectedSession)) {
           this.isSubscribed.set(true);
           this.isRegistered.set(true);
         }
@@ -433,10 +442,11 @@ export class PushNotificationsService {
       return;
     }
     this.isSyncingExistingSubscription = true;
+    const expectedSession = currentAuthSessionVersion(this.auth);
     try {
       const publicKey = config.publicKey;
       const subscription = await this.getCurrentSubscription();
-      if (!subscription) {
+      if (!subscription || !isSameAuthSession(this.auth, userId, expectedSession)) {
         return;
       }
 
@@ -618,30 +628,46 @@ export class PushNotificationsService {
   }
 
   private loadPreferences(userId: string): void {
+    const expectedSession = currentAuthSessionVersion(this.auth);
     this.isLoadingPreferences.set(true);
     this.http
       .get<PushPreferences>(`${this.apiUrl}/preferences`)
       .pipe(
+        takeUntil(sessionEndedStream(this.auth)),
         catchError(error => {
-          console.error('Unable to load push notification preferences', error);
-          this.preferencesError.set('Unable to load notification preferences.');
+          if (isSameAuthSession(this.auth, userId, expectedSession)) {
+            console.error('Unable to load push notification preferences', error);
+            this.preferencesError.set('Unable to load notification preferences.');
+          }
           return EMPTY;
         }),
-        finalize(() => this.isLoadingPreferences.set(false)),
+        finalize(() => {
+          if (isSameAuthSession(this.auth, userId, expectedSession)) {
+            this.isLoadingPreferences.set(false);
+          }
+        }),
         takeUntilDestroyed(this.destroyRef),
       )
       .subscribe(preferences => {
-        if (this.auth.currentUser()?.id === userId) {
+        if (isSameAuthSession(this.auth, userId, expectedSession)) {
           this.preferences.set(preferences);
         }
       });
   }
 
+  private resetSessionState(): void {
+    this.isRegistered.set(false);
+    this.preferences.set({ tasks: true, reminders: true, requests: true, meetings: true });
+    this.preferencesError.set('');
+    this.preferencesMessage.set('');
+    this.statusMessage.set('');
+    this.isLoadingPreferences.set(false);
+    this.isSavingPreferences.set(false);
+  }
+
   private refreshInAppNotifications(): void {
     const notificationService = this.injector.get(NotificationService, null, { optional: true });
-    notificationService?.loadNotifications().subscribe({
-      error: err => console.warn('Unable to refresh in-app notifications on push event', err),
-    });
+    notificationService?.syncNotifications(true);
   }
 
   private notConfiguredMessage(config: PushConfig | null): string {

@@ -12,6 +12,7 @@ export const authInterceptor: HttpInterceptorFn = (req, next) => {
   const router = inject(Router);
   const browser = isPlatformBrowser(inject(PLATFORM_ID));
   const token = authService.getAccessToken();
+  const requestSessionVersion = authService.sessionVersion?.() ?? 0;
   const isLoginRequest = req.url.endsWith('/auth/login');
   const request = token && !isLoginRequest
     ? req.clone({ setHeaders: { Authorization: `Bearer ${token}` } })
@@ -20,7 +21,16 @@ export const authInterceptor: HttpInterceptorFn = (req, next) => {
   activity.beginRequest();
   return next(request).pipe(
     catchError(error => {
-      if (browser && error instanceof HttpErrorResponse && error.status === 401 && !isLoginRequest) {
+      const isCurrentSession =
+        requestSessionVersion === (authService.sessionVersion?.() ?? 0);
+
+      if (
+        browser &&
+        error instanceof HttpErrorResponse &&
+        error.status === 401 &&
+        !isLoginRequest &&
+        isCurrentSession
+      ) {
         authService.logout();
         void router.navigate(['/login']);
       }

@@ -16,6 +16,7 @@ import {
 } from '../../../../core/models/meeting.model';
 import { AuthService } from '../../../../core/services/auth.service';
 import { MeetingService } from '../../../../core/services/meeting.service';
+import { sortMeetingsDesc } from '../../../../core/utils/date-sort';
 import { LoadingService } from '../../../../core/services/loading.service';
 import { ToastService } from '../../../../core/services/toast.service';
 import { catchError, from, map, mergeMap, of, toArray } from 'rxjs';
@@ -94,10 +95,10 @@ export class MeetingList {
     const userId = this.currentUser()?.id;
     if (!userId) return [];
 
-    return this.meetingService.meetings().filter(meeting =>
+    return sortMeetingsDesc(this.meetingService.meetings().filter(meeting =>
       meeting.organizer.id === userId ||
       meeting.participants.some(participant => participant.id === userId)
-    );
+    ));
   });
 
   readonly meetings = computed(() => {

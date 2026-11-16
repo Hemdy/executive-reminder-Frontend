@@ -1,7 +1,7 @@
 import { HttpClient } from '@angular/common/http';
 import { isPlatformBrowser } from '@angular/common';
 import { Injectable, PLATFORM_ID, computed, inject, signal } from '@angular/core';
-import { Observable, map, tap } from 'rxjs';
+import { Observable, Subject, map, tap } from 'rxjs';
 import { LoginCredentials, User } from '../models/user.model';
 import { API_BASE_URL } from '../config/api.config';
 
@@ -16,8 +16,12 @@ export class AuthService {
   private readonly platformId = inject(PLATFORM_ID);
   private readonly browser = isPlatformBrowser(this.platformId);
   private readonly currentUserSignal = signal<User | null>(this.readStoredUser());
+  private readonly sessionVersionSignal = signal(0);
+  private readonly sessionEndedSubject = new Subject<void>();
 
   readonly currentUser = this.currentUserSignal.asReadonly();
+  readonly sessionVersion = this.sessionVersionSignal.asReadonly();
+  readonly sessionEnded$ = this.sessionEndedSubject.asObservable();
   readonly isAuthenticated = computed(() =>
     this.browser &&
     this.currentUserSignal() !== null &&
@@ -35,6 +39,15 @@ export class AuthService {
   }
 
   logout(): void {
+    const hadSession =
+      this.currentUserSignal() !== null ||
+      this.getStorage()?.getItem('accessToken') !== null;
+
+    this.sessionVersionSignal.update(version => version + 1);
+    if (hadSession) {
+      this.sessionEndedSubject.next();
+    }
+
     const storage = this.getStorage();
     storage?.removeItem('accessToken');
     storage?.removeItem('currentUser');
@@ -78,6 +91,9 @@ export class AuthService {
 
   private storeSession(response: LoginResponse): void {
     const storage = this.getStorage();
+    this.sessionVersionSignal.update(version => version + 1);
+    this.sessionEndedSubject.next();
+
     if (!storage) {
       this.currentUserSignal.set(null);
       return;

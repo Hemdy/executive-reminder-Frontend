@@ -103,6 +103,18 @@ describe('RequestList', () => {
     expect(component.totalCount()).toBe(2);
   });
 
+  it('displays requests in descending chronological order by creation date', () => {
+    const requestService = TestBed.inject(RequestService);
+    vi.spyOn(requestService, 'requests').mockReturnValue([
+      { ...makeRequest('older', 'current-user'), createdAt: '2026-02-01T10:00:00Z' },
+      { ...makeRequest('newest', 'current-user'), createdAt: '2026-11-10T10:00:00Z' },
+      { ...makeRequest('middle', 'current-user'), createdAt: '2026-06-15T10:00:00Z' },
+    ]);
+    currentUserSignal.set({ ...currentUser });
+
+    expect(component.requests().map(request => request.id)).toEqual(['newest', 'middle', 'older']);
+  });
+
   it('prevents selecting another requester’s item and explains why', () => {
     const event = new MouseEvent('click', { cancelable: true });
     const toast = TestBed.inject(ToastService);

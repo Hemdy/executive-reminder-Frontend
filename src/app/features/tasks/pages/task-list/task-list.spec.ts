@@ -111,6 +111,18 @@ describe('TaskList', () => {
     expect(component.tasks().map(task => task.id)).toEqual(['assigned', 'participant', 'created']);
   });
 
+  it('displays tasks in descending chronological order by due date', () => {
+    const taskService = TestBed.inject(TaskService);
+    vi.spyOn(taskService, 'tasks').mockReturnValue([
+      { ...makeTask('older', 'current-user'), dueDate: '2026-05-01' },
+      { ...makeTask('newest', 'current-user'), dueDate: '2026-12-01' },
+      { ...makeTask('middle', 'current-user'), dueDate: '2026-08-15' },
+    ]);
+    currentUserSignal.set({ ...currentUser });
+
+    expect(component.tasks().map(task => task.id)).toEqual(['newest', 'middle', 'older']);
+  });
+
   it('does not allow assignees to select another user’s task for deletion', () => {
     const taskService = TestBed.inject(TaskService);
     const deleteTask = vi.spyOn(taskService, 'deleteTask');

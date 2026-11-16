@@ -17,6 +17,12 @@ import { ReminderService } from '../../../../core/services/reminder.service';
 import { RequestService } from '../../../../core/services/request.service';
 import { MeetingService } from '../../../../core/services/meeting.service';
 import { NotificationService } from '../../../../core/services/notification.service';
+import {
+  compareDescTimestamps,
+  sortRemindersDesc,
+  sortTasksDesc,
+  toSortTimestamp,
+} from '../../../../core/utils/date-sort';
 
 interface DashboardStatusItem {
   id: string;
@@ -242,17 +248,43 @@ export class CeoDashboard implements OnInit, OnDestroy {
   );
 
   readonly attentionItems = computed(() => [
-    ...this.assignedTasks().filter(task => this.tasks.isOverdue(task)).map(task => ({ title: task.title, type: 'Overdue Task', priority: task.priority })),
-    ...this.assignedRequests().filter(request =>
-      request.priority === 'URGENT' ||
-      request.priority === 'HIGH' ||
-      request.status === 'NEEDS_INFORMATION'
-    ).map(request => ({ title: request.title, type: 'Request', priority: request.priority })),
-    ...this.assignedReminders().filter(reminder => this.reminders.isOverdue(reminder)).map(reminder => ({ title: reminder.title, type: 'Overdue Reminder', priority: reminder.priority }))
-  ].slice(0, 8));
+    ...this.assignedTasks()
+      .filter(task => this.tasks.isOverdue(task))
+      .map(task => ({
+        title: task.title,
+        type: 'Overdue Task',
+        priority: task.priority,
+        sortPrimary: toSortTimestamp(task.dueDate, task.dueTime),
+        sortSecondary: toSortTimestamp(task.createdAt),
+      })),
+    ...this.assignedRequests()
+      .filter(request =>
+        request.priority === 'URGENT' ||
+        request.priority === 'HIGH' ||
+        request.status === 'NEEDS_INFORMATION'
+      )
+      .map(request => ({
+        title: request.title,
+        type: 'Request',
+        priority: request.priority,
+        sortPrimary: toSortTimestamp(request.dueDate ?? request.createdAt),
+        sortSecondary: toSortTimestamp(request.createdAt),
+      })),
+    ...this.assignedReminders()
+      .filter(reminder => this.reminders.isOverdue(reminder))
+      .map(reminder => ({
+        title: reminder.title,
+        type: 'Overdue Reminder',
+        priority: reminder.priority,
+        sortPrimary: toSortTimestamp(reminder.reminderDate, reminder.reminderTime),
+        sortSecondary: toSortTimestamp(reminder.createdAt),
+      })),
+  ]
+    .sort((a, b) => compareDescTimestamps(a.sortPrimary, b.sortPrimary, a.sortSecondary, b.sortSecondary))
+    .slice(0, 8));
 
   readonly pendingTasks = computed(() =>
-    this.assignedTasks().filter(task => task.status === 'PENDING').slice(0, 5)
+    sortTasksDesc(this.assignedTasks().filter(task => task.status === 'PENDING')).slice(0, 5)
   );
   readonly inProgressItems = computed<DashboardStatusItem[]>(() => [
     ...this.assignedTasks()
@@ -296,52 +328,59 @@ export class CeoDashboard implements OnInit, OnDestroy {
         route: `/meetings/${meeting.id}`
       }))
   ]);
-  readonly completedItems = computed<DashboardStatusItem[]>(() => [
-    ...this.assignedTasks()
-      .filter(task => task.status === 'COMPLETED' || task.status === 'CLOSED')
-      .map(task => ({
-        id: task.id,
-        title: task.title,
-        type: 'Task' as const,
-        date: task.dueDate,
-        owner: `${task.createdBy.firstName} ${task.createdBy.lastName}`,
-        route: `/tasks/${task.id}`
-      })),
-    ...this.assignedReminders()
-      .filter(reminder => reminder.status === 'COMPLETED')
-      .map(reminder => ({
-        id: reminder.id,
-        title: reminder.title,
-        type: 'Reminder' as const,
-        date: reminder.reminderDate,
-        owner: `${reminder.createdBy.firstName} ${reminder.createdBy.lastName}`,
-        route: `/reminders/${reminder.id}`
-      })),
-    ...this.assignedRequests()
-      .filter(request => request.status === 'COMPLETED')
-      .map(request => ({
-        id: request.id,
-        title: request.title,
-        type: 'Request' as const,
-        date: request.dueDate ?? request.createdAt,
-        owner: `${request.requester.firstName} ${request.requester.lastName}`,
-        route: `/requests/${request.id}`
-      })),
-    ...this.assignedMeetings()
-      .filter(meeting => meeting.status === 'COMPLETED')
-      .map(meeting => ({
-        id: meeting.id,
-        title: meeting.title,
-        type: 'Meeting' as const,
-        date: meeting.meetingDate,
-        owner: `${meeting.organizer.firstName} ${meeting.organizer.lastName}`,
-        route: `/meetings/${meeting.id}`
-      }))
-  ]);
+  readonly completedItems = computed<DashboardStatusItem[]>(() =>
+    [
+      ...this.assignedTasks()
+        .filter(task => task.status === 'COMPLETED' || task.status === 'CLOSED')
+        .map(task => ({
+          id: task.id,
+          title: task.title,
+          type: 'Task' as const,
+          date: task.dueDate,
+          owner: `${task.createdBy.firstName} ${task.createdBy.lastName}`,
+          route: `/tasks/${task.id}`,
+          completedAt: task.updatedAt ? toSortTimestamp(task.updatedAt) : toSortTimestamp(task.dueDate, task.dueTime),
+        })),
+      ...this.assignedReminders()
+        .filter(reminder => reminder.status === 'COMPLETED')
+        .map(reminder => ({
+          id: reminder.id,
+          title: reminder.title,
+          type: 'Reminder' as const,
+          date: reminder.reminderDate,
+          owner: `${reminder.createdBy.firstName} ${reminder.createdBy.lastName}`,
+          route: `/reminders/${reminder.id}`,
+          completedAt: reminder.updatedAt ? toSortTimestamp(reminder.updatedAt) : toSortTimestamp(reminder.reminderDate, reminder.reminderTime),
+        })),
+      ...this.assignedRequests()
+        .filter(request => request.status === 'COMPLETED')
+        .map(request => ({
+          id: request.id,
+          title: request.title,
+          type: 'Request' as const,
+          date: request.dueDate ?? request.createdAt,
+          owner: `${request.requester.firstName} ${request.requester.lastName}`,
+          route: `/requests/${request.id}`,
+          completedAt: request.updatedAt ? toSortTimestamp(request.updatedAt) : toSortTimestamp(request.dueDate ?? request.createdAt),
+        })),
+      ...this.assignedMeetings()
+        .filter(meeting => meeting.status === 'COMPLETED')
+        .map(meeting => ({
+          id: meeting.id,
+          title: meeting.title,
+          type: 'Meeting' as const,
+          date: meeting.meetingDate,
+          owner: `${meeting.organizer.firstName} ${meeting.organizer.lastName}`,
+          route: `/meetings/${meeting.id}`,
+          completedAt: meeting.updatedAt ? toSortTimestamp(meeting.updatedAt) : toSortTimestamp(meeting.meetingDate, meeting.startTime),
+        }))
+    ].sort((a, b) => compareDescTimestamps(a.completedAt, b.completedAt))
+  );
   readonly upcomingReminders = computed(() =>
-    this.assignedReminders()
-      .filter(reminder => reminder.status === 'PENDING')
-      .filter(reminder => !this.reminders.isOverdue(reminder))
-      .slice(0, 5)
+    sortRemindersDesc(
+      this.assignedReminders()
+        .filter(reminder => reminder.status === 'PENDING')
+        .filter(reminder => !this.reminders.isOverdue(reminder))
+    ).slice(0, 5)
   );
 }

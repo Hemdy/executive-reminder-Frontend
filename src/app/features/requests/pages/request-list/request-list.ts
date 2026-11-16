@@ -17,6 +17,7 @@ import {
 } from '../../../../core/models/request.model';
 import { AuthService } from '../../../../core/services/auth.service';
 import { RequestService } from '../../../../core/services/request.service';
+import { sortRequestsDesc } from '../../../../core/utils/date-sort';
 import { LoadingService } from '../../../../core/services/loading.service';
 import { ToastService } from '../../../../core/services/toast.service';
 import { catchError, from, map, mergeMap, of, toArray } from 'rxjs';
@@ -123,9 +124,9 @@ export class RequestList {
     const userId = this.currentUser()?.id;
     if (!userId) return [];
 
-    return this.requestService.requests().filter(request =>
+    return sortRequestsDesc(this.requestService.requests().filter(request =>
       request.requester.id === userId || request.assignedTo.id === userId
-    );
+    ));
   });
 
   readonly requests = computed(() => {

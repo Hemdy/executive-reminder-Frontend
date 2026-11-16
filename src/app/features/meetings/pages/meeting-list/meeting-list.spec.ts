@@ -105,6 +105,22 @@ describe('MeetingList', () => {
     expect(component.totalCount()).toBe(2);
   });
 
+  it('displays meetings in descending chronological order by meeting date and start time', () => {
+    const meetingService = TestBed.inject(MeetingService);
+    vi.spyOn(meetingService, 'meetings').mockReturnValue([
+      { ...makeMeeting('older', 'current-user'), meetingDate: '2026-04-01', startTime: '09:00' },
+      { ...makeMeeting('latest', 'current-user'), meetingDate: '2026-11-25', startTime: '15:00' },
+      { ...makeMeeting('same-day-early', 'current-user'), meetingDate: '2026-11-25', startTime: '09:00' },
+    ]);
+    currentUserSignal.set({ ...currentUser });
+
+    expect(component.meetings().map(meeting => meeting.id)).toEqual([
+      'latest',
+      'same-day-early',
+      'older',
+    ]);
+  });
+
   it('does not allow participants to select another user\'s meeting for deletion', () => {
     const meetingService = TestBed.inject(MeetingService);
     const deleteMeeting = vi.spyOn(meetingService, 'deleteMeeting');
