@@ -11,6 +11,7 @@ import {
   viewChild
 } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
+import { AppSelect, SelectOption } from '../../../../core/components/app-select/app-select';
 import { ContentSkeleton } from '../../../../core/components/content-skeleton/content-skeleton';
 import { AuthService } from '../../../../core/services/auth.service';
 import { RoleService } from '../../../../core/services/role.service';
@@ -20,7 +21,7 @@ import { finalize, switchMap } from 'rxjs';
 
 @Component({
   selector: 'app-role-management',
-  imports: [ReactiveFormsModule, ContentSkeleton],
+  imports: [ReactiveFormsModule, ContentSkeleton, AppSelect],
   templateUrl: './role-management.html',
   styleUrl: './role-management.scss',
   changeDetection: ChangeDetectionStrategy.OnPush
@@ -63,6 +64,12 @@ export class RoleManagement implements OnInit {
   readonly canManageRoles = computed(() =>
     this.authService.hasRole('ADMIN', 'DIRECTOR') &&
     this.authService.hasPermission('roles:edit')
+  );
+  readonly activeRoleOptions = computed<SelectOption[]>(() =>
+    this.roleService.activeRoles().map(role => ({
+      value: role.name,
+      label: role.name
+    }))
   );
 readonly permissionOptions = [
   ['dashboard:view', 'Dashboard — View'],

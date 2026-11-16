@@ -94,31 +94,19 @@
       />
     </div>
 
-    <select
+    <app-select
+      ariaLabel="Filter meetings by status"
+      [options]="statusFilterOptions"
       [value]="statusFilter()"
-      (change)="statusFilter.set($any($event.target).value)"
-    >
-      <option value="ALL">All Statuses</option>
+      (valueChange)="statusFilter.set($any($event))"
+    />
 
-      @for (status of statuses; track status) {
-        <option [value]="status">
-          {{ statusLabel(status) }}
-        </option>
-      }
-    </select>
-
-    <select
+    <app-select
+      ariaLabel="Filter meetings by type"
+      [options]="typeFilterOptions"
       [value]="typeFilter()"
-      (change)="typeFilter.set($any($event.target).value)"
-    >
-      <option value="ALL">All Types</option>
-
-      @for (type of types; track type) {
-        <option [value]="type">
-          {{ typeLabel(type) }}
-        </option>
-      }
-    </select>
+      (valueChange)="typeFilter.set($any($event))"
+    />
 
     @if (
       searchTerm() ||

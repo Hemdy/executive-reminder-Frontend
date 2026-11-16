@@ -29,12 +29,13 @@ import { ReminderService } from '../../../../core/services/reminder.service';
 import { RoleService } from '../../../../core/services/role.service';
 import { LoadingService } from '../../../../core/services/loading.service';
 import { ToastService } from '../../../../core/services/toast.service';
+import { AppSelect, SelectOption } from '../../../../core/components/app-select/app-select';
 import { ContentSkeleton } from '../../../../core/components/content-skeleton/content-skeleton';
 
 @Component({
   selector: 'app-reminder-form',
   standalone: true,
-  imports: [ReactiveFormsModule, RouterModule, ContentSkeleton],
+  imports: [ReactiveFormsModule, RouterModule, ContentSkeleton, AppSelect],
   templateUrl: './reminder-form.html',
   styleUrl: './reminder-form.scss',
   changeDetection: ChangeDetectionStrategy.OnPush
@@ -99,6 +100,27 @@ export class ReminderForm {
     'COMPLETED',
     'DISMISSED',
     'CANCELLED'
+  ];
+
+  readonly categoryOptions: SelectOption[] = this.categories.map(category => ({
+    value: category,
+    label: category
+  }));
+
+  readonly priorityOptions: SelectOption[] = [
+    { value: 'LOW', label: 'LOW', dotColor: '#00a85a' },
+    { value: 'MEDIUM', label: 'MEDIUM', dotColor: '#2878e8' },
+    { value: 'HIGH', label: 'HIGH', dotColor: '#f08c00' },
+    { value: 'URGENT', label: 'URGENT', dotColor: '#c53030' },
+  ];
+
+  readonly recurrenceOptions: SelectOption[] = [
+    { value: 'ONCE', label: 'Once' },
+    { value: 'DAILY', label: 'Daily' },
+    { value: 'WEEKLY', label: 'Weekly' },
+    { value: 'MONTHLY', label: 'Monthly' },
+    { value: 'YEARLY', label: 'Yearly' },
+    { value: 'CUSTOM', label: 'Custom' },
   ];
 
   readonly reminderForm = this.fb.nonNullable.group({

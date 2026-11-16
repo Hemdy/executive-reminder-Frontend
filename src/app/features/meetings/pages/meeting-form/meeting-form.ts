@@ -29,6 +29,7 @@ import {
 
 import { MeetingService } from '../../../../core/services/meeting.service';
 import { AuthService } from '../../../../core/services/auth.service';
+import { AppSelect, SelectOption } from '../../../../core/components/app-select/app-select';
 import { ContentSkeleton } from '../../../../core/components/content-skeleton/content-skeleton';
 import { RoleService } from '../../../../core/services/role.service';
 import { LoadingService } from '../../../../core/services/loading.service';
@@ -37,7 +38,7 @@ import { ToastService } from '../../../../core/services/toast.service';
 @Component({
   selector: 'app-meeting-form',
   standalone: true,
-  imports: [ReactiveFormsModule, RouterModule, ContentSkeleton],
+  imports: [ReactiveFormsModule, RouterModule, ContentSkeleton, AppSelect],
     templateUrl: './meeting-form.html',
   styleUrl: './meeting-form.scss',
   changeDetection: ChangeDetectionStrategy.OnPush
@@ -84,6 +85,20 @@ export class MeetingForm {
     'RESCHEDULED',
     'COMPLETED',
     'CANCELLED'
+  ];
+
+  readonly meetingTypeOptions: SelectOption[] = [
+    { value: 'IN_PERSON', label: 'In Person', icon: 'fa-solid fa-building' },
+    { value: 'ONLINE', label: 'Online', icon: 'fa-solid fa-video' },
+    { value: 'PHONE', label: 'Phone', icon: 'fa-solid fa-phone' },
+    { value: 'HYBRID', label: 'Hybrid', icon: 'fa-solid fa-arrows-split-up-and-left' },
+  ];
+
+  readonly statusOptions: SelectOption[] = [
+    { value: 'SCHEDULED', label: 'Scheduled', dotColor: '#1f4b99' },
+    { value: 'RESCHEDULED', label: 'Rescheduled', dotColor: '#b7791f' },
+    { value: 'COMPLETED', label: 'Completed', dotColor: '#218739' },
+    { value: 'CANCELLED', label: 'Cancelled', dotColor: '#c53030' },
   ];
 
   readonly form = this.fb.nonNullable.group({

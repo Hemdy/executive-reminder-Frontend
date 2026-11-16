@@ -84,44 +84,26 @@
       />
     </div>
 
-    <select
+    <app-select
+      ariaLabel="Filter requests by status"
+      [options]="statusFilterOptions"
       [value]="statusFilter()"
-      (change)="statusFilter.set($any($event.target).value)"
-    >
-      <option value="ALL">All Statuses</option>
+      (valueChange)="statusFilter.set($any($event))"
+    />
 
-      @for (status of statuses; track status) {
-        <option [value]="status">
-          {{ statusLabel(status) }}
-        </option>
-      }
-    </select>
-
-    <select
+    <app-select
+      ariaLabel="Filter requests by type"
+      [options]="typeFilterOptions"
       [value]="typeFilter()"
-      (change)="typeFilter.set($any($event.target).value)"
-    >
-      <option value="ALL">All Types</option>
+      (valueChange)="typeFilter.set($any($event))"
+    />
 
-      @for (type of types; track type) {
-        <option [value]="type">
-          {{ typeLabel(type) }}
-        </option>
-      }
-    </select>
-
-    <select
+    <app-select
+      ariaLabel="Filter requests by priority"
+      [options]="priorityFilterOptions"
       [value]="priorityFilter()"
-      (change)="priorityFilter.set($any($event.target).value)"
-    >
-      <option value="ALL">All Priorities</option>
-
-      @for (priority of priorities; track priority) {
-        <option [value]="priority">
-          {{ priorityLabel(priority) }}
-        </option>
-      }
-    </select>
+      (valueChange)="priorityFilter.set($any($event))"
+    />
 
     @if (
       searchTerm() ||

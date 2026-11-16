@@ -22,6 +22,7 @@ import { TaskService } from '../../../../core/services/task.service';
 import { RoleService } from '../../../../core/services/role.service';
 import { LoadingService } from '../../../../core/services/loading.service';
 import { ToastService } from '../../../../core/services/toast.service';
+import { AppSelect, SelectOption } from '../../../../core/components/app-select/app-select';
 import { ContentSkeleton } from '../../../../core/components/content-skeleton/content-skeleton';
 import {
   isSupportedTaskAttachment,
@@ -41,7 +42,7 @@ interface FormUser {
 @Component({
   selector: 'app-task-form',
   standalone: true,
-  imports: [ReactiveFormsModule, RouterLink, ContentSkeleton],
+  imports: [ReactiveFormsModule, RouterLink, ContentSkeleton, AppSelect],
   templateUrl: './task-form.html',
   styleUrl: './task-form.scss',
   changeDetection: ChangeDetectionStrategy.OnPush
@@ -105,6 +106,19 @@ export class TaskForm {
     'COMPLETED',
     'CLOSED',
     'CANCELLED'
+  ];
+
+  readonly categoryOptions: SelectOption[] = this.categories.map(category => ({
+    value: category,
+    label: category,
+    dotColor: this.categoryColor(category),
+  }));
+
+  readonly priorityOptions: SelectOption[] = [
+    { value: 'LOW', label: 'LOW', dotColor: '#00a85a' },
+    { value: 'MEDIUM', label: 'MEDIUM', dotColor: '#e52655' },
+    { value: 'HIGH', label: 'HIGH', dotColor: '#f08c00' },
+    { value: 'URGENT', label: 'URGENT', dotColor: '#c53030' },
   ];
 
   readonly taskForm = this.fb.nonNullable.group({

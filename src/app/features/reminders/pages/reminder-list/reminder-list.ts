@@ -6,6 +6,7 @@ import {
   signal
 } from '@angular/core';
 import { Router, RouterModule } from '@angular/router';
+import { AppSelect, SelectOption } from '../../../../core/components/app-select/app-select';
 import { ContentSkeleton } from '../../../../core/components/content-skeleton/content-skeleton';
 import { AuthService } from '../../../../core/services/auth.service';
 import { ReminderService } from '../../../../core/services/reminder.service';
@@ -21,7 +22,7 @@ import {
 @Component({
   selector: 'app-reminder-list',
   standalone: true,
-  imports: [RouterModule, ContentSkeleton],
+  imports: [RouterModule, ContentSkeleton, AppSelect],
   templateUrl: './reminder-list.html',
   styleUrl: './reminder-list.scss',
   changeDetection: ChangeDetectionStrategy.OnPush
@@ -56,6 +57,21 @@ export class ReminderList {
     signal<'ALL' | ReminderStatus>('ALL');
   readonly priorityFilter =
     signal<'ALL' | ReminderPriority>('ALL');
+  readonly statusFilterOptions: SelectOption[] = [
+    { value: 'ALL', label: 'All statuses' },
+    { value: 'PENDING', label: 'Pending', dotColor: '#1f4b99' },
+    { value: 'TRIGGERED', label: 'Triggered', dotColor: '#b7791f' },
+    { value: 'COMPLETED', label: 'Completed', dotColor: '#218739' },
+    { value: 'DISMISSED', label: 'Dismissed', dotColor: '#687386' },
+    { value: 'CANCELLED', label: 'Cancelled', dotColor: '#c53030' },
+  ];
+  readonly priorityFilterOptions: SelectOption[] = [
+    { value: 'ALL', label: 'All priorities' },
+    { value: 'LOW', label: 'Low', dotColor: '#00a85a' },
+    { value: 'MEDIUM', label: 'Medium', dotColor: '#2878e8' },
+    { value: 'HIGH', label: 'High', dotColor: '#f08c00' },
+    { value: 'URGENT', label: 'Urgent', dotColor: '#c53030' },
+  ];
   readonly selectedIds = signal<Set<string>>(new Set());
   readonly deletingSelected = signal(false);
   readonly deleteError = signal('');

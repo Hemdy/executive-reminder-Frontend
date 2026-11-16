@@ -6,6 +6,7 @@ import {
   signal
 } from '@angular/core';
 import { Router } from '@angular/router';
+import { AppSelect, SelectOption } from '../../../../core/components/app-select/app-select';
 import { ContentSkeleton } from '../../../../core/components/content-skeleton/content-skeleton';
 
 import {
@@ -22,7 +23,7 @@ import { catchError, from, map, mergeMap, of, toArray } from 'rxjs';
 @Component({
   selector: 'app-meeting-list',
   standalone: true,
-  imports: [ContentSkeleton],
+  imports: [ContentSkeleton, AppSelect],
   templateUrl: './meeting-list.html',
   styleUrl: './meeting-list.scss',
   changeDetection: ChangeDetectionStrategy.OnPush
@@ -71,6 +72,22 @@ export class MeetingList {
     'ONLINE',
     'PHONE',
     'HYBRID'
+  ];
+
+  readonly statusFilterOptions: SelectOption[] = [
+    { value: 'ALL', label: 'All Statuses' },
+    { value: 'SCHEDULED', label: 'Scheduled', dotColor: '#1f4b99' },
+    { value: 'RESCHEDULED', label: 'Rescheduled', dotColor: '#b7791f' },
+    { value: 'COMPLETED', label: 'Completed', dotColor: '#218739' },
+    { value: 'CANCELLED', label: 'Cancelled', dotColor: '#c53030' },
+  ];
+
+  readonly typeFilterOptions: SelectOption[] = [
+    { value: 'ALL', label: 'All Types' },
+    { value: 'IN_PERSON', label: 'In Person', icon: 'fa-solid fa-building' },
+    { value: 'ONLINE', label: 'Online', icon: 'fa-solid fa-video' },
+    { value: 'PHONE', label: 'Phone', icon: 'fa-solid fa-phone' },
+    { value: 'HYBRID', label: 'Hybrid', icon: 'fa-solid fa-arrows-split-up-and-left' },
   ];
 
   readonly assignedMeetings = computed(() => {

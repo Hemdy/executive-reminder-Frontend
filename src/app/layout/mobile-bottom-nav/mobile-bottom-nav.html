@@ -1,0 +1,233 @@
+<div class="mobile-nav-region">
+  @if (hasOpenMenu()) {
+    <button
+      type="button"
+      class="mobile-nav-backdrop"
+      aria-label="Close navigation menu"
+      (click)="closeMenus()"
+    ></button>
+  }
+
+  <!-- Parabolic Floating Action Menu -->
+  <div
+    id="fab-quick-actions"
+    class="fab-arc-menu"
+    role="menu"
+    aria-label="Quick create actions"
+    [class.is-open]="isFabOpen()"
+    [attr.aria-hidden]="!isFabOpen()"
+  >
+    <svg
+      class="fab-arc-connectors"
+      viewBox="0 0 360 132"
+      fill="none"
+      preserveAspectRatio="none"
+      aria-hidden="true"
+    >
+      <path d="M 164 130 Q 126 98 76 88" />
+      <path d="M 172 122 Q 148 64 108 32" />
+      <path d="M 188 122 Q 212 64 252 32" />
+      <path d="M 196 130 Q 234 98 284 88" />
+    </svg>
+
+    <div class="fab-arc-tier fab-arc-tier--top">
+      @for (action of topArcActions; track action.id) {
+        <button
+          type="button"
+          role="menuitem"
+          class="fab-action-pill"
+          [class]="'fab-action-pill fab-action-pill--' + action.id"
+          [tabindex]="isFabOpen() ? 0 : -1"
+          (click)="selectQuickAction(action.route)"
+        >
+          <span class="fab-action-badge" aria-hidden="true">
+            <i [class]="action.icon"></i>
+          </span>
+          <span class="fab-action-label">{{ action.label }}</span>
+        </button>
+      }
+    </div>
+
+    <div class="fab-arc-tier fab-arc-tier--bottom">
+      @for (action of bottomArcActions; track action.id) {
+        <button
+          type="button"
+          role="menuitem"
+          class="fab-action-pill"
+          [class]="'fab-action-pill fab-action-pill--' + action.id"
+          [tabindex]="isFabOpen() ? 0 : -1"
+          (click)="selectQuickAction(action.route)"
+        >
+          <span class="fab-action-badge" aria-hidden="true">
+            <i [class]="action.icon"></i>
+          </span>
+          <span class="fab-action-label">{{ action.label }}</span>
+        </button>
+      }
+    </div>
+  </div>
+
+  <!-- Workspace Upward Menu -->
+  <section
+    id="workspace-sheet"
+    class="workspace-sheet"
+    role="dialog"
+    aria-label="Workspace navigation"
+    [class.is-open]="isWorkspaceOpen()"
+    [attr.aria-hidden]="!isWorkspaceOpen()"
+  >
+    <header class="workspace-sheet-header">
+      <div>
+        <span class="workspace-eyebrow">Workspace</span>
+        <h2>Executive Modules</h2>
+      </div>
+      <button
+        type="button"
+        class="workspace-close-btn"
+        aria-label="Close workspace menu"
+        [tabindex]="isWorkspaceOpen() ? 0 : -1"
+        (click)="closeMenus()"
+      >
+        <i class="fa-solid fa-xmark" aria-hidden="true"></i>
+      </button>
+    </header>
+
+    <div class="workspace-grid">
+      @for (item of workspaceItems; track item.id) {
+        <a
+          class="workspace-card"
+          [class]="'workspace-card workspace-card--' + item.tone"
+          [routerLink]="item.route"
+          routerLinkActive="is-active"
+          [tabindex]="isWorkspaceOpen() ? 0 : -1"
+          (click)="closeMenus()"
+        >
+          <span class="workspace-card-icon" aria-hidden="true">
+            <i [class]="item.icon"></i>
+          </span>
+          <span class="workspace-card-copy">
+            <strong>{{ item.label }}</strong>
+            <small>{{ item.description }}</small>
+          </span>
+        </a>
+      }
+    </div>
+
+    @if (canViewRoles()) {
+      <a
+        class="workspace-admin-row"
+        routerLink="/roles"
+        routerLinkActive="is-active"
+        [tabindex]="isWorkspaceOpen() ? 0 : -1"
+        (click)="closeMenus()"
+      >
+        <span class="workspace-card-icon workspace-card-icon--role" aria-hidden="true">
+          <i class="fa-solid fa-user-shield"></i>
+        </span>
+        <span class="workspace-card-copy">
+          <strong>Roles &amp; Permissions</strong>
+          <small>Administration &amp; access control</small>
+        </span>
+        <i class="fa-solid fa-chevron-right workspace-row-chevron" aria-hidden="true"></i>
+      </a>
+    }
+  </section>
+
+  <!-- Fixed Bottom Navigation Bar -->
+  <nav class="bottom-nav-shell" aria-label="Mobile bottom navigation">
+    <div class="bottom-nav-surface">
+      <div class="bottom-nav-wing bottom-nav-wing--left">
+        <a
+          routerLink="/dashboard"
+          routerLinkActive="is-active"
+          [routerLinkActiveOptions]="{ exact: true }"
+          class="bottom-nav-item"
+          (click)="closeMenus()"
+        >
+          <span class="bottom-nav-icon" aria-hidden="true">
+            <i class="fa-solid fa-house"></i>
+          </span>
+          <span class="bottom-nav-label">Home</span>
+          <span class="bottom-nav-indicator" aria-hidden="true"></span>
+        </a>
+
+        <button
+          type="button"
+          class="bottom-nav-item"
+          [class.is-active]="isWorkspaceOpen() || isWorkspaceRoute()"
+          aria-controls="workspace-sheet"
+          [attr.aria-expanded]="isWorkspaceOpen()"
+          (click)="toggleWorkspaceMenu()"
+        >
+          <span class="bottom-nav-icon" aria-hidden="true">
+            <i class="fa-solid fa-briefcase"></i>
+          </span>
+          <span class="bottom-nav-label">Workspace</span>
+          <span class="bottom-nav-indicator" aria-hidden="true"></span>
+        </button>
+      </div>
+
+      <div class="bottom-nav-cradle">
+        <svg
+          class="bottom-nav-notch-svg"
+          viewBox="0 0 88 64"
+          preserveAspectRatio="none"
+          aria-hidden="true"
+        >
+          <path
+            class="notch-fill"
+            d="M 0 0.5 C 12 0.5 16 14 22 22 C 28 30 35 34 44 34 C 53 34 60 30 66 22 C 72 14 76 0.5 88 0.5 L 88 64 L 0 64 Z"
+          />
+          <path
+            class="notch-stroke"
+            d="M 0 0.5 C 12 0.5 16 14 22 22 C 28 30 35 34 44 34 C 53 34 60 30 66 22 C 72 14 76 0.5 88 0.5"
+          />
+        </svg>
+
+        <button
+          type="button"
+          class="fab-trigger"
+          [class.is-expanded]="isFabOpen()"
+          aria-controls="fab-quick-actions"
+          [attr.aria-expanded]="isFabOpen()"
+          [attr.aria-label]="isFabOpen() ? 'Close quick actions' : 'Open quick actions'"
+          (click)="toggleFabMenu()"
+        >
+          <span class="fab-icon" aria-hidden="true">
+            <i class="fa-solid fa-plus"></i>
+          </span>
+        </button>
+      </div>
+
+      <div class="bottom-nav-wing bottom-nav-wing--right">
+        <a
+          routerLink="/calendar"
+          routerLinkActive="is-active"
+          class="bottom-nav-item"
+          (click)="closeMenus()"
+        >
+          <span class="bottom-nav-icon" aria-hidden="true">
+            <i class="fa-solid fa-calendar-days"></i>
+          </span>
+          <span class="bottom-nav-label">Calendar</span>
+          <span class="bottom-nav-indicator" aria-hidden="true"></span>
+        </a>
+
+        <a
+          routerLink="/settings"
+          routerLinkActive="is-active"
+          class="bottom-nav-item"
+          (click)="closeMenus()"
+        >
+          <span class="bottom-nav-icon" aria-hidden="true">
+            <i class="fa-solid fa-gear"></i>
+          </span>
+          <span class="bottom-nav-label">Settings</span>
+          <span class="bottom-nav-indicator" aria-hidden="true"></span>
+        </a>
+      </div>
+    </div>
+
+    <div class="bottom-nav-safe-area" aria-hidden="true"></div>
+  </nav>
+</div>

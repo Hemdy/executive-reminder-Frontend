@@ -132,14 +132,12 @@
           </div>
           <div class="form-field">
             <label class="visually-hidden" for="category">Task category</label>
-            <div class="select-with-icon">
-              <i class="fa-solid fa-grip" aria-hidden="true"></i>
-              <select id="category" formControlName="category">
-                @for (category of categories; track category) {
-                  <option [value]="category">{{ category }}</option>
-                }
-              </select>
-            </div>
+            <app-select
+              inputId="category"
+              ariaLabel="Task category"
+              formControlName="category"
+              [options]="categoryOptions"
+            />
           </div>
           <p class="category-selection">
             <i class="fa-solid fa-circle" [style.--indicator-color]="categoryColor(taskForm.controls.category.value)" aria-hidden="true"></i>
@@ -158,14 +156,12 @@
         </div>
         <div class="form-field">
           <label class="visually-hidden" for="priority">Task priority</label>
-          <div class="select-with-icon">
-            <i class="fa-solid fa-circle" [style.--indicator-color]="priorityColor()" aria-hidden="true"></i>
-            <select id="priority" formControlName="priority">
-              @for (priority of priorities; track priority) {
-                <option [value]="priority">{{ priority.replace('_', ' ') }}</option>
-              }
-            </select>
-          </div>
+          <app-select
+            inputId="priority"
+            ariaLabel="Task priority"
+            formControlName="priority"
+            [options]="priorityOptions"
+          />
         </div>
       </section>
 

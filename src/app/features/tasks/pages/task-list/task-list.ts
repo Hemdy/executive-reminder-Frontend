@@ -6,6 +6,7 @@ import {
   signal
 } from '@angular/core';
 import { Router, RouterModule } from '@angular/router';
+import { AppSelect, SelectOption } from '../../../../core/components/app-select/app-select';
 import { AuthService } from '../../../../core/services/auth.service';
 import { ContentSkeleton } from '../../../../core/components/content-skeleton/content-skeleton';
 import {
@@ -21,7 +22,7 @@ import { catchError, from, map, mergeMap, of, toArray } from 'rxjs';
 @Component({
   selector: 'app-task-list',
   standalone: true,
-  imports: [RouterModule, ContentSkeleton],
+  imports: [RouterModule, ContentSkeleton, AppSelect],
 
   templateUrl: './task-list.html',
   styleUrl: './task-list.scss',
@@ -49,6 +50,21 @@ export class TaskList {
   readonly searchTerm = signal('');
   readonly statusFilter = signal<'ALL' | TaskStatus>('ALL');
   readonly priorityFilter = signal<'ALL' | TaskPriority>('ALL');
+  readonly statusFilterOptions: SelectOption[] = [
+    { value: 'ALL', label: 'All statuses' },
+    { value: 'PENDING', label: 'Pending', dotColor: '#b7791f' },
+    { value: 'IN_PROGRESS', label: 'In Progress', dotColor: '#1f4b99' },
+    { value: 'COMPLETED', label: 'Completed', dotColor: '#218739' },
+    { value: 'CLOSED', label: 'Closed', dotColor: '#687386' },
+    { value: 'CANCELLED', label: 'Cancelled', dotColor: '#c53030' },
+  ];
+  readonly priorityFilterOptions: SelectOption[] = [
+    { value: 'ALL', label: 'All priorities' },
+    { value: 'LOW', label: 'Low', dotColor: '#00a85a' },
+    { value: 'MEDIUM', label: 'Medium', dotColor: '#2878e8' },
+    { value: 'HIGH', label: 'High', dotColor: '#f08c00' },
+    { value: 'URGENT', label: 'Urgent', dotColor: '#c53030' },
+  ];
   readonly selectedIds = signal<Set<string>>(new Set());
   readonly deletingSelected = signal(false);
   readonly deleteError = signal('');

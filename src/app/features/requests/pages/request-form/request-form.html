@@ -73,25 +73,23 @@
         <div class="field">
           <label for="type">Request Type <span>*</span></label>
 
-          <select id="type" formControlName="type">
-            @for (type of types; track type) {
-              <option [value]="type">
-                {{ typeLabel(type) }}
-              </option>
-            }
-          </select>
+          <app-select
+            inputId="type"
+            ariaLabel="Request Type"
+            formControlName="type"
+            [options]="typeOptions"
+          />
         </div>
 
         <div class="field">
           <label for="priority">Priority <span>*</span></label>
 
-          <select id="priority" formControlName="priority">
-            @for (priority of priorities; track priority) {
-              <option [value]="priority">
-                {{ priority }}
-              </option>
-            }
-          </select>
+          <app-select
+            inputId="priority"
+            ariaLabel="Priority"
+            formControlName="priority"
+            [options]="priorityOptions"
+          />
         </div>
 
         <div class="field">
@@ -100,19 +98,15 @@
           @if (usersLoading()) {
             <app-content-skeleton kind="list" />
           } @else {
-            <select
-              id="assignedTo"
+            <app-select
+              inputId="assignedTo"
+              ariaLabel="Assigned To"
+              placeholder="Select person"
               formControlName="assignedToId"
-            >
-              <option value="">Select person</option>
-
-              @for (user of users(); track user.id) {
-                <option [value]="user.id">
-                  {{ user.title }} {{ user.firstName }} {{ user.lastName }}
-                  — {{ user.role }}
-                </option>
-              }
-            </select>
+              [options]="assigneeOptions()"
+              [searchable]="users().length > 5"
+              [invalid]="assignedToControl.invalid && assignedToControl.touched"
+            />
           }
 
           @if (assignedToControl.invalid && assignedToControl.touched) {
@@ -150,13 +144,12 @@
         <div class="field">
           <label for="status">Status</label>
 
-          <select id="status" formControlName="status">
-            @for (status of statuses; track status) {
-              <option [value]="status">
-                {{ statusLabel(status) }}
-              </option>
-            }
-          </select>
+          <app-select
+            inputId="status"
+            ariaLabel="Status"
+            formControlName="status"
+            [options]="statusOptions"
+          />
         </div>
 
       </div>

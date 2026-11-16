@@ -102,20 +102,14 @@ h1 {
   color: var(--text);
 }
 
-.search-box input:focus,
-.task-toolbar select:focus {
+.search-box input:focus {
   border-color: var(--primary);
 }
 
-.task-toolbar select {
-  height: 40px;
-  min-width: 150px;
-  padding: 0 10px;
-  border: 1px solid var(--border);
-  border-radius: 6px;
-  background: var(--surface);
-  color: var(--text);
-  outline: none;
+.task-toolbar app-select {
+  width: auto;
+  min-width: 155px;
+  flex: 0 0 auto;
 }
 
 .clear-button {
@@ -394,8 +388,8 @@ tbody tr:last-child td {
     justify-content: center;
   }
 
-  .task-toolbar select {
-    flex: 1;
+  .task-toolbar app-select {
+    flex: 1 1 140px;
     min-width: 0;
   }
 }

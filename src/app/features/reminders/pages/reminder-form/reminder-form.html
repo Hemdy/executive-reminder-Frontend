@@ -165,19 +165,12 @@
             <span>*</span>
           </label>
 
-          <select
-            id="category"
+          <app-select
+            inputId="category"
+            ariaLabel="Category"
             formControlName="category"
-          >
-            @for (
-              category of categories;
-              track category
-            ) {
-              <option [value]="category">
-                {{ category }}
-              </option>
-            }
-          </select>
+            [options]="categoryOptions"
+          />
 
         </div>
 
@@ -188,19 +181,12 @@
             <span>*</span>
           </label>
 
-          <select
-            id="priority"
+          <app-select
+            inputId="priority"
+            ariaLabel="Priority"
             formControlName="priority"
-          >
-            @for (
-              priority of priorities;
-              track priority
-            ) {
-              <option [value]="priority">
-                {{ priority.replace('_', ' ') }}
-              </option>
-            }
-          </select>
+            [options]="priorityOptions"
+          />
 
         </div>
 
@@ -301,19 +287,12 @@
             <span>*</span>
           </label>
 
-          <select
-            id="recurrence"
+          <app-select
+            inputId="recurrence"
+            ariaLabel="Recurrence"
             formControlName="recurrence"
-          >
-            @for (
-              recurrence of recurrences;
-              track recurrence
-            ) {
-              <option [value]="recurrence">
-                {{ recurrence.replace('_', ' ') }}
-              </option>
-            }
-          </select>
+            [options]="recurrenceOptions"
+          />
 
         </div>
 

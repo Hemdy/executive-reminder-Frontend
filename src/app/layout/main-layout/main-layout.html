@@ -2,6 +2,7 @@
   class="app-shell"
   [class.sidebar-collapsed]="sidebarCollapsed()"
   [class.mobile-sidebar-open]="mobileSidebarOpen()"
+  [class.has-bottom-nav]="showBottomNav()"
 >
 
   <app-sidebar
@@ -31,6 +32,10 @@
       aria-label="Close navigation"
       (click)="closeMobileSidebar()"
     ></button>
+  }
+
+  @if (showBottomNav()) {
+    <app-mobile-bottom-nav (menuOpened)="closeMobileSidebar()" />
   }
 
 </div>

@@ -1,5 +1,15 @@
 import { DOCUMENT, isPlatformBrowser } from '@angular/common';
-import { ChangeDetectionStrategy, Component, computed, inject, OnDestroy, signal, PLATFORM_ID } from '@angular/core';
+import {
+  afterNextRender,
+  ChangeDetectionStrategy,
+  Component,
+  computed,
+  inject,
+  OnDestroy,
+  PLATFORM_ID,
+  signal,
+} from '@angular/core';
+import { PwaDetectionService } from '../../services/pwa-detection.service';
 
 interface InstallPromptEvent extends Event {
   prompt(): Promise<void>;
@@ -16,19 +26,18 @@ interface InstallPromptEvent extends Event {
 export class PwaInstallPrompt implements OnDestroy {
   private readonly document = inject(DOCUMENT);
   private readonly browser = isPlatformBrowser(inject(PLATFORM_ID));
+  private readonly pwaDetection = inject(PwaDetectionService);
   private readonly dismissalKey = 'exec-track-install-prompt-dismissed';
   private installPrompt: InstallPromptEvent | null = null;
-  private readonly isIosDevice = signal(false);
-  private readonly isAndroidDevice = signal(false);
-  private readonly isIosSafari = signal(false);
-  readonly installed = signal(false);
+  private readonly clientReady = signal(false);
+  readonly installed = this.pwaDetection.isStandalone;
   readonly dismissed = signal(false);
   readonly showBrowserInstructions = signal(false);
   readonly showPrompt = computed(() =>
-    this.browser && !this.installed() && !this.dismissed(),
+    this.browser && this.clientReady() && !this.installed() && !this.dismissed(),
   );
   readonly installButtonLabel = computed(() =>
-    this.isIosDevice() ? 'Add to Home Screen' : 'Install App',
+    this.pwaDetection.isIosDevice() ? 'Add to Home Screen' : 'Install App',
   );
 
   private readonly onBeforeInstallPrompt = (event: Event): void => {
@@ -36,12 +45,15 @@ export class PwaInstallPrompt implements OnDestroy {
     this.installPrompt = event as InstallPromptEvent;
   };
   private readonly onAppInstalled = (): void => {
-    this.installed.set(true);
     this.dismissed.set(true);
     this.persistDismissal();
   };
 
   constructor() {
+    afterNextRender(() => {
+      this.clientReady.set(true);
+    });
+
     if (!this.browser) {
       return;
     }
@@ -51,17 +63,6 @@ export class PwaInstallPrompt implements OnDestroy {
       return;
     }
 
-    const userAgent = view.navigator.userAgent;
-    const isIos = /iPad|iPhone|iPod/.test(userAgent) ||
-      (/Macintosh/.test(userAgent) && view.navigator.maxTouchPoints > 1);
-    const standalone = view.matchMedia('(display-mode: standalone)').matches ||
-      (view.navigator as Navigator & { standalone?: boolean }).standalone === true;
-
-    this.isIosDevice.set(isIos);
-    this.isAndroidDevice.set(/Android/i.test(userAgent));
-    this.isIosSafari.set(isIos && /Safari/i.test(userAgent) &&
-      !/(CriOS|FxiOS|EdgiOS|OPiOS)/i.test(userAgent));
-    this.installed.set(standalone);
     this.dismissed.set(this.isDismissed());
 
     view.addEventListener('beforeinstallprompt', this.onBeforeInstallPrompt);
@@ -75,7 +76,7 @@ export class PwaInstallPrompt implements OnDestroy {
   }
 
   async install(): Promise<void> {
-    if (this.isIosDevice() || !this.installPrompt) {
+    if (this.pwaDetection.isIosDevice() || !this.installPrompt) {
       this.showBrowserInstructions.set(true);
       return;
     }
@@ -103,15 +104,15 @@ export class PwaInstallPrompt implements OnDestroy {
   }
 
   get isIos(): boolean {
-    return this.isIosDevice();
+    return this.pwaDetection.isIosDevice();
   }
 
   get isAndroid(): boolean {
-    return this.isAndroidDevice();
+    return this.pwaDetection.isAndroidDevice();
   }
 
   get isSafariOnIos(): boolean {
-    return this.isIosSafari();
+    return this.pwaDetection.isIosSafari();
   }
 
   private isDismissed(): boolean {

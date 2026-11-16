@@ -1,0 +1,126 @@
+<div
+  class="select-wrapper"
+  [class.is-open]="isOpen()"
+  [class.is-disabled]="isDisabled()"
+  [class.is-invalid]="invalid()"
+  [class.size-sm]="size() === 'sm'"
+  [class.variant-ghost]="variant() === 'ghost'"
+>
+  <button
+    #triggerBtn
+    type="button"
+    class="select-trigger"
+    [id]="inputId() || instanceId"
+    role="combobox"
+    aria-haspopup="listbox"
+    [attr.aria-expanded]="isOpen()"
+    [attr.aria-controls]="listboxId"
+    [attr.aria-label]="ariaLabel() || null"
+    [attr.aria-activedescendant]="
+      isOpen() && highlightedIndex() >= 0
+        ? instanceId + '-opt-' + highlightedIndex()
+        : null
+    "
+    [disabled]="isDisabled()"
+    (click)="toggleMenu()"
+    (keydown)="onTriggerKeydown($event)"
+  >
+    <span class="select-trigger-content">
+      @if (resolvedDotColor()) {
+        <span
+          class="select-dot"
+          [style.background]="resolvedDotColor()"
+          aria-hidden="true"
+        ></span>
+      } @else if (resolvedIcon()) {
+        <i class="select-leading-icon" [class]="resolvedIcon()" aria-hidden="true"></i>
+      }
+      <span
+        class="select-value-text"
+        [class.is-placeholder]="isPlaceholderShown()"
+      >
+        {{ displayLabel() }}
+      </span>
+    </span>
+
+    <span class="select-chevron" aria-hidden="true">
+      <i class="fa-solid fa-chevron-down"></i>
+    </span>
+  </button>
+
+  @if (isOpen()) {
+    <div
+      class="select-menu"
+      [class.open-upward]="menuCoords().openUpward"
+      [style.top.px]="menuCoords().top"
+      [style.bottom.px]="menuCoords().bottom"
+      [style.left.px]="menuCoords().left"
+      [style.minWidth.px]="menuCoords().minWidth"
+      (keydown)="onMenuKeydown($event)"
+    >
+      @if (searchable()) {
+        <div class="select-search-wrap">
+          <i class="fa-solid fa-magnifying-glass" aria-hidden="true"></i>
+          <input
+            #searchInputEl
+            type="search"
+            class="select-search-input"
+            [placeholder]="searchPlaceholder()"
+            [value]="searchTerm()"
+            (input)="onSearchInput($any($event.target).value)"
+            (click)="$event.stopPropagation()"
+          />
+        </div>
+      }
+
+      <div
+        [id]="listboxId"
+        class="select-options-list"
+        role="listbox"
+        [attr.aria-label]="ariaLabel() || placeholder()"
+        [style.maxHeight.px]="menuCoords().maxHeight"
+      >
+        @for (option of filteredOptions(); track option.value; let i = $index) {
+          <button
+            type="button"
+            role="option"
+            class="select-option"
+            [id]="instanceId + '-opt-' + i"
+            [class.is-selected]="option.value === currentValue()"
+            [class.is-highlighted]="i === highlightedIndex()"
+            [class.is-option-disabled]="option.disabled"
+            [attr.aria-selected]="option.value === currentValue()"
+            [disabled]="option.disabled"
+            (mouseenter)="highlightedIndex.set(i)"
+            (click)="selectOption(option)"
+          >
+            <span class="select-option-main">
+              @if (option.dotColor) {
+                <span
+                  class="select-dot"
+                  [style.background]="option.dotColor"
+                  aria-hidden="true"
+                ></span>
+              } @else if (option.icon) {
+                <i class="select-option-icon" [class]="option.icon" aria-hidden="true"></i>
+              }
+
+              <span class="select-option-copy">
+                <span class="select-option-label">{{ option.label }}</span>
+                @if (option.description) {
+                  <small class="select-option-description">{{ option.description }}</small>
+                }
+              </span>
+            </span>
+
+            @if (option.value === currentValue()) {
+              <i class="fa-solid fa-check select-option-check" aria-hidden="true"></i>
+            }
+          </button>
+        } @empty {
+          <div class="select-empty">No matching options</div>
+        }
+      </div>
+    </div>
+  }
+</div>

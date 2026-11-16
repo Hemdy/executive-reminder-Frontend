@@ -25,6 +25,24 @@
   min-height: calc(100vh - var(--topbar-height));
 }
 
+.app-shell.has-bottom-nav {
+  .page-content {
+    padding-bottom: calc(96px + env(safe-area-inset-bottom, 0px));
+  }
+}
+
+@media (min-width: 769px) and (max-width: 1024px) {
+  .app-shell.has-bottom-nav {
+    app-mobile-bottom-nav {
+      --nav-left-offset: var(--sidebar-width);
+    }
+
+    &.sidebar-collapsed app-mobile-bottom-nav {
+      --nav-left-offset: var(--sidebar-collapsed-width);
+    }
+  }
+}
+
 @media (max-width: 768px) {
   .main-area {
     margin-left: 0;
@@ -36,6 +54,16 @@
 
   .page-content {
     padding: 20px 16px;
+  }
+
+  .app-shell.has-bottom-nav {
+    .page-content {
+      padding-bottom: calc(92px + env(safe-area-inset-bottom, 0px));
+    }
+
+    app-mobile-bottom-nav {
+      --nav-left-offset: 0px;
+    }
   }
 
   .sidebar-backdrop {

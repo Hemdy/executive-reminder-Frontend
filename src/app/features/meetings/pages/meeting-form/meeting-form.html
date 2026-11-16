@@ -114,19 +114,12 @@
             Meeting Type <span>*</span>
           </label>
 
-          <select
-            id="meetingType"
+          <app-select
+            inputId="meetingType"
+            ariaLabel="Meeting Type"
             formControlName="meetingType"
-          >
-            @for (
-              type of meetingTypes;
-              track type
-            ) {
-              <option [value]="type">
-                {{ typeLabel(type) }}
-              </option>
-            }
-          </select>
+            [options]="meetingTypeOptions"
+          />
 
         </div>
 
@@ -282,19 +275,12 @@
             Meeting Status
           </label>
 
-          <select
-            id="status"
+          <app-select
+            inputId="status"
+            ariaLabel="Meeting Status"
             formControlName="status"
-          >
-            @for (
-              status of statuses;
-              track status
-            ) {
-              <option [value]="status">
-                {{ statusLabel(status) }}
-              </option>
-            }
-          </select>
+            [options]="statusOptions"
+          />
 
         </div>
 

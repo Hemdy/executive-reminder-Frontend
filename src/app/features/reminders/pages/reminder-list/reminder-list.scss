@@ -96,20 +96,14 @@ h1 {
   outline: none;
 }
 
-.search-box input:focus,
-.reminder-toolbar select:focus {
+.search-box input:focus {
   border-color: var(--primary);
 }
 
-.reminder-toolbar select {
-  height: 40px;
-  min-width: 150px;
-  padding: 0 10px;
-  border: 1px solid var(--border);
-  border-radius: 6px;
-  background: var(--surface);
-  color: var(--text);
-  outline: none;
+.reminder-toolbar app-select {
+  width: auto;
+  min-width: 155px;
+  flex: 0 0 auto;
 }
 
 .clear-button {
@@ -395,8 +389,9 @@ tbody tr:last-child td {
     width: 100%;
   }
 
-  .reminder-toolbar select {
-    flex: 1;
+  .reminder-toolbar app-select {
+    flex: 1 1 140px;
+    min-width: 0;
   }
 
 }

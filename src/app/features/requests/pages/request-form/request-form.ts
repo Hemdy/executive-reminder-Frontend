@@ -22,6 +22,7 @@ import {
   UpdateRequestRequest
 } from '../../../../core/models/request.model';
 import { RequestService } from '../../../../core/services/request.service';
+import { AppSelect, SelectOption } from '../../../../core/components/app-select/app-select';
 import { ContentSkeleton } from '../../../../core/components/content-skeleton/content-skeleton';
 import { RoleService } from '../../../../core/services/role.service';
 import { LoadingService } from '../../../../core/services/loading.service';
@@ -30,7 +31,7 @@ import { ToastService } from '../../../../core/services/toast.service';
 @Component({
   selector: 'app-request-form',
   standalone: true,
-  imports: [ReactiveFormsModule, RouterModule, ContentSkeleton],
+  imports: [ReactiveFormsModule, RouterModule, ContentSkeleton, AppSelect],
   templateUrl: './request-form.html',
   styleUrl: './request-form.scss',
   changeDetection: ChangeDetectionStrategy.OnPush
@@ -98,6 +99,43 @@ export class RequestForm {
     'COMPLETED',
     'CANCELLED'
   ];
+
+  readonly typeOptions: SelectOption[] = [
+    { value: 'GENERAL', label: 'General' },
+    { value: 'APPROVAL', label: 'Approval' },
+    { value: 'DECISION', label: 'Decision' },
+    { value: 'DOCUMENT_REVIEW', label: 'Document Review' },
+    { value: 'INFORMATION', label: 'Information' },
+    { value: 'MEETING', label: 'Meeting' },
+    { value: 'EXPENSE', label: 'Expense' },
+    { value: 'OTHER', label: 'Other' },
+  ];
+
+  readonly priorityOptions: SelectOption[] = [
+    { value: 'LOW', label: 'LOW', dotColor: '#00a85a' },
+    { value: 'MEDIUM', label: 'MEDIUM', dotColor: '#2878e8' },
+    { value: 'HIGH', label: 'HIGH', dotColor: '#f08c00' },
+    { value: 'URGENT', label: 'URGENT', dotColor: '#c53030' },
+  ];
+
+  readonly statusOptions: SelectOption[] = [
+    { value: 'PENDING', label: 'Pending', dotColor: '#b7791f' },
+    { value: 'IN_REVIEW', label: 'In Review', dotColor: '#1f4b99' },
+    { value: 'APPROVED', label: 'Approved', dotColor: '#218739' },
+    { value: 'REJECTED', label: 'Rejected', dotColor: '#c53030' },
+    { value: 'NEEDS_INFORMATION', label: 'Needs Information', dotColor: '#7639e8' },
+    { value: 'COMPLETED', label: 'Completed', dotColor: '#218739' },
+    { value: 'CANCELLED', label: 'Cancelled', dotColor: '#687386' },
+  ];
+
+  readonly assigneeOptions = computed<SelectOption[]>(() => [
+    { value: '', label: 'Select person' },
+    ...this.users().map(user => ({
+      value: user.id,
+      label: `${user.title ? `${user.title} ` : ''}${user.firstName} ${user.lastName}`.trim(),
+      description: user.role,
+    })),
+  ]);
 
   readonly form = this.fb.nonNullable.group({
     title: ['', [Validators.required, Validators.maxLength(200)]],

@@ -34,28 +34,19 @@
       />
     </div>
 
-    <select
+    <app-select
+      ariaLabel="Filter reminders by status"
+      [options]="statusFilterOptions"
       [value]="statusFilter()"
-      (change)="setStatusFilter($any($event.target).value)"
-    >
-      <option value="ALL">All statuses</option>
-      <option value="PENDING">Pending</option>
-      <option value="TRIGGERED">Triggered</option>
-      <option value="COMPLETED">Completed</option>
-      <option value="DISMISSED">Dismissed</option>
-      <option value="CANCELLED">Cancelled</option>
-    </select>
+      (valueChange)="setStatusFilter($event)"
+    />
 
-    <select
+    <app-select
+      ariaLabel="Filter reminders by priority"
+      [options]="priorityFilterOptions"
       [value]="priorityFilter()"
-      (change)="setPriorityFilter($any($event.target).value)"
-    >
-      <option value="ALL">All priorities</option>
-      <option value="LOW">Low</option>
-      <option value="MEDIUM">Medium</option>
-      <option value="HIGH">High</option>
-      <option value="URGENT">Urgent</option>
-    </select>
+      (valueChange)="setPriorityFilter($event)"
+    />
 
     @if (
       searchTerm() ||

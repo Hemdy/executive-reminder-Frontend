@@ -1,421 +1,422 @@
-<section class="'page">
+<section class="page">
   <div class="calendar-page">
-  @if (meetings.listLoading() || reminders.listLoading()) {
-    <app-content-skeleton kind="table" />
-  } @else if (meetings.listError() || reminders.listError()) {
-    <p role="alert">{{ meetings.listError() || reminders.listError() }}</p>
-    <button type="button" class="secondary-button" (click)="retryLoad()">Retry</button>
-  } @else {
-
-  <div class="page-header">
-    <div>
-      <h1 class="page-title">Calendar</h1>
-      <!-- <p class="page-subtitle">
-        Manage meetings, tasks, reminders, and deadlines
-        in one place.
-      </p> -->
-    </div>
-
-    <!-- <button
-      type="button"
-      class="primary-button"
-      (click)="goToToday()"
-    >
-      Today
-    </button> -->
-  </div>
-
-  <div class="calendar-card">
-
-    <div class="calendar-toolbar">
-
-      <div class="calendar-navigation">
-        <button
-          type="button"
-          class="icon-button"
-          aria-label="Previous"
-          (click)="previous()"
-        >
-          <i class="fa-solid fa-chevron-left" aria-hidden="true"></i>
-        </button>
-
-        <button
-          type="button"
-          class="icon-button"
-          aria-label="Next"
-          (click)="next()"
-        >
-          <i class="fa-solid fa-chevron-right" aria-hidden="true"></i>
-        </button>
-
-        <h2>
-          @if (currentView() === 'MONTH' || currentView() === 'AGENDA') {
-            {{ currentMonthLabel() }}
-          } @else {
-            {{ currentDayLabel() }}
-          }
-        </h2>
-      </div>
-
-      <div class="view-switcher">
-
-        <button
-          type="button"
-          [class.active]="currentView() === 'MONTH'"
-          (click)="setView('MONTH')"
-        >
-          Month
-        </button>
-
-        <button
-          type="button"
-          [class.active]="currentView() === 'WEEK'"
-          (click)="setView('WEEK')"
-        >
-          Week
-        </button>
-
-        <button
-          type="button"
-          [class.active]="currentView() === 'DAY'"
-          (click)="setView('DAY')"
-        >
-          Day
-        </button>
-
-        <button
-          type="button"
-          [class.active]="currentView() === 'AGENDA'"
-          (click)="setView('AGENDA')"
-        >
-          Agenda
-        </button>
-
-      </div>
-
-    </div>
-
-    <!-- MONTH -->
-
-    @if (currentView() === 'MONTH') {
-
-      <div class="calendar-month">
-
-        <div class="weekday-row">
-          <div>Sun</div>
-          <div>Mon</div>
-          <div>Tue</div>
-          <div>Wed</div>
-          <div>Thu</div>
-          <div>Fri</div>
-          <div>Sat</div>
-        </div>
-
-        <div class="month-grid">
-
-          @for (
-            day of monthDays();
-            track trackByDate($index, day)
-          ) {
-
-            <div
-              class="calendar-day"
-              [class.other-month]="!day.isCurrentMonth"
-              [class.today]="day.isToday"
-              (click)="selectDate(day.date)"
-            >
-
-              <div class="day-number">
-                {{ day.date.getDate() }}
-              </div>
-
-              <div class="day-events">
-
-                @for (
-                  event of getEventsForDate(day.date).slice(0, 4);
-                  track trackByEvent($index, event)
-                ) {
-
-                  <button
-                    type="button"
-                    class="calendar-event"
-                    [class]="getEventClass(event)"
-                    (click)="openEvent(event); $event.stopPropagation()"
-                  >
-                    <span class="event-time">
-                      {{ event.startTime ? formatTime(event.startTime) : '' }}
-                    </span>
-
-                    <span class="event-title">
-                      {{ event.title }}
-                    </span>
-                  </button>
-
-                }
-
-                @if (getEventsForDate(day.date).length > 4) {
-                  <div class="more-events">
-                    +{{ getEventsForDate(day.date).length - 4 }} more
-                  </div>
-                }
-
-              </div>
-
+    @if (meetings.listLoading() || reminders.listLoading()) {
+      <app-content-skeleton kind="table" />
+    } @else if (meetings.listError() || reminders.listError()) {
+      <p role="alert">{{ meetings.listError() || reminders.listError() }}</p>
+      <button type="button" class="secondary-button" (click)="retryLoad()">Retry</button>
+    } @else {
+      <div class="calendar-card">
+        <!-- Header Banner inspired by reference -->
+        <header class="calendar-hero">
+          <div class="hero-copy">
+            <span class="hero-icon-badge" aria-hidden="true">
+              <i class="fa-regular fa-calendar-check"></i>
+            </span>
+            <div>
+              <h1 class="page-title">Calendar</h1>
+              <p class="page-subtitle">View and manage your tasks, meetings and events</p>
             </div>
+          </div>
 
-          }
+          <div class="hero-illustration" aria-hidden="true">
+            <svg viewBox="0 0 120 76" fill="none">
+              <rect x="26" y="10" width="62" height="52" rx="10" fill="#ffffff" stroke="#d5e2f7" stroke-width="2" />
+              <path d="M26 22C26 15.3726 31.3726 10 38 10H76C82.6274 10 88 15.3726 88 22V26H26V22Z" fill="#2563eb" />
+              <rect x="38" y="6" width="4" height="9" rx="2" fill="#1e40af" />
+              <rect x="55" y="6" width="4" height="9" rx="2" fill="#1e40af" />
+              <rect x="72" y="6" width="4" height="9" rx="2" fill="#1e40af" />
+              <rect x="35" y="33" width="9" height="7" rx="2" fill="#e2ecff" />
+              <rect x="48" y="33" width="9" height="7" rx="2" fill="#e2ecff" />
+              <rect x="61" y="33" width="9" height="7" rx="2" fill="#e2ecff" />
+              <rect x="35" y="44" width="9" height="7" rx="2" fill="#e2ecff" />
+              <rect x="48" y="44" width="9" height="7" rx="2" fill="#2563eb" />
+              <rect x="61" y="44" width="9" height="7" rx="2" fill="#e2ecff" />
+              <circle cx="90" cy="52" r="16" fill="#ffffff" stroke="#2563eb" stroke-width="2.5" />
+              <circle cx="90" cy="52" r="12" fill="#eff5ff" />
+              <path d="M90 45V52L95 55" stroke="#1f4b99" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" />
+            </svg>
+          </div>
+        </header>
 
-        </div>
-
-      </div>
-
-    }
-
-    <!-- WEEK -->
-
-    @if (currentView() === 'WEEK') {
-
-      <div class="week-view">
-
-        <div class="week-header">
-
-          @for (day of weekDays(); track day.toISOString()) {
-
-            <button
-              type="button"
-              class="week-day"
-              [class.today]="calendarService.isToday(day)"
-              (click)="selectDate(day)"
-            >
-              <span>
-                {{ day | date:'EEE' }}
-              </span>
-
-              <strong>
-                {{ day | date:'d' }}
-              </strong>
-            </button>
-
-          }
-
-        </div>
-
-        <div class="week-events">
-
-          @for (day of weekDays(); track day.toISOString()) {
-
-            <div class="week-column">
-
-              @for (
-                event of getEventsForDate(day);
-                track trackByEvent($index, event)
-              ) {
-
-                <button
-                  type="button"
-                  class="week-event"
-                  [class]="getEventClass(event)"
-                  (click)="openEvent(event)"
-                >
-                  <strong>{{ event.title }}</strong>
-
-                  <span>
-                    {{ getEventTime(event) }}
-                  </span>
-
-                  <small>
-                    {{ getTypeLabel(event.type) }}
-                  </small>
-                </button>
-
-              }
-
-            </div>
-
-          }
-
-        </div>
-
-      </div>
-
-    }
-
-    <!-- DAY -->
-
-    @if (currentView() === 'DAY') {
-
-      <div class="day-view">
-
-        <div class="day-view-header">
-          <span class="day-name">
-            {{ selectedDate() | date:'EEEE' }}
-          </span>
-
-          <strong>
-            {{ selectedDate() | date:'MMMM d, y' }}
-          </strong>
-        </div>
-
-        @if (dayEvents().length) {
-
-          <div class="agenda-list">
-
-            @for (
-              event of dayEvents();
-              track trackByEvent($index, event)
-            ) {
+        <!-- Toolbar -->
+        <div class="calendar-toolbar">
+          <div class="calendar-navigation">
+            <div class="nav-arrow-group">
+              <button
+                type="button"
+                class="icon-button"
+                aria-label="Previous"
+                (click)="previous()"
+              >
+                <i class="fa-solid fa-chevron-left" aria-hidden="true"></i>
+              </button>
 
               <button
                 type="button"
-                class="agenda-item"
-                [class]="getEventClass(event)"
-                (click)="openEvent(event)"
+                class="icon-button"
+                aria-label="Next"
+                (click)="next()"
               >
-
-                <div class="agenda-time">
-                  {{ getEventTime(event) }}
-                </div>
-
-                <div class="agenda-content">
-                  <strong>{{ event.title }}</strong>
-
-                  <span>
-                    {{ getTypeLabel(event.type) }}
-                  </span>
-
-                  @if (event.location) {
-                    <small>
-                      {{ event.location }}
-                    </small>
-                  }
-                </div>
-
+                <i class="fa-solid fa-chevron-right" aria-hidden="true"></i>
               </button>
+            </div>
 
+            @if (currentView() === 'DAY') {
+              <h2 class="day-heading">{{ currentDayLabel() }}</h2>
+            } @else {
+              <div class="month-picker-wrap">
+                <app-select
+                  ariaLabel="Select month and year"
+                  variant="ghost"
+                  leadingIcon="fa-regular fa-calendar"
+                  [options]="monthOptions()"
+                  [value]="currentMonthKey()"
+                  (valueChange)="selectMonthKey($event)"
+                />
+              </div>
             }
-
-          </div>
-
-        } @else {
-
-          <div class="empty-calendar">
-            <div class="empty-icon">□</div>
-            <h3>No events scheduled</h3>
-            <p>
-              There are no meetings, reminders, or tasks
-              scheduled for this day.
-            </p>
-          </div>
-
-        }
-
-      </div>
-
-    }
-
-    <!-- AGENDA -->
-
-    @if (currentView() === 'AGENDA') {
-
-      <div class="agenda-view">
-
-        @if (agendaEvents().length) {
-
-          @for (
-            event of agendaEvents();
-            track trackByEvent($index, event)
-          ) {
 
             <button
               type="button"
-              class="agenda-row"
-              [class]="getEventClass(event)"
-              (click)="openEvent(event)"
+              class="today-button"
+              (click)="goToToday()"
             >
-
-              <div class="agenda-date">
-                <strong>
-                  {{ calendarService.parseDate(event.date) | date:'d' }}
-                </strong>
-
-                <span>
-                  {{ calendarService.parseDate(event.date) | date:'MMM' }}
-                </span>
-              </div>
-
-              <div class="agenda-main">
-
-                <div class="agenda-title-row">
-                  <strong>{{ event.title }}</strong>
-
-                  <span class="event-type">
-                    {{ getTypeLabel(event.type) }}
-                  </span>
-                </div>
-
-                <div class="agenda-meta">
-
-                  @if (event.startTime) {
-                    <span>
-                      {{ getEventTime(event) }}
-                    </span>
-                  }
-
-                  @if (event.location) {
-                    <span>
-                      {{ event.location }}
-                    </span>
-                  }
-
-                  <span>
-                    {{ event.status }}
-                  </span>
-
-                </div>
-
-              </div>
-
+              Today
             </button>
-
-          }
-
-        } @else {
-
-          <div class="empty-calendar">
-            <div class="empty-icon">□</div>
-            <h3>Your calendar is clear</h3>
-            <p>
-              No upcoming meetings, reminders, or tasks.
-            </p>
           </div>
 
+          <div class="view-switcher" role="tablist" aria-label="Calendar view">
+            <button
+              type="button"
+              role="tab"
+              [attr.aria-selected]="currentView() === 'MONTH'"
+              [class.active]="currentView() === 'MONTH'"
+              (click)="setView('MONTH')"
+            >
+              <i class="fa-regular fa-calendar" aria-hidden="true"></i>
+              <span>Month</span>
+            </button>
+
+            <button
+              type="button"
+              role="tab"
+              [attr.aria-selected]="currentView() === 'WEEK'"
+              [class.active]="currentView() === 'WEEK'"
+              (click)="setView('WEEK')"
+            >
+              <i class="fa-solid fa-table-columns" aria-hidden="true"></i>
+              <span>Week</span>
+            </button>
+
+            <button
+              type="button"
+              role="tab"
+              [attr.aria-selected]="currentView() === 'DAY'"
+              [class.active]="currentView() === 'DAY'"
+              (click)="setView('DAY')"
+            >
+              <i class="fa-solid fa-calendar-day" aria-hidden="true"></i>
+              <span>Day</span>
+            </button>
+
+            <button
+              type="button"
+              role="tab"
+              [attr.aria-selected]="currentView() === 'AGENDA'"
+              [class.active]="currentView() === 'AGENDA'"
+              (click)="setView('AGENDA')"
+            >
+              <i class="fa-solid fa-list" aria-hidden="true"></i>
+              <span>Agenda</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- MONTH VIEW -->
+        @if (currentView() === 'MONTH') {
+          <div class="calendar-month-shell">
+            <div class="calendar-month">
+              <div class="weekday-row">
+                <div class="is-weekend">Sun</div>
+                <div>Mon</div>
+                <div>Tue</div>
+                <div>Wed</div>
+                <div>Thu</div>
+                <div>Fri</div>
+                <div class="is-weekend">Sat</div>
+              </div>
+
+              <div class="month-grid">
+                @for (day of monthDays(); track trackByDate($index, day)) {
+                  <div
+                    class="calendar-day"
+                    role="button"
+                    tabindex="0"
+                    [class.other-month]="!day.isCurrentMonth"
+                    [class.today]="day.isToday"
+                    [class.selected]="isSelected(day.date)"
+                    [class.weekend]="day.isWeekend"
+                    [attr.aria-label]="(day.date | date:'fullDate') + ' (' + getEventsForDate(day.date).length + ' events)'"
+                    [attr.aria-pressed]="isSelected(day.date)"
+                    (click)="selectDate(day.date)"
+                    (keydown.enter)="selectDate(day.date)"
+                    (keydown.space)="selectDate(day.date); $event.preventDefault()"
+                  >
+                    <div class="day-header-row">
+                      <span class="day-number">{{ day.date.getDate() }}</span>
+                    </div>
+
+                    <!-- Desktop & Tablet event pills -->
+                    <div class="day-events">
+                      @for (event of getEventsForDate(day.date).slice(0, 3); track trackByEvent($index, event)) {
+                        <button
+                          type="button"
+                          class="calendar-event"
+                          [class]="getEventClass(event)"
+                          (click)="openEvent(event); $event.stopPropagation()"
+                        >
+                          <span class="event-dot" aria-hidden="true"></span>
+                          @if (event.startTime) {
+                            <span class="event-time">{{ formatTime(event.startTime) }}</span>
+                          }
+                          <span class="event-title">{{ event.title }}</span>
+                        </button>
+                      }
+
+                      @if (getEventsForDate(day.date).length > 3) {
+                        <div class="more-events">
+                          +{{ getEventsForDate(day.date).length - 3 }} more
+                        </div>
+                      }
+                    </div>
+
+                    <!-- Mobile compact indicator dots -->
+                    @if (getEventsForDate(day.date).length > 0) {
+                      <div class="day-dots" aria-hidden="true">
+                        @for (event of getEventsForDate(day.date).slice(0, 3); track trackByEvent($index, event)) {
+                          <span class="mini-dot" [class]="getEventClass(event)"></span>
+                        }
+                        @if (getEventsForDate(day.date).length > 3) {
+                          <span class="mini-dot-more">+</span>
+                        }
+                      </div>
+                    }
+                  </div>
+                }
+              </div>
+            </div>
+
+            <!-- Selected Day Schedule Strip -->
+            <div class="selected-day-panel">
+              <div class="selected-day-header">
+                <div>
+                  <span class="selected-day-eyebrow">Selected Day</span>
+                  <h3>{{ selectedDate() | date:'EEEE, MMMM d, y' }}</h3>
+                </div>
+                <div class="selected-day-actions">
+                  <span class="selected-day-count">
+                    {{ dayEvents().length }} {{ dayEvents().length === 1 ? 'event' : 'events' }}
+                  </span>
+                  <button
+                    type="button"
+                    class="day-switch-link"
+                    (click)="setView('DAY')"
+                  >
+                    Open Day View
+                  </button>
+                </div>
+              </div>
+
+              @if (dayEvents().length > 0) {
+                <div class="selected-day-list">
+                  @for (event of dayEvents(); track trackByEvent($index, event)) {
+                    <button
+                      type="button"
+                      class="selected-day-item"
+                      [class]="getEventClass(event)"
+                      (click)="openEvent(event)"
+                    >
+                      <span class="selected-item-dot" aria-hidden="true"></span>
+                      <span class="selected-item-copy">
+                        <strong>{{ event.title }}</strong>
+                        <small>
+                          {{ getTypeLabel(event.type) }}
+                          @if (event.startTime) {
+                            · {{ getEventTime(event) }}
+                          }
+                          @if (event.location) {
+                            · {{ event.location }}
+                          }
+                        </small>
+                      </span>
+                      <i class="fa-solid fa-chevron-right selected-item-arrow" aria-hidden="true"></i>
+                    </button>
+                  }
+                </div>
+              } @else {
+                <p class="selected-day-empty">No meetings, tasks, or reminders scheduled for this date.</p>
+              }
+            </div>
+          </div>
         }
 
+        <!-- WEEK VIEW -->
+        @if (currentView() === 'WEEK') {
+          <div class="week-view">
+            <div class="week-header">
+              @for (day of weekDays(); track day.toISOString()) {
+                <button
+                  type="button"
+                  class="week-day"
+                  [class.today]="calendarService.isToday(day)"
+                  [class.selected]="isSelected(day)"
+                  (click)="selectDate(day)"
+                >
+                  <span>{{ day | date:'EEE' }}</span>
+                  <strong>{{ day | date:'d' }}</strong>
+                </button>
+              }
+            </div>
+
+            <div class="week-events">
+              @for (day of weekDays(); track day.toISOString()) {
+                <div class="week-column" [class.today]="calendarService.isToday(day)">
+                  @for (event of getEventsForDate(day); track trackByEvent($index, event)) {
+                    <button
+                      type="button"
+                      class="week-event"
+                      [class]="getEventClass(event)"
+                      (click)="openEvent(event)"
+                    >
+                      <span class="week-event-type">
+                        <span class="event-dot" aria-hidden="true"></span>
+                        {{ getTypeLabel(event.type) }}
+                      </span>
+                      <strong>{{ event.title }}</strong>
+                      @if (event.startTime) {
+                        <span>{{ getEventTime(event) }}</span>
+                      }
+                    </button>
+                  }
+                </div>
+              }
+            </div>
+          </div>
+        }
+
+        <!-- DAY VIEW -->
+        @if (currentView() === 'DAY') {
+          <div class="day-view">
+            <div class="day-view-header">
+              <span class="day-name">{{ selectedDate() | date:'EEEE' }}</span>
+              <strong>{{ selectedDate() | date:'MMMM d, y' }}</strong>
+            </div>
+
+            @if (dayEvents().length) {
+              <div class="agenda-list">
+                @for (event of dayEvents(); track trackByEvent($index, event)) {
+                  <button
+                    type="button"
+                    class="agenda-item"
+                    [class]="getEventClass(event)"
+                    (click)="openEvent(event)"
+                  >
+                    <div class="agenda-time">
+                      {{ getEventTime(event) || 'All day' }}
+                    </div>
+
+                    <div class="agenda-content">
+                      <div class="agenda-title-row">
+                        <strong>{{ event.title }}</strong>
+                        <span class="event-type">{{ getTypeLabel(event.type) }}</span>
+                      </div>
+
+                      @if (event.location) {
+                        <small>{{ event.location }}</small>
+                      }
+                    </div>
+                  </button>
+                }
+              </div>
+            } @else {
+              <div class="empty-calendar">
+                <div class="empty-icon" aria-hidden="true">
+                  <i class="fa-regular fa-calendar-xmark"></i>
+                </div>
+                <h3>No events scheduled</h3>
+                <p>There are no meetings, reminders, or tasks scheduled for this day.</p>
+              </div>
+            }
+          </div>
+        }
+
+        <!-- AGENDA VIEW -->
+        @if (currentView() === 'AGENDA') {
+          <div class="agenda-view">
+            @if (agendaEvents().length) {
+              @for (event of agendaEvents(); track trackByEvent($index, event)) {
+                <button
+                  type="button"
+                  class="agenda-row"
+                  [class]="getEventClass(event)"
+                  (click)="openEvent(event)"
+                >
+                  <div class="agenda-date">
+                    <strong>{{ calendarService.parseDate(event.date) | date:'d' }}</strong>
+                    <span>{{ calendarService.parseDate(event.date) | date:'MMM' }}</span>
+                  </div>
+
+                  <div class="agenda-main">
+                    <div class="agenda-title-row">
+                      <strong>{{ event.title }}</strong>
+                      <span class="event-type">{{ getTypeLabel(event.type) }}</span>
+                    </div>
+
+                    <div class="agenda-meta">
+                      @if (event.startTime) {
+                        <span>{{ getEventTime(event) }}</span>
+                      }
+                      @if (event.location) {
+                        <span>{{ event.location }}</span>
+                      }
+                      <span>{{ event.status }}</span>
+                    </div>
+                  </div>
+                </button>
+              }
+            } @else {
+              <div class="empty-calendar">
+                <div class="empty-icon" aria-hidden="true">
+                  <i class="fa-regular fa-calendar-check"></i>
+                </div>
+                <h3>Your calendar is clear</h3>
+                <p>No upcoming meetings, reminders, or tasks.</p>
+              </div>
+            }
+          </div>
+        }
+
+        <!-- Legend Footer -->
+        <footer class="calendar-legend">
+          <div class="legend-items">
+            <span class="legend-item">
+              <span class="legend-dot meeting" aria-hidden="true"></span>
+              Meetings
+            </span>
+
+            <span class="legend-item">
+              <span class="legend-dot task" aria-hidden="true"></span>
+              Tasks
+            </span>
+
+            <span class="legend-item">
+              <span class="legend-dot reminder" aria-hidden="true"></span>
+              Reminders
+            </span>
+          </div>
+        </footer>
       </div>
-
     }
-
   </div>
-
-  <div class="calendar-legend">
-
-    <div>
-      <span class="legend-dot meeting"></span>
-      Meetings
-    </div>
-
-    <div>
-      <span class="legend-dot task"></span>
-      Tasks
-    </div>
-
-    <div>
-      <span class="legend-dot reminder"></span>
-      Reminders
-    </div>
-
-  </div>
-
-  }
-</div>
 </section>

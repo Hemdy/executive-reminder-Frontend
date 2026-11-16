@@ -17,6 +17,7 @@ import { catchError, EMPTY, finalize, firstValueFrom, from, of, take, timeout } 
 import { API_BASE_URL } from '../config/api.config';
 import { AuthService } from './auth.service';
 import { NotificationService } from './notification.service';
+import { PwaDetectionService } from './pwa-detection.service';
 
 interface PushConfig {
   enabled: boolean;
@@ -56,12 +57,13 @@ export class PushNotificationsService {
   private readonly injector = inject(Injector);
   private readonly destroyRef = inject(DestroyRef);
   private readonly browser = isPlatformBrowser(inject(PLATFORM_ID));
+  private readonly pwaDetection = inject(PwaDetectionService);
   private readonly apiUrl = `${API_BASE_URL}/notifications/push`;
   private readonly config = signal<PushConfig | null>(null);
   readonly isConfigLoading = signal(false);
 
-  readonly isIosDevice = signal(false);
-  readonly isStandalone = signal(false);
+  readonly isIosDevice = this.pwaDetection.isIosDevice;
+  readonly isStandalone = this.pwaDetection.isStandalone;
   readonly requiresIosInstall = computed(() => this.isIosDevice() && !this.isStandalone());
   readonly isSupported = signal(
     this.browser && this.swPush.isEnabled && typeof Notification !== 'undefined',
@@ -98,23 +100,6 @@ export class PushNotificationsService {
     if (!this.browser) {
       return;
     }
-
-    const userAgent = typeof navigator !== 'undefined' ? navigator.userAgent : '';
-    const isIos =
-      /iPad|iPhone|iPod/.test(userAgent) ||
-      (/Macintosh/.test(userAgent) && typeof navigator !== 'undefined' && navigator.maxTouchPoints > 1);
-    const isStandalone =
-      typeof window !== 'undefined' &&
-      (typeof window.matchMedia === 'function'
-        ? window.matchMedia('(display-mode: standalone)').matches
-        : false ||
-          (window.navigator as Navigator & { standalone?: boolean }).standalone === true);
-    const standaloneFlag =
-      isStandalone ||
-      (typeof window !== 'undefined' &&
-        (window.navigator as Navigator & { standalone?: boolean }).standalone === true);
-    this.isIosDevice.set(isIos);
-    this.isStandalone.set(standaloneFlag);
 
     if (typeof Notification !== 'undefined') {
       this.permission.set(Notification.permission);

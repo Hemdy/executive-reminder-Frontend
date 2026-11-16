@@ -1,4 +1,4 @@
-
+import { DatePipe } from '@angular/common';
 import {
   ChangeDetectionStrategy,
   Component,
@@ -6,16 +6,16 @@ import {
   inject,
   signal
 } from '@angular/core';
-import { DatePipe } from '@angular/common';
 import { Router } from '@angular/router';
-import { CalendarService } from '../../../../core/services/calendar.service';
-import { MeetingService } from '../../../../core/services/meeting.service';
-import { ReminderService } from '../../../../core/services/reminder.service';
+import { AppSelect, SelectOption } from '../../../../core/components/app-select/app-select';
 import { ContentSkeleton } from '../../../../core/components/content-skeleton/content-skeleton';
 import {
   CalendarEvent,
   CalendarEventType
 } from '../../../../core/models/calendar-event.model';
+import { CalendarService } from '../../../../core/services/calendar.service';
+import { MeetingService } from '../../../../core/services/meeting.service';
+import { ReminderService } from '../../../../core/services/reminder.service';
 
 type CalendarView = 'MONTH' | 'WEEK' | 'DAY' | 'AGENDA';
 
@@ -23,17 +23,17 @@ interface CalendarDay {
   date: Date;
   isCurrentMonth: boolean;
   isToday: boolean;
+  isWeekend: boolean;
 }
 
 @Component({
   selector: 'app-calendar',
   standalone: true,
-  imports: [DatePipe, ContentSkeleton],
+  imports: [DatePipe, ContentSkeleton, AppSelect],
   templateUrl: './calendar.html',
   styleUrl: './calendar.scss',
   changeDetection: ChangeDetectionStrategy.OnPush
 })
-
 export class Calendar {
   readonly calendarService = inject(CalendarService);
   readonly meetings = inject(MeetingService);
@@ -62,6 +62,32 @@ export class Calendar {
       month: 'long',
       year: 'numeric'
     });
+  });
+
+  readonly currentMonthKey = computed(() => {
+    const date = this.currentDate();
+    return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
+  });
+
+  readonly monthOptions = computed<SelectOption[]>(() => {
+    const base = this.currentDate();
+    const baseYear = base.getFullYear();
+    const baseMonth = base.getMonth();
+    const options: SelectOption[] = [];
+
+    for (let offset = -12; offset <= 12; offset++) {
+      const optionDate = new Date(baseYear, baseMonth + offset, 1);
+      const key = `${optionDate.getFullYear()}-${String(optionDate.getMonth() + 1).padStart(2, '0')}`;
+      options.push({
+        value: key,
+        label: optionDate.toLocaleDateString('en-US', {
+          month: 'long',
+          year: 'numeric'
+        })
+      });
+    }
+
+    return options;
   });
 
   readonly currentDayLabel = computed(() => {
@@ -115,6 +141,19 @@ export class Calendar {
 
   setView(view: CalendarView): void {
     this.currentView.set(view);
+  }
+
+  selectMonthKey(monthKey: string): void {
+    const [yearStr, monthStr] = monthKey.split('-');
+    const year = Number(yearStr);
+    const month = Number(monthStr) - 1;
+    if (!Number.isFinite(year) || !Number.isFinite(month)) {
+      return;
+    }
+
+    const nextDate = new Date(year, month, 1);
+    this.currentDate.set(nextDate);
+    this.selectedDate.set(nextDate);
   }
 
   previous(): void {
@@ -180,6 +219,15 @@ export class Calendar {
     if (this.currentView() === 'MONTH') {
       this.currentDate.set(new Date(date));
     }
+  }
+
+  isSelected(date: Date): boolean {
+    const selected = this.selectedDate();
+    return (
+      selected.getFullYear() === date.getFullYear() &&
+      selected.getMonth() === date.getMonth() &&
+      selected.getDate() === date.getDate()
+    );
   }
 
   openEvent(event: CalendarEvent): void {
@@ -271,7 +319,8 @@ export class Calendar {
       days.push({
         date: day,
         isCurrentMonth: false,
-        isToday: this.calendarService.isToday(day)
+        isToday: this.calendarService.isToday(day),
+        isWeekend: day.getDay() === 0 || day.getDay() === 6
       });
     }
 
@@ -285,7 +334,8 @@ export class Calendar {
       days.push({
         date: day,
         isCurrentMonth: true,
-        isToday: this.calendarService.isToday(day)
+        isToday: this.calendarService.isToday(day),
+        isWeekend: day.getDay() === 0 || day.getDay() === 6
       });
     }
 
@@ -301,7 +351,8 @@ export class Calendar {
       days.push({
         date: day,
         isCurrentMonth: false,
-        isToday: this.calendarService.isToday(day)
+        isToday: this.calendarService.isToday(day),
+        isWeekend: day.getDay() === 0 || day.getDay() === 6
       });
     }
 
